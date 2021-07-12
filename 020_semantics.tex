@@ -9,11 +9,11 @@
   \end{align*}
   The set of \emph{expressions} \textsf{e} is defined as
   \begin{align*}
-    \mathsf{t} ::= &\ i & \text{integer}\\
+    \mathsf{e} ::= &\ i & \text{integer}\\
     | &\ \mathsf{w} & \text{leftvalue}\\
     | &\ \borrow\mathsf{w} & \text{borrow}\\
     | &\ \mathtt{mut}\borrow\mathsf{w} & \text{mutable borrow}\\
-    | &\ \mathtt{box}\ \mathsf{t} & \text{heap allocation}
+    | &\ \mathtt{box}\ \mathsf{e} & \text{heap allocation}
   \end{align*}
   The set of \emph{terms} \textsf{t} is defined as:
   \begin{align*}
@@ -46,23 +46,22 @@
   \text{and }\ell\in\Locs
   \end{array}\right.\right\}}_{\text{not owned bindings}}
   \]
-  with the constraint that, for each $e\in\mathbb{E}$, there is at most a binding for each
-  given variable $x$ (owned or not owned). Moreover, we write $e(x)=\ell$ meaning that
-  either $x\Rightarrow^m\ell\in e$ or $x\rightarrow^m\ell\in e$, for some $m$.
+  with the constraint that, for each $\rho\in\mathbb{E}$, there is at most a binding for each
+  given variable $x$ (owned or not owned). Moreover, we write $\rho(x)=\ell$ meaning that
+  either $x\Rightarrow^m\ell\in\rho$ or $x\rightarrow^m\ell\in\rho$, for some $m$.
 
   The set $\mathbb{H}$ of \emph{heaps} contains bindings from locations to values,
   existing in two versions, owned and not owned:
   \[
   \mathbb{H}=
-  \underbrace{\{\ell\Rightarrow v\mid\ell\in\Locs\text{ and }v\in\mathbb{V}\}}_{\text{owned bindigs}}
+  \underbrace{\{\ell\Rightarrow v\mid\ell\in\Locs\text{ and }v\in\mathbb{V}\}}_{\text{owned bindings}}
   \cup
-  \underbrace{\{\ell\rightarrow v\mid\ell\in\Locs\text{ and }v\in\mathbb{V}\}}_{\text{not owned bindigs}}
+  \underbrace{\{\ell\rightarrow v\mid\ell\in\Locs\text{ and }v\in\mathbb{V}\}}_{\text{not owned bindings}}
   \]
   with the constraint that, for each $h\in\mathbb{H}$, there is at most a binding for each
   location $\ell$ (owned or not owned). Moreover, we write $h(\ell)=v$ meaning that
   either $\ell\Rightarrow v\in h$ or $\ell\rightarrow v\in h$.
 
   The set of \emph{stores} $\mathbb{S}$ is the set of pairs
-  $\mathbb{E}\times\mathbb{H}$, whose elements are written as
-  $e\star h$.
+  $\mathbb{E}\times\mathbb{H}$, whose elements are written as $\rho\star h$.
 \end{definition}
