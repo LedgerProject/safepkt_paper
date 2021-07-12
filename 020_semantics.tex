@@ -1,0 +1,68 @@
+\section{Semantics}\label{sec:semantics}
+
+\begin{definition}
+  We assume there is a set of variables $\Vars$.
+  The set of \emph{leftvalues} \textsf{w} is defined as:
+  \begin{align*}
+    \mathsf{w} ::= &\ x & \text{variable, with $x\in\Vars$}\\
+    | &\ \mathtt{*}\mathsf{w} & \text{dereference}
+  \end{align*}
+  The set of \emph{expressions} \textsf{e} is defined as
+  \begin{align*}
+    \mathsf{t} ::= &\ i & \text{integer}\\
+    | &\ \mathsf{w} & \text{leftvalue}\\
+    | &\ \borrow\mathsf{w} & \text{borrow}\\
+    | &\ \mathtt{mut}\borrow\mathsf{w} & \text{mutable borrow}\\
+    | &\ \mathtt{box}\ \mathsf{t} & \text{heap allocation}
+  \end{align*}
+  The set of \emph{terms} \textsf{t} is defined as:
+  \begin{align*}
+    \mathsf{t} ::= &\ \mathsf{e} & \text{expression}\\
+    | &\ \mathsf{w}=\mathsf{t} & \text{assignment}\\
+    | &\ \mathtt{let\ mut}\ x=\mathsf{t} & \text{declaration, with $x\in\Vars$}\\
+    | &\ \{\mathsf{t_1};\ldots;\mathsf{t_n}\} & \text{block, with $n\ge 0$}
+  \end{align*}
+\end{definition}
+
+\begin{definition}
+  We assume that there is an infinite set $\Locs$ of \emph{locations}
+  and a finite set $\Lifetimes$ of \emph{lifetimes}.
+  The set of \emph{values} is defined as $\mathbb{V}=\mathbb{Z}\cup\Locs$,
+  where $\mathbb{Z}$ is the set of integers.
+
+  The set $\mathbb{E}$
+  of \emph{environments} contains bindings from variables to locations,
+  decorated with a \emph{lifetime} and existing in two versions, owned
+  and not owned:
+  \[
+  \mathbb{E}=
+  \underbrace{\left\{x\Rightarrow^m\ell\left|\begin{array}{l}
+  x\in\Vars,\ m\in\Lifetimes\\
+  \text{and }\ell\in\Locs
+  \end{array}\right.\right\}}_{\text{owned bindings}}
+  \cup
+  \underbrace{\left\{x\rightarrow^m\ell\left|\begin{array}{l}
+  x\in\Vars,\ m\in\Lifetimes\\
+  \text{and }\ell\in\Locs
+  \end{array}\right.\right\}}_{\text{not owned bindings}}
+  \]
+  with the constraint that, for each $e\in\mathbb{E}$, there is at most a binding for each
+  given variable $x$ (owned or not owned). Moreover, we write $e(x)=\ell$ meaning that
+  either $x\Rightarrow^m\ell\in e$ or $x\rightarrow^m\ell\in e$, for some $m$.
+
+  The set $\mathbb{H}$ of \emph{heaps} contains bindings from locations to values,
+  existing in two versions, owned and not owned:
+  \[
+  \mathbb{H}=
+  \underbrace{\{\ell\Rightarrow v\mid\ell\in\Locs\text{ and }v\in\mathbb{V}\}}_{\text{owned bindigs}}
+  \cup
+  \underbrace{\{\ell\rightarrow v\mid\ell\in\Locs\text{ and }v\in\mathbb{V}\}}_{\text{not owned bindigs}}
+  \]
+  with the constraint that, for each $h\in\mathbb{H}$, there is at most a binding for each
+  location $\ell$ (owned or not owned). Moreover, we write $h(\ell)=v$ meaning that
+  either $\ell\Rightarrow v\in h$ or $\ell\rightarrow v\in h$.
+
+  The set of \emph{stores} $\mathbb{S}$ is the set of pairs
+  $\mathbb{E}\times\mathbb{H}$, whose elements are written as
+  $e\star h$.
+\end{definition}
