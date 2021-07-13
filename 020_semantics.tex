@@ -1,7 +1,8 @@
 \section{Semantics}\label{sec:semantics}
 
 \begin{definition}
-  We assume there is a set of variables $\Vars$.
+  We assume there is a set of variables $\Vars$
+  and a finite set $\Lifetimes$ of \emph{lifetimes}.
   The set of \emph{leftvalues} \textsf{w} is defined as:
   \begin{align*}
     \mathsf{w} ::= &\ x & \text{variable, with $x\in\Vars$}\\
@@ -15,18 +16,21 @@
     | &\ \mathtt{mut}\borrow\mathsf{w} & \text{mutable borrow}\\
     | &\ \mathtt{box}\ \mathsf{e} & \text{heap allocation}
   \end{align*}
-  The set of \emph{terms} \textsf{t} is defined as:
+  The sets of \emph{terms} \textsf{t} and \emph{blocks} \textsf{b}
+  is defined as:
   \begin{align*}
-    \mathsf{t} ::= &\ \mathsf{e} & \text{expression}\\
-    | &\ \mathsf{w}=\mathsf{t} & \text{assignment}\\
-    | &\ \mathtt{let\ mut}\ x=\mathsf{t} & \text{declaration, with $x\in\Vars$}\\
-    | &\ \{\mathsf{t_1};\ldots;\mathsf{t_n}\} & \text{block, with $n\ge 0$}
+    \mathsf{t} ::= &\ \mathsf{w}=\mathsf{e} & \text{assignment}\\
+    | &\ \mathtt{let\ mut}\ x=\mathsf{e} & \text{declaration, with $x\in\Vars$}\\
+    | &\ \mathsf{b} & \text{block}
+  \end{align*}
+  and
+  \begin{align*}
+    \mathsf{b} ::= &\ \{\mathsf{t_1};\ldots;\mathsf{t_n}\}^l & \text{with $n\ge 0$ and $l\in\Lifetimes$}
   \end{align*}
 \end{definition}
 
 \begin{definition}
-  We assume that there is an infinite set $\Locs$ of \emph{locations}
-  and a finite set $\Lifetimes$ of \emph{lifetimes}.
+  We assume that there is an infinite set $\Locs$ of \emph{locations}.
   The set of \emph{values} is defined as $\mathbb{V}=\mathbb{Z}\cup\Locs$,
   where $\mathbb{Z}$ is the set of integers.
 
