@@ -51,7 +51,8 @@
   \end{array}\right.\right\}}_{\text{not owned bindings}}
   \]
   with the constraint that, for each $\rho\in\mathbb{E}$, there is at most a binding for each
-  given variable $x$ (owned or not owned). Moreover, we write $\rho(x)=\ell$ meaning that
+  given variable $x$ (owned or not owned). Moreover, we write $\rho(x)=\ell$ and
+  $\rho^+(x)=\ell^m$ when
   either $x\Rightarrow^m\ell\in\rho$ or $x\rightarrow^m\ell\in\rho$, for some $m$.
 
   The set $\mathbb{H}$ of \emph{heaps} contains bindings from locations to values,
@@ -63,9 +64,65 @@
   \underbrace{\{\ell\rightarrow v\mid\ell\in\Locs\text{ and }v\in\mathbb{V}\}}_{\text{not owned bindings}}
   \]
   with the constraint that, for each $h\in\mathbb{H}$, there is at most a binding for each
-  location $\ell$ (owned or not owned). Moreover, we write $h(\ell)=v$ meaning that
-  either $\ell\Rightarrow v\in h$ or $\ell\rightarrow v\in h$.
+  location $\ell$ (owned or not owned). We write $h(\ell)=v$ meaning that
+  either $\ell\Rightarrow v\in h$ or $\ell\rightarrow v\in h$. Given $L\subseteq\Locs$,
+  we write $h|_{-L}$ meaning $h$ where the bindings for the locations in $L$
+  have been removed (if any).
 
   The set of \emph{stores} $\mathbb{S}$ is the set of pairs
   $\mathbb{E}\times\mathbb{H}$, whose elements are written as $\rho\star h$.
+  Given $s=\rho\star h\in\mathbb{S}$, we define $s(x)=\rho(x)$
+  and $s^+(x)=\rho^+(x)$ for all
+  $x\in\Vars$ and $s(\ell)=h(\ell)$ for all $\ell\in\Locs$.
+  GIven $L\subseteq\Locs$, we define $(\rho\star h)|_{-L}=\rho\star(h|_{-L})$.
+\end{definition}
+
+\begin{definition}[Locate]
+  The partial function $\loc(\mathsf{w},s)$ determines the location that holds
+  the value of the leftvalue $\mathsf{w}$ in $s\in\mathbb{S}$, as follows:
+  \begin{align*}
+    \loc(x,s) &= s(x)\\
+    \loc(*\mathsf{w},s) &= s(\loc(\mathsf{w},s))
+  \end{align*}
+\end{definition}
+
+%\begin{definition}[Read]
+%  The partial function $\readlv(s,\mathsf{w})$ retrieves the value of
+%  the leftvalue $\mathsf{w}$ in $s\in\mathbb{S}$, as follows:
+%  \[
+%  \readlv(s,\mathsf{w})=s(\loc(s,\mathsf{w}))
+%  \]
+%\end{definition}
+
+The evaluation of a leftvalue yields the value of the leftvalue and a potentially updated heap:
+
+\begin{definition}[Semantics of leftvalues]\label{def:semantics_leftvalues}
+  Given $s=\rho\star h$, we define
+  \[
+  \den[\mathsf{w}]{s}=\begin{cases}
+  \langle s(\loc(\mathsf{w},s)), h\rangle & \text{if the static type of $\mathsf{w}$ has copy semantics}\\
+  \langle s(\loc(\mathsf{w},s)), h|_{-\loc(\mathsf{w},s)}\rangle & \text{if the static type of $\mathsf{w}$ has move semantics} 
+  \end{cases}
+  \]
+\end{definition}
+
+\noindent
+Note that the second case above makes $\mathsf{w}$ point to a dangling location, hence
+$\mathsf{w}$ becomes unusable.
+
+The evaluation of an expression yields the value of the expression and a potentially updated heap:
+
+\begin{definition}[Semantics of expressions]\label{def:semantics_expressions}
+  Given $s=\rho\star h$, we define
+  \begin{align*}
+    \den[i]{s}&=\langle i,h\rangle\\
+    \den[\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\\
+    \den[\mathtt{mut}\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\\
+    \den[\mathtt{box}\ \mathsf{e}]{s}&=\langle\ell,h'\cup\{\ell\Rightarrow v\}\rangle
+    & \text{where $\ell$ is fresh and $\den[\mathsf{e}](s)=\langle v, h'\rangle$}
+  \end{align*}
+  For expressions that are leftvalues, see Def.~\ref{def:semantics_leftvalues}.
+\end{definition}
+
+\begin{definition}[Semantics of terms]\label{def:semantics_terms}
 \end{definition}

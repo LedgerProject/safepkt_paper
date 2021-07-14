@@ -9,6 +9,7 @@
 \usepackage{relsize}
 \usepackage{tcolorbox}
 \usepackage{amsmath,amssymb,amsfonts}
+\usepackage{stmaryrd}
 
 \usepackage{svg}
 \newcommand{\orcid}[1]{\href{https://orcid.org/#1}{\includesvg[height = 2ex]{svg-inkscape/ORCID_iD}}}
@@ -23,7 +24,11 @@
 \newcommand{\mutborrow}{\<mut>}
 \newcommand{\Vars}{\mathsf{Vars}}
 \newcommand{\Locs}{\mathsf{Locs}}
+\newcommand{\loc}{\mathsf{loc}}
+\newcommand{\readlv}{\mathsf{read}}
 \newcommand{\Lifetimes}{\mathsf{Lifetimes}}
+
+\newcommand{\den}[2][]{\ensuremath{\llbracket #1\rrbracket{#2}}}
 
 \usepackage{listings, xcolor}
 \newcommand{\todo}[1]{\textcolor{red}{#1}}
