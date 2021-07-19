@@ -124,5 +124,36 @@ The evaluation of an expression yields the value of the expression and a potenti
   For expressions that are leftvalues, see Def.~\ref{def:semantics_leftvalues}.
 \end{definition}
 
-\begin{definition}[Semantics of terms]\label{def:semantics_terms}
+The set of locations reachable by following owned bindings only, and starting from a set of locations $\psi$,
+is defined as follows:
+%
+\begin{definition}[Owned reachable locations]
+  Given $\psi\subseteq\Locs$ and $h\in\mathbb{H}$, we define
+  \begin{align*}
+  \omega^0(\psi,h)&=\{\ell'\in\Locs\mid\ell\in\psi\text{ and }\ell\Rightarrow\ell'\in h\}\\
+  \omega^{i+1}(\psi,h)&=\{\ell'\in\Locs\mid\ell\in\omega^i(\psi,h)\text{ and }\ell\Rightarrow\ell'\in h\}
+  \end{align*}
+  and
+  \[
+  \omega(\psi,h)=\bigcup\limits_{i\ge 0}\omega^i(\psi,h)~.
+  \]
+\end{definition}
+
+The function $\drop$ removes the owned locations reachable from a set of locations.
+%  
+\begin{definition}[Drop]\label{def:drop}
+  The function $\drop:\wp(\Locs)\times\mathbb{H}\to\mathbb{H}$ is defined as
+  \[
+  \drop(\psi,h)=h|_{-{\omega(\psi,h)}}~.
+  \]
+\end{definition}
+
+\begin{definition}[Semantics of assignment]\label{def:semantics_assigmment}
+  Given $s=\rho\star h$ and $l\in\Lifetimes$, we define
+  \begin{align*}
+    \denl[\mathsf{w}=\mathsf{e}]{l}{s}&=\langle\rho,h''[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}\\
+    \denl[\mathsf{w}=\mathsf{e}]{l}{s}&=\langle\rho,h''[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}
+  \end{align*}
+  where $\den[e]{s}=\langle v,h'\rangle$, $\ell=\loc(\mathsf{w},\langle\rho,h'\rangle)$ and
+  $h''=\drop(\{\ell\},h')$.
 \end{definition}
