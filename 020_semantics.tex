@@ -29,6 +29,18 @@
   \end{align*}
 \end{definition}
 
+\begin{example}\label{ex:program}
+  The following valid program consists of a block that contains an inner block.
+  \[
+    \{
+      \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
+      \{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+      \mathtt{*}y = \mathtt{box}\ 1\}^m;\
+      \mathtt{let\ mut}\ z = x
+    \}^l
+  \]
+\end{example}
+
 \begin{definition}
   We assume that there is an infinite set $\Locs$ of \emph{locations}.
   The set of \emph{values} is defined as $\mathbb{V}=\mathbb{Z}\cup\Locs$,
@@ -85,6 +97,13 @@
     \loc(*\mathsf{w},s) &= s(\loc(\mathsf{w},s))
   \end{align*}
 \end{definition}
+
+\begin{example}[Ex.~\ref{ex:program} continued]
+  After execution of the first statement, we have $\loc(x,s) = \ell_1$.
+  After execution of the inner block, we have $\loc(x,s) = \loc(y,s) = \ell_2$
+  and after execution of the final statement we have
+  $\loc(x,s) = \loc(y,s) = \loc(z,s) = \ell_2$.
+\end{example}
 
 %\begin{definition}[Read]
 %  The partial function $\readlv(s,\mathsf{w})$ retrieves the value of
