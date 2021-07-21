@@ -101,7 +101,7 @@ The evaluation of a leftvalue yields the value of the leftvalue and a potentiall
   \[
   \den[\mathsf{w}]{s}=\begin{cases}
   \langle s(\loc(\mathsf{w},s)), h\rangle & \text{if the static type of $\mathsf{w}$ has copy semantics}\\
-  \langle s(\loc(\mathsf{w},s)), h|_{-\loc(\mathsf{w},s)}\rangle & \text{if the static type of $\mathsf{w}$ has move semantics} 
+  \langle s(\loc(\mathsf{w},s)), h|_{-\loc(\mathsf{w},s)}\rangle & \text{if the static type of $\mathsf{w}$ has move semantics}
   \end{cases}
   \]
 \end{definition}
@@ -119,7 +119,7 @@ The evaluation of an expression yields the value of the expression and a potenti
     \den[\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\\
     \den[\mathtt{mut}\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\\
     \den[\mathtt{box}\ \mathsf{e}]{s}&=\langle\ell,h'\cup\{\ell\Rightarrow v\}\rangle
-    & \text{where $\ell$ is fresh and $\den[\mathsf{e}](s)=\langle v, h'\rangle$}
+    & \text{where $\ell$ is fresh and $\den[\mathsf{e}]{s}=\langle v, h'\rangle$}
   \end{align*}
   For expressions that are leftvalues, see Def.~\ref{def:semantics_leftvalues}.
 \end{definition}
@@ -140,7 +140,7 @@ is defined as follows:
 \end{definition}
 
 The function $\drop$ removes the owned locations reachable from a set of locations.
-%  
+%
 \begin{definition}[Drop]\label{def:drop}
   The function $\drop:\wp(\Locs)\times\mathbb{H}\to\mathbb{H}$ is defined as
   \[
@@ -151,9 +151,9 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
 \begin{definition}[Semantics of assignment]\label{def:semantics_assigmment}
   Given $s=\rho\star h$ and $l\in\Lifetimes$, we define
   \begin{align*}
-    \denl[\mathsf{w}=\mathsf{e}]{l}{s}&=\langle\rho,h''[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}\\
-    \denl[\mathsf{w}=\mathsf{e}]{l}{s}&=\langle\rho,h''[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}
+    \denl[\mathsf{w}=\mathsf{e}]{l}{s}&=\langle\rho,h''[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}\\
+    \denl[\mathsf{w}=\mathsf{e}]{l}{s}&=\langle\rho,h''[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ has move semantics}
   \end{align*}
-  where $\den[e]{s}=\langle v,h'\rangle$, $\ell=\loc(\mathsf{w},\langle\rho,h'\rangle)$ and
+  where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$, $\ell=\loc(\mathsf{w},\langle\rho,h'\rangle)$ and
   $h''=\drop(\{\ell\},h')$.
 \end{definition}
