@@ -48,22 +48,23 @@
 
   The set $\mathbb{E}$
   of \emph{environments} contains bindings from variables to locations,
-  decorated with a \emph{lifetime} and existing in two versions, owned
-  and not owned:
+  decorated with a \emph{lifetime}:
+  % and existing in two versions, owned and not owned:
   \[
-  \mathbb{E}=
-  \underbrace{\left\{x\Rightarrow^m\ell\left|\begin{array}{l}
-  x\in\Vars,\ m\in\Lifetimes\\
-  \text{and }\ell\in\Locs
-  \end{array}\right.\right\}}_{\text{owned bindings}}
-  \cup
-  \underbrace{\left\{x\rightarrow^m\ell\left|\begin{array}{l}
-  x\in\Vars,\ m\in\Lifetimes\\
-  \text{and }\ell\in\Locs
-  \end{array}\right.\right\}}_{\text{not owned bindings}}
+  \mathbb{E}=\{x\to^m\ell\mid x\in\Vars,\ m\in\Lifetimes\text{ and }\ \ell\in\Locs\}
+  %\underbrace{\left\{x\Rightarrow^m\ell\left|\begin{array}{l}
+  %x\in\Vars,\ m\in\Lifetimes\\
+  %\text{and }\ell\in\Locs
+  %\end{array}\right.\right\}}_{\text{owned bindings}}
+  %\cup
+  %\underbrace{\left\{x\rightarrow^m\ell\left|\begin{array}{l}
+  %x\in\Vars,\ m\in\Lifetimes\\
+  %\text{and }\ell\in\Locs
+  %\end{array}\right.\right\}}_{\text{not owned bindings}}
   \]
   with the constraint that, for each $\rho\in\mathbb{E}$, there is at most a binding for each
-  given variable $x$ (owned or not owned). Moreover, we write $\rho(x)=\ell$ and
+  given variable $x$. % (owned or not owned).
+  Moreover, we write $\rho(x)=\ell$ and
   $\rho^+(x)=\ell^m$ when
   either $x\Rightarrow^m\ell\in\rho$ or $x\rightarrow^m\ell\in\rho$, for some $m$.
 
@@ -141,7 +142,7 @@ The evaluation of an expression yields the value of the expression and a potenti
     \den[\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\\
     \den[\mathtt{mut}\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\\
     \den[\mathtt{box}\ \mathsf{e}]{s}&=\langle\ell,h'\cup\{\ell\Rightarrow v\}\rangle
-    & \text{where $\ell$ is fresh and $\den[\mathsf{e}]{s}=\langle v, h'\rangle$}
+    & \text{where $\den[\mathsf{e}]{s}=\langle v, h'\rangle$ and $\ell$ is fresh}
   \end{align*}
   For expressions that are leftvalues, see Def.~\ref{def:semantics_leftvalues}.
 \end{definition}
@@ -152,7 +153,7 @@ is defined as follows:
 \begin{definition}[Owned reachable locations]
   Given $\psi\subseteq\Locs$ and $h\in\mathbb{H}$, we define
   \begin{align*}
-  \omega^0(\psi,h)&=\{\ell'\in\Locs\mid\ell\in\psi\text{ and }\ell\Rightarrow\ell'\in h\}\\
+  \omega^0(\psi,h)&=\psi\\ %\{\ell'\in\Locs\mid\ell\in\psi\text{ and }\ell\Rightarrow\ell'\in h\}\\
   \omega^{i+1}(\psi,h)&=\{\ell'\in\Locs\mid\ell\in\omega^i(\psi,h)\text{ and }\ell\Rightarrow\ell'\in h\}
   \end{align*}
   and
@@ -171,13 +172,26 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
 \end{definition}
 
 \begin{definition}[Semantics of assignment]\label{def:semantics_assigmment}
-  Given $s=\rho\star h$ and $l\in\Lifetimes$, we define
-  \begin{align*}
-    \denl[\mathsf{w}=\mathsf{e}]{l}{s}&=\langle\rho,h''[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}\\
-    \denl[\mathsf{w}=\mathsf{e}]{l}{s}&=\langle\rho,h''[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ has move semantics}
-  \end{align*}
+  Given $s=\rho\star h$ and $m\in\Lifetimes$, we define
+  \[
+  \denl[\mathsf{w}=\mathsf{e}]{m}{s}=\begin{cases}
+  \langle\rho,h''[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ has move semantics}\\
+  \langle\rho,h''[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}
+  \end{cases}
+  \]
   where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$, $\ell=\loc(\mathsf{w},\langle\rho,h'\rangle)$ and
   $h''=\drop(\{\ell\},h')$.
+\end{definition}
+
+\begin{definition}[Semantics of declaration]\label{def:semantics_declaration}
+  Given $s=\rho\star h$ and $m\in\Lifetimes$, we define
+  \[
+  \denl[\mathtt{let\ mut}\ x=\mathsf{e}]{m}{s}=\begin{cases}
+  \langle\rho[x\to^m\ell],h'[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ has move semantics}\\
+  \langle\rho[x\to^m\ell],h'[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}
+  \end{cases}
+  \]
+  where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$ and $\ell$ is fresh.
 \end{definition}
 
 \begin{example}
