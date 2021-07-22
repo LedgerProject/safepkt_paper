@@ -95,29 +95,34 @@
   the value of the leftvalue $\mathsf{w}$ in $s\in\mathbb{S}$, as follows:
   \begin{align*}
     \loc(x,s) &= s(x)\\
-    \loc(*\mathsf{w},s) &= s(\loc(\mathsf{w},s))
+    \loc(*\mathsf{w},s) &= \left\{\begin{array}{ll}
+      s(\loc(\mathsf{w},s)) & \text{if } s(\loc(\mathsf{w},s)) \in \Locs\\
+      \text{undefined} & \text{otherwise}
+    \end{array}\right.
   \end{align*}
 \end{definition}
 
 \noindent
 Note that $\loc$ is a partial function since the second case of
 Def.~\ref{def:locate} is undefined when
-$\loc(\mathsf{w},s)\not\in\Locs$. In the following, when $\loc$ is undefined, the
+$s(\loc(\mathsf{w},s))\not\in\Locs$. In the following, when $\loc$ is undefined, the
 semantics will be stuck.
 
-  
+
 \begin{example}
-  Let $x$ be a variable, $m$ be a lifetime and
-  $s = \rho\star h$ be a store with
-  $\rho = \left\{x\rightarrow^m\ell_x\right\}$
-  and $h = \left\{\ell_x\rightarrow\ell,\ \ell\rightarrow 1\right\}$.
-  Then we have
-  \[\loc(\mathtt{*}x,s) = s(\loc(x,s)) = s(s(x)) = s(\rho(x))
-  = s(\ell_x) = h(\ell_x) = \ell\;.\]
-  Now for $s' = \rho\star h'$ with
-  $h' = \left\{\ell_x\rightarrow 1\right\}$ we have
-  $\loc(\mathtt{*}x,s') = s'(\loc(x,s')) = s'(s'(x)) = s'(\rho(x))
-  = s'(\ell_x) = h'(\ell_x) = 1$.
+  Let $\rho = \left\{x\rightarrow^m\ell_x\right\}$.
+  \begin{itemize}
+    \item Let $s = \rho\star h$ with
+    $h = \left\{\ell_x\rightarrow\ell,\ \ell\rightarrow 1\right\}$.
+    Then, $s(\loc(x,s)) = s(s(x)) = s(\rho(x)) = s(\ell_x) =
+    h(\ell_x) = \ell\in\Locs$, so
+    $\loc(\mathtt{*}x,s)= s(\loc(x,s)) = \ell$.
+    %
+    \item Let $s' = \rho\star h'$ with
+    $h' = \left\{\ell_x\rightarrow 1\right\}$. Then,
+    $s'(\loc(x,s')) = s'(s'(x)) = s'(\rho(x)) = s'(\ell_x) =
+    h'(\ell_x) = 1 \not\in\Locs$, so $\loc(\mathtt{*}x,s')$ is undefined.
+  \end{itemize}
 \end{example}
 
 %\begin{definition}[Read]
