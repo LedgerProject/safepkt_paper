@@ -102,10 +102,14 @@
   Let $x$ be a variable, $m$ be a lifetime and
   $s = \rho\star h$ be a store with
   $\rho = \left\{x\rightarrow^m\ell_x\right\}$
-  and $h = \left\{\ell_x\rightarrow^m\ell,\ \ell\rightarrow^m 1\right\}$.
+  and $h = \left\{\ell_x\rightarrow\ell,\ \ell\rightarrow 1\right\}$.
   Then we have
   \[\loc(\mathtt{*}x,s) = s(\loc(x,s)) = s(s(x)) = s(\rho(x))
   = s(\ell_x) = h(\ell_x) = \ell\;.\]
+  Now for $s' = \rho\star h'$ with
+  $h' = \left\{\ell_x\rightarrow 1\right\}$ we have
+  $\loc(\mathtt{*}x,s') = s'(\loc(x,s')) = s'(s'(x)) = s'(\rho(x))
+  = s'(\ell_x) = h'(\ell_x) = 1$.
 \end{example}
 
 %\begin{definition}[Read]
