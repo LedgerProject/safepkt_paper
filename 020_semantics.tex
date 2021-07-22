@@ -90,7 +90,7 @@
   Given $L\subseteq\Locs$, we define $(\rho\star h)|_{-L}=\rho\star(h|_{-L})$.
 \end{definition}
 
-\begin{definition}[Locate]
+\begin{definition}[Locate]\label{def:locate}
   The partial function $\loc(\mathsf{w},s)$ determines the location that holds
   the value of the leftvalue $\mathsf{w}$ in $s\in\mathbb{S}$, as follows:
   \begin{align*}
@@ -99,6 +99,13 @@
   \end{align*}
 \end{definition}
 
+\noindent
+Note that $\loc$ is a partial function since the second case of
+Def.~\ref{def:locate} is undefined when
+$\loc(\mathsf{w},s)\not\in\Locs$. In the following, when $\loc$ is undefined, the
+semantics will be stuck.
+
+  
 \begin{example}
   Let $x$ be a variable, $m$ be a lifetime and
   $s = \rho\star h$ be a store with
