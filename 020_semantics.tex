@@ -21,11 +21,7 @@
   \begin{align*}
     \mathsf{t} ::= &\ \mathsf{w}=\mathsf{e} & \text{assignment}\\
     | &\ \mathtt{let\ mut}\ x=\mathsf{e} & \text{declaration, with $x\in\Vars$}\\
-    | &\ \mathsf{b} & \text{block}
-  \end{align*}
-  and
-  \begin{align*}
-    \mathsf{b} ::= &\ \{\mathsf{t_1};\ldots;\mathsf{t_n}\}^l & \text{with $n\ge 0$ and $l\in\Lifetimes$}
+    | &\ \{\mathsf{t_1};\ldots;\mathsf{t_n}\}^l & \text{block, with $n\ge 0$ and $l\in\Lifetimes$}
   \end{align*}
 \end{definition}
 
@@ -188,27 +184,25 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
   \]
 \end{definition}
 
-\begin{definition}[Semantics of assignment]\label{def:semantics_assigmment}
+\begin{definition}[Semantics of terms]\label{def:semantics_terms}
   Given $s=\rho\star h$ and $m\in\Lifetimes$, we define
-  \[
-  \denl[\mathsf{w}=\mathsf{e}]{m}{s}=\begin{cases}
-  \langle\rho,h''[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ has move semantics}\\
-  \langle\rho,h''[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}
-  \end{cases}
-  \]
-  where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$, $\ell=\loc(\mathsf{w},\langle\rho,h'\rangle)$ and
-  $h''=\drop(\{\ell\},h')$.
-\end{definition}
-
-\begin{definition}[Semantics of declaration]\label{def:semantics_declaration}
-  Given $s=\rho\star h$ and $m\in\Lifetimes$, we define
-  \[
-  \denl[\mathtt{let\ mut}\ x=\mathsf{e}]{m}{s}=\begin{cases}
-  \langle\rho[x\to^m\ell],h'[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ has move semantics}\\
-  \langle\rho[x\to^m\ell],h'[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}
-  \end{cases}
-  \]
-  where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$ and $\ell$ is fresh.
+  \begin{align*}
+    \denl[\mathsf{w}=\mathsf{e}]{m}{s}&=
+    \begin{cases}
+      \langle\rho,h''[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ has move semantics}\\
+      \langle\rho,h''[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}
+    \end{cases}\\
+    &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$, $\ell=\loc(\mathsf{w},\langle\rho,h'\rangle)$ and
+      $h''=\drop(\{\ell\},h')$}\\
+    \denl[\mathtt{let\ mut}\ x=\mathsf{e}]{m}{s}&=
+    \begin{cases}
+      \langle\rho[x\to^m\ell],h'[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ has move semantics}\\
+      \langle\rho[x\to^m\ell],h'[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}
+    \end{cases}\\
+    &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$ and $\ell$ is fresh}\\
+    \denl[\{\mathsf{t_1};\ldots;\mathsf{t_n}\}^l]{m}{s}&=\langle\rho,\drop(\{\ell\mid x\to^l\ell\in\rho'\},h')\rangle\\
+    &\text{where $\langle\rho',h'\rangle=\denl[\mathsf{t_n}]{l}{\denl[\mathsf{t_{n-1}}]{l}{\cdots\denl[\mathsf{t_1}]{l}{s}}}$.}
+  \end{align*}
 \end{definition}
 
 \begin{example}
