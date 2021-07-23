@@ -31,9 +31,9 @@
     \{
       \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
       \{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
-      \mathtt{*}y = \mathtt{box}\ 1\}^m;\
+      \mathtt{*}y = \mathtt{box}\ 1\}^l;\
       \mathtt{let\ mut}\ z = x
-    \}^l
+    \}^m
   \]
 \end{example}
 
@@ -211,16 +211,72 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     \{
       \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
       \{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
-      \mathtt{*}y = \mathtt{box}\ 1\}^m;\
+      \mathtt{*}y = \mathtt{box}\ 1\}^l;\
       \mathtt{let\ mut}\ z = x
-    \}^l
+    \}^m
   \]
-  Let $\rho=\left\{x\rightarrow^l\ell_x,
-  y\rightarrow^m\ell_y,
-  z\rightarrow^l\ell_z\right\}$.
-  Let $h=\emptyset$ be the heap before execution of the first statement.
-  % After execution of the first statement, we have $\loc(x,s) = \ell_1$.
-  % After execution of the inner block, we have $\loc(x,s) = \loc(y,s) = \ell_2$
-  % and after execution of the final statement we have
-  % $\loc(x,s) = \loc(y,s) = \loc(z,s) = \ell_2$.
+  \begin{itemize}
+    \item Let $s_0=\emptyset \star \emptyset$.
+    We have $\den[0]{s_0} = \langle 0,\emptyset\rangle$, hence
+    $\den[\mathtt{box}\ 0]{s_0} =
+    \langle\ell,\{\ell\Rightarrow 0\}\rangle$ where $\ell$ is fresh.
+    %
+    Consequently, we have
+    $\denl[\mathtt{let\ mut}\ x = \mathtt{box}\ 0]{m}{s_0} =
+    \langle \rho_1,\ h_1\rangle$ where
+    \[\rho_1=\{x\to^m\ell_x\} \qquad
+    h_1 = \{\ell_x\Rightarrow \ell,\ \ell\Rightarrow 0\}\]
+    and $\ell_x$ is fresh.
+    %
+    \item Let $s_1 = \rho_1 \star h_1$.
+    Then, we have $\den[\mathtt{mut}\borrow x]{s_1} =
+    \langle\loc(x,s_1),h_1\rangle = \langle\ell_x, h_1\rangle$.
+    Therefore, we have
+    $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{l}{s_1} =
+    \langle \rho_2,\ h_2\rangle$
+    where
+    \begin{align*}
+      \rho_2 & = \rho_1[y\to^l\ell_y] = \{y\to^l\ell_y,\ x\to^m\ell_x\}\\
+      h_2 & = h_1[\ell_y\Rightarrow \ell_x] =
+      \{\ell_y\Rightarrow \ell_x,\ \ell_x\Rightarrow \ell,\ \ell\Rightarrow 0\}
+    \end{align*}
+    and $\ell_y$ is fresh.
+    %
+    \item Let $s_2 = \rho_2 \star h_2$.
+    We have $\den[1]{s_2} = \langle 1,h_2\rangle$, hence
+    $\den[\mathtt{box}\ 1]{s_2} =
+    \langle\ell',h_2[\ell'\Rightarrow 1]\rangle$ where $\ell'$ is fresh.
+    %
+    If we let $s'_2=\langle\rho_2,h_2[\ell'\Rightarrow 1]\rangle$,
+    we have $\loc(\mathtt{*}y,s'_2) = s'_2(\loc(y,s'_2)) =
+    s'_2(s'_2(y)) = s'_2(\rho_2(y)) = s'_2(\ell_y) = h_2[\ell'\Rightarrow 1](\ell_y)
+    = \ell_x$. Moreover, $h^{''}_2=\drop(\{\ell_x\},h_2[\ell'\Rightarrow 1]) =
+    \{\ell_y\Rightarrow \ell_x,\ell'\Rightarrow 1\}$. Consequently,
+    $\denl[\mathtt{*}y = \mathtt{box}\ 1]{l}{s_2} =
+    \langle\rho_3,h_3\rangle$ where
+    \[\rho_3 = \rho_2
+    \text{ and }
+    h_3 = \{\ell_y\Rightarrow \ell_x,\ell_x\Rightarrow\ell',
+    \ell'\Rightarrow 1\}\]
+    %
+    \item Let us evaluate
+    $\denl[\{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+    \mathtt{*}y = \mathtt{box}\ 1\}^l]{m}{s_1}$. Above, we have
+    computed $\denl[\mathtt{*}y = \mathtt{box}\ 1]{l}{
+    \denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{l}{s_1}} =
+    \langle\rho_3,h_3\rangle$. Moreover,
+    $\drop(\{\ell\mid x\to^l\ell\in\rho_3\},h_3) = \drop(\{\ell_y\},h_3) =
+    \emptyset$. Consequently,
+    $\denl[\{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+    \mathtt{*}y = \mathtt{box}\ 1\}^l]{m}{s_1} =
+    \langle \rho_4,h_4\rangle$ where
+    \[\rho_4 = \rho_1 \text{ and } h_4 = \emptyset\]
+    %
+    \item Let $s_4 = \rho_4 \star h_4$. Then,
+    $\den[x]{s_4} =
+    \langle s_4(\loc(x,s_4)), {h_4}|_{-\loc(x,s_4)}\rangle$
+    with $\loc(x,s_4)=\ell_x$ and $s_4(\loc(x,s_4)) = s_4(\ell_x)
+    = h_4(\ell_x)$ is undefined. So,
+    $\denl[\mathtt{let\ mut}\ z = x]{m}{s_4}$ is undefined.
+  \end{itemize}
 \end{example}
