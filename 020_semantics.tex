@@ -189,15 +189,15 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
   \begin{align*}
     \denl[\mathsf{w}=\mathsf{e}]{m}{s}&=
     \begin{cases}
-      \langle\rho,h''[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ has move semantics}\\
-      \langle\rho,h''[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}
+      \langle\rho,h''[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ is a box}\\
+      \langle\rho,h''[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ is not a box}
     \end{cases}\\
     &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$, $\ell=\loc(\mathsf{w},\langle\rho,h'\rangle)$ and
       $h''=\drop(\{\ell\},h')$}\\
     \denl[\mathtt{let\ mut}\ x=\mathsf{e}]{m}{s}&=
     \begin{cases}
-      \langle\rho[x\to^m\ell],h'[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ has move semantics}\\
-      \langle\rho[x\to^m\ell],h'[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ has copy semantics}
+      \langle\rho[x\to^m\ell],h'[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ is a box}\\
+      \langle\rho[x\to^m\ell],h'[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ is not a box}
     \end{cases}\\
     &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$ and $\ell$ is fresh}\\
     \denl[\{\mathsf{t_1};\ldots;\mathsf{t_n}\}^l]{m}{s}&=\langle\rho,\drop(\{\ell\mid x\to^l\ell\in\rho'\},h')\rangle\\
@@ -237,8 +237,8 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     where
     \begin{align*}
       \rho_2 & = \rho_1[y\to^l\ell_y] = \{y\to^l\ell_y,\ x\to^m\ell_x\}\\
-      h_2 & = h_1[\ell_y\Rightarrow \ell_x] =
-      \{\ell_y\Rightarrow \ell_x,\ \ell_x\Rightarrow \ell,\ \ell\Rightarrow 0\}
+      h_2 & = h_1[\ell_y\to \ell_x] =
+      \{\ell_y\to \ell_x,\ \ell_x\Rightarrow \ell,\ \ell\Rightarrow 0\}
     \end{align*}
     and $\ell_y$ is fresh.
     %
@@ -251,12 +251,12 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     we have $\loc(\mathtt{*}y,s'_2) = s'_2(\loc(y,s'_2)) =
     s'_2(s'_2(y)) = s'_2(\rho_2(y)) = s'_2(\ell_y) = h_2[\ell'\Rightarrow 1](\ell_y)
     = \ell_x$. Moreover, $h^{''}_2=\drop(\{\ell_x\},h_2[\ell'\Rightarrow 1]) =
-    \{\ell_y\Rightarrow \ell_x,\ell'\Rightarrow 1\}$. Consequently,
+    \{\ell_y\to \ell_x,\ell'\Rightarrow 1\}$. Consequently,
     $\denl[\mathtt{*}y = \mathtt{box}\ 1]{l}{s_2} =
     \langle\rho_3,h_3\rangle$ where
     \[\rho_3 = \rho_2
     \text{ and }
-    h_3 = \{\ell_y\Rightarrow \ell_x,\ell_x\Rightarrow\ell',
+    h_3 = \{\ell_y\to\ell_x,\ell_x\Rightarrow\ell',
     \ell'\Rightarrow 1\}\]
     %
     \item Let us evaluate
@@ -266,17 +266,17 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     \denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{l}{s_1}} =
     \langle\rho_3,h_3\rangle$. Moreover,
     $\drop(\{\ell\mid x\to^l\ell\in\rho_3\},h_3) = \drop(\{\ell_y\},h_3) =
-    \emptyset$. Consequently,
+    \{\ell_x\Rightarrow\ell',\ell'\Rightarrow 1\}$. Consequently,
     $\denl[\{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
     \mathtt{*}y = \mathtt{box}\ 1\}^l]{m}{s_1} =
     \langle \rho_4,h_4\rangle$ where
-    \[\rho_4 = \rho_1 \text{ and } h_4 = \emptyset\]
+    \[\rho_4 = \rho_1 \text{ and } h_4 = \{\ell_x\Rightarrow\ell',\ell'\Rightarrow 1\}\]
     %
     \item Let $s_4 = \rho_4 \star h_4$. Then,
     $\den[x]{s_4} =
     \langle s_4(\loc(x,s_4)), {h_4}|_{-\loc(x,s_4)}\rangle$
     with $\loc(x,s_4)=\ell_x$ and $s_4(\loc(x,s_4)) = s_4(\ell_x)
-    = h_4(\ell_x)$ is undefined. So,
-    $\denl[\mathtt{let\ mut}\ z = x]{m}{s_4}$ is undefined.
+    = h_4(\ell_x)=\ell'$. So,
+    $\denl[\mathtt{let\ mut}\ z = x]{m}{s_4}$
   \end{itemize}
 \end{example}
