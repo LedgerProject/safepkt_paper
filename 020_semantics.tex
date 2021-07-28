@@ -36,6 +36,7 @@
       \mathtt{let\ mut}\ z = x
     \}^m
   \]
+  \qed
 \end{example}
 
 \begin{definition}
@@ -120,6 +121,7 @@ semantics will be stuck.
     $h' = \left\{\ell_x\rightarrow 1\right\}$. Then,
     $s'(\loc(x,s')) = s'(s'(x)) = s'(\rho(x)) = s'(\ell_x) =
     h'(\ell_x) = 1 \not\in\Locs$, so $\loc(\mathtt{*}x,s')$ is undefined.
+    \qed
   \end{itemize}
 \end{example}
 
@@ -200,7 +202,14 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
       \langle\rho[x\to^m\ell],h'[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ is a box}\\
       \langle\rho[x\to^m\ell],h'[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ is not a box}
     \end{cases}\\
-    &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$ and $\ell$ is fresh}\\
+    &\text{where $\mathsf{e}\neq \mathtt{mut}\borrow\mathsf{w}$,
+    $\den[\mathsf{e}]{s}=\langle v,h'\rangle$ and $\ell$ is fresh}\\
+    \denl[\mathtt{let\ mut}\ x=\mathtt{mut}\borrow\mathsf{w}]{m}{s}&=
+    \begin{cases}
+      \mathit{undefined} & \text{if $\ell_{\mathsf{w}} \in \ran(h)$}\\
+      \langle\rho[x\to^m\ell],h[\ell\to \ell_{\mathsf{w}}]\rangle & \text{otherwise}
+    \end{cases}\\
+    &\text{where $\ell_{\mathsf{w}}=\loc(\mathsf{w},s)$ and $\ell$ is fresh}\\
     \denl[\{\mathsf{t_1};\ldots;\mathsf{t_n}\}^l]{m}{s}&=\langle\rho,\drop(\{\ell\mid x\to^l\ell\in\rho'\},h')\rangle\\
     &\text{where $\langle\rho',h'\rangle=\denl[\mathsf{t_n}]{l}{\denl[\mathsf{t_{n-1}}]{l}{\cdots\denl[\mathsf{t_1}]{l}{s}}}$.}
   \end{align*}
@@ -230,8 +239,10 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     and $\ell_x$ is fresh.
     %
     \item Let $s_1 = \rho_1 \star h_1$.
-    Then, we have $\den[\mathtt{mut}\borrow x]{s_1} =
-    \langle\loc(x,s_1),h_1\rangle = \langle\ell_x, h_1\rangle$.
+    Then, we have
+    % $\den[\mathtt{mut}\borrow x]{s_1} =
+    % \langle\loc(x,s_1),h_1\rangle = \langle\ell_x, h_1\rangle$.
+    $\loc(x,s_1) = \ell_x \not\in\ran(h_1)$.
     Therefore, we have
     $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{l}{s_1} =
     \langle \rho_2,\ h_2\rangle$
@@ -286,10 +297,7 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
       h_5 & = \{\ell_z\Rightarrow \ell',\ \ell'\Rightarrow 1\}
     \end{align*}
   \end{itemize}
-  % Finally, we have
-  % \begin{align*}
-  %   \denl[P_1]{m}{s_0} & =
-  % \end{align*}
+  \qed
 \end{example}
 
 \begin{example}
@@ -313,9 +321,9 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     and $\ell_x$ is fresh.
     %
     \item Let $s_1 = \rho_1 \star h_1$.
-    Then, we have $\den[\mathtt{mut}\borrow x]{s_1} =
-    \langle\loc(x,s_1),h_1\rangle = \langle\ell_x, h_1\rangle$.
-    Therefore,
+    Then, we have
+    $\loc(x,s_1) = \ell_x \not\in\ran(h_1)$.
+    Therefore, we have
     $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{m}{s_1} =
     \langle \rho_2,\ h_2\rangle$
     where
@@ -327,19 +335,10 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     and $\ell_y$ is fresh.
     %
     \item Let $s_2 = \rho_2 \star h_2$.
-    Then, we have $\den[\mathtt{mut}\borrow x]{s_2} =
-    \langle\loc(x,s_2),h_2\rangle = \langle\ell_x, h_2\rangle$.
-    Therefore,
+    Then, we have $\loc(x,s_2) = \ell_x \in\ran(h_2)$.
+    Therefore, we have
     $\denl[\mathtt{let\ mut}\ z = \mathtt{mut}\borrow x]{m}{s_2} =
-    \langle \rho_3,\ h_3\rangle$
-    where
-    \begin{align*}
-      \rho_3 & = \rho_2[z\to^m\ell_z] =
-      \{z\to^m\ell_z,\ y\to^m\ell_y,\ x\to^m\ell_x\}\\
-      h_3 & = h_1[\ell_y\to \ell_x] =
-      \{\ell_z\to \ell_x,\ \ell_y\to \ell_x,\ \ell_x\to 13\}
-    \end{align*}
-    and $\ell_z$ is fresh.
+    \mathit{undefined}$.
   \end{itemize}
   Now, consider the following valid program $P'_2$ which is a variant
   of $P_2$ with immutable references:
@@ -350,8 +349,13 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
       \mathtt{let\ mut}\ z = \borrow x
     \}^m
   \]
-  Then, starting from $s_0$ as above, we get the same store $\rho_3\star h_3$
-  at the end.
+  Then, starting from $s_0$ as above, we get the store $\rho\star h$
+  at the end with
+  \begin{align*}
+      \rho & = \{z\to^m\ell_z,\ y\to^m\ell_y,\ x\to^m\ell_x\}\\
+      h & = \{\ell_z\to \ell_x,\ \ell_y\to \ell_x,\ \ell_x\to 13\}
+    \end{align*}
+    \qed
 \end{example}
 
 \begin{example}
@@ -375,9 +379,9 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     and $\ell_x$ is fresh.
     %
     \item Let $s_1 = \rho_1 \star h_1$.
-    Then, we have $\den[\mathtt{mut}\borrow x]{s_1} =
-    \langle\loc(x,s_1),h_1\rangle = \langle\ell_x, h_1\rangle$.
-    Therefore,
+    Then, we have
+    $\loc(x,s_1) = \ell_x \not\in\ran(h_1)$.
+    Therefore, we have
     $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{m}{s_1} =
     \langle \rho_2,\ h_2\rangle$
     where
@@ -401,4 +405,5 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     h_3 = \{\ell_y\to \ell_x,\ \ell_x\to 1\}
     \]
   \end{itemize}
+  \qed
 \end{example}
