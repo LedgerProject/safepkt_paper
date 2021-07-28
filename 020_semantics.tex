@@ -26,7 +26,8 @@
 \end{definition}
 
 \begin{example}\label{ex:program}
-  The following valid program consists of a block that contains an inner block.
+  The following valid program $P_1$ consists of a block that contains
+  an inner block.
   \[
     \{
       \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
@@ -206,7 +207,7 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
 \end{definition}
 
 \begin{example}
-  Consider again the program of Ex.~\ref{ex:program}:
+  Consider again the program $P_1$ of Ex.~\ref{ex:program}:
   \[
     \{
       \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
@@ -285,10 +286,16 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
       h_5 & = \{\ell_z\Rightarrow \ell',\ \ell'\Rightarrow 1\}
     \end{align*}
   \end{itemize}
+  % Finally, we have
+  % \begin{align*}
+  %   \denl[P_1]{m}{s_0} & =
+  % \end{align*}
 \end{example}
 
 \begin{example}
-  Let us consider the following program:
+  Consider the following illegal program $P_2$
+  that attempts to create two mutable references
+  to the same piece of data in the same scope:
   \[
     \{
       \mathtt{let\ mut}\ x = 13;\
@@ -333,5 +340,65 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
       \{\ell_z\to \ell_x,\ \ell_y\to \ell_x,\ \ell_x\to 13\}
     \end{align*}
     and $\ell_z$ is fresh.
+  \end{itemize}
+  Now, consider the following valid program $P'_2$ which is a variant
+  of $P_2$ with immutable references:
+  \[
+    \{
+      \mathtt{let\ mut}\ x = 13;\
+      \mathtt{let\ mut}\ y = \borrow x;\
+      \mathtt{let\ mut}\ z = \borrow x
+    \}^m
+  \]
+  Then, starting from $s_0$ as above, we get the same store $\rho_3\star h_3$
+  at the end.
+\end{example}
+
+\begin{example}
+  Consider the following illegal program $P_3$
+  where variable $x$ is assigned to $1$ while
+  borrowed to $y$:
+  \[
+    \{
+      \mathtt{let\ mut}\ x = 0;\
+      \mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+      x = 1
+    \}^m
+  \]
+  \begin{itemize}
+    \item Let $s_0=\emptyset \star \emptyset$.
+    We have $\den[0]{s_0} = \langle 0,\emptyset\rangle$, hence
+    $\denl[\mathtt{let\ mut}\ x = 0]{m}{s_0} =
+    \langle \rho_1,\ h_1\rangle$ where
+    \[\rho_1=\{x\to^m\ell_x\} \qquad
+    h_1 = \{\ell_x\to 0\}\]
+    and $\ell_x$ is fresh.
+    %
+    \item Let $s_1 = \rho_1 \star h_1$.
+    Then, we have $\den[\mathtt{mut}\borrow x]{s_1} =
+    \langle\loc(x,s_1),h_1\rangle = \langle\ell_x, h_1\rangle$.
+    Therefore,
+    $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{m}{s_1} =
+    \langle \rho_2,\ h_2\rangle$
+    where
+    \begin{align*}
+      \rho_2 & = \rho_1[y\to^m\ell_y] = \{y\to^m\ell_y,\ x\to^m\ell_x\}\\
+      h_2 & = h_1[\ell_y\to \ell_x] =
+      \{\ell_y\to \ell_x,\ \ell_x\to 0\}
+    \end{align*}
+    and $\ell_y$ is fresh.
+    %
+    \item Let $s_2 = \rho_2 \star h_2$.
+    Then, we have $\den[1]{s_2} = \langle 1,h_2\rangle$.
+    Moreover,
+    $\loc(x,s_2) = \ell_x$ and
+    $\drop(\{\ell_x\}, h_2) = \{\ell_y\to \ell_x\}$.
+    Therefore,
+    $\denl[x = 1]{m}{s_2} =
+    \langle \rho_3,\ h_3\rangle$
+    where
+    \[\rho_3 = \rho_2 \qquad
+    h_3 = \{\ell_y\to \ell_x,\ \ell_x\to 1\}
+    \]
   \end{itemize}
 \end{example}
