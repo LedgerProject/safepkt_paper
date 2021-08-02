@@ -25,6 +25,14 @@
   \end{align*}
 \end{definition}
 
+\begin{definition}[Static types]
+  We assume that expressions in a program have a static type, written $\type(e)$, that allows one
+  to identify expressions that contain a box or a mutable borrow. We will write that
+  ``$\type(e)$ is a box'', and that ``$\type(e)$ is a $\texttt{mut}\borrow$'' for that, respectively.
+  Expressions whose type is a box or a $\texttt{mut}\borrow$ are said to have move semantics.
+  All other expressions have copy semantics.
+\end{definition}
+
 \begin{example}\label{ex:program}
   The following valid program $P_1$ consists of a block that contains
   an inner block.
@@ -50,43 +58,59 @@
   % and existing in two versions, owned and not owned:
   \[
   \mathbb{E}=\{x\to^m\ell\mid x\in\Vars,\ m\in\Lifetimes\text{ and }\ \ell\in\Locs\}
-  %\underbrace{\left\{x\Rightarrow^m\ell\left|\begin{array}{l}
-  %x\in\Vars,\ m\in\Lifetimes\\
-  %\text{and }\ell\in\Locs
-  %\end{array}\right.\right\}}_{\text{owned bindings}}
-  %\cup
-  %\underbrace{\left\{x\rightarrow^m\ell\left|\begin{array}{l}
-  %x\in\Vars,\ m\in\Lifetimes\\
-  %\text{and }\ell\in\Locs
-  %\end{array}\right.\right\}}_{\text{not owned bindings}}
   \]
   with the constraint that, for each $\rho\in\mathbb{E}$, there is at most a binding for each
-  given variable $x$. % (owned or not owned).
-  Moreover, we write $\rho(x)=\ell$ and
-  $\rho^+(x)=\ell^m$ when
-  % either $x\Rightarrow^m\ell\in\rho$ or
+  given variable $x$. Moreover, we write $\rho(x)=\ell$ when
   $x\rightarrow^m\ell\in\rho$, for some $m$.
 
   The set $\mathbb{H}$ of \emph{heaps} contains bindings from locations to values,
-  existing in two versions, owned and not owned:
+  existing in three versions: owned, not owned and mutable borrows:
   \[
   \mathbb{H}=
-  \underbrace{\{\ell\Rightarrow v\mid\ell\in\Locs\text{ and }v\in\mathbb{V}\}}_{\text{owned bindings}}
+  \underbrace{\{\ell\Rightarrow\ell'\mid\ell,\ell'\in\Locs\}}_{\text{owned bindings}}
   \cup
   \underbrace{\{\ell\rightarrow v\mid\ell\in\Locs\text{ and }v\in\mathbb{V}\}}_{\text{not owned bindings}}
+  \cup
+  \underbrace{\{\ell\leadsto\ell'\mid\ell,\ell'\in\Locs\}}_{\text{mutable borrows}}
   \]
   with the constraint that, for each $h\in\mathbb{H}$, there is at most a binding for each
-  location $\ell$ (owned or not owned). We write $h(\ell)=v$ meaning that
-  either $\ell\Rightarrow v\in h$ or $\ell\rightarrow v\in h$. Given $L\subseteq\Locs$,
+  location $\ell$ (owned, not owned or mutable borrow). We write $h(\ell)=v$ meaning that
+  either $\ell\Rightarrow v\in h$ or $\ell\rightarrow v\in h$ or $\ell\leadsto v\in h$.
+  Given $L\subseteq\Locs$,
   we write $h|_{-L}$ meaning $h$ where the bindings for the locations in $L$
   have been removed (if any).
 
   The set of \emph{stores} $\mathbb{S}$ is the set of pairs
   $\mathbb{E}\times\mathbb{H}$, whose elements are written as $\rho\star h$.
-  Given $s=\rho\star h\in\mathbb{S}$, we define $s(x)=\rho(x)$
-  and $s^+(x)=\rho^+(x)$ for all
-  $x\in\Vars$ and $s(\ell)=h(\ell)$ for all $\ell\in\Locs$.
+  Given $s=\rho\star h\in\mathbb{S}$, we define $s(x)=\rho(x)$ for all
+  $x\in\Vars$, and $s(\ell)=h(\ell)$ for all $\ell\in\Locs$.
   Given $L\subseteq\Locs$, we define $(\rho\star h)|_{-L}=\rho\star(h|_{-L})$.
+\end{definition}
+
+\noindent
+We observe that the above definition of $\mathbb{H}$ allows one to represent mutable borrows
+through the $\leadsto$ bindings, but also normal (that is, non-mutable) borrows, that are
+just a special case of not owned bindings, hence through the $\to$ bindings.
+
+\begin{definition}[Borrowed locations]
+  Let $h\in\mathbb{H}$ and $l'\in\Locs$.
+  Location $l$ is \emph{non-mutably borrowed} in $h$
+  if there exists $\ell'\in\Locs$ such that $\ell'\to\ell$.
+  Location $l$ is \emph{mutably borrowed} in $h$
+  if there exists $\ell'\in\Locs$ such that $\ell'\leadsto\ell$.
+  Location $l$ is \emph{borrowed} in $h$
+  if it is mutably or non-mutably borrowed in $h$.
+\end{definition}
+
+\begin{definition}[Consistent heaps]
+  Given $h\in\mathbb{H}$, it is \emph{consistent} when
+  \begin{enumerate}
+  \item no location is at the same time mutably and not mutably borrowed in $h$
+  \item no location is mutably borrowed more than once, that is, for every
+    $\ell\in\Locs$ there are not $\ell'\in\Locs$ and $\ell''\in\Locs$ such that
+    $\ell'\not=\ell''$, $\ell'\leadsto\ell\in h$ and $\ell''\leadsto\ell\in h$.
+  \end{enumerate}
+  We say that a store is consistent when its heap is consistent.
 \end{definition}
 
 \begin{definition}[Locate]\label{def:locate}
@@ -107,7 +131,6 @@ Def.~\ref{def:locate} is undefined when
 $s(\loc(\mathsf{w},s))\not\in\Locs$. In the following, when $\loc$ is undefined, the
 semantics will be stuck.
 
-
 \begin{example}
   Let $\rho = \left\{x\rightarrow^m\ell_x\right\}$.
   \begin{itemize}
@@ -125,22 +148,14 @@ semantics will be stuck.
   \end{itemize}
 \end{example}
 
-%\begin{definition}[Read]
-%  The partial function $\readlv(s,\mathsf{w})$ retrieves the value of
-%  the leftvalue $\mathsf{w}$ in $s\in\mathbb{S}$, as follows:
-%  \[
-%  \readlv(s,\mathsf{w})=s(\loc(s,\mathsf{w}))
-%  \]
-%\end{definition}
-
 The evaluation of a leftvalue yields the value of the leftvalue and a potentially updated heap:
 
 \begin{definition}[Semantics of leftvalues]\label{def:semantics_leftvalues}
   Given $s=\rho\star h$, we define
   \[
   \den[\mathsf{w}]{s}=\begin{cases}
-  \langle s(\loc(\mathsf{w},s)), h\rangle & \text{if the static type of $\mathsf{w}$ has copy semantics}\\
-  \langle s(\loc(\mathsf{w},s)), h|_{-\loc(\mathsf{w},s)}\rangle & \text{if the static type of $\mathsf{w}$ has move semantics}
+  \langle s(\loc(\mathsf{w},s)), h\rangle & \text{if $\type(\mathsf{w})$ has copy semantics}\\
+  \langle s(\loc(\mathsf{w},s)), h|_{-\loc(\mathsf{w},s)}\rangle & \text{if $\type(\mathsf{w})$ has move semantics}
   \end{cases}
   \]
 \end{definition}
@@ -157,7 +172,12 @@ The evaluation of an expression yields the value of the expression and a potenti
     \den[i]{s}&=\langle i,h\rangle\\
     \den[\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\\
     \den[\mathtt{mut}\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\\
-    \den[\mathtt{box}\ \mathsf{e}]{s}&=\langle\ell,h'\cup\{\ell\Rightarrow v\}\rangle
+    \den[\mathtt{box}\ \mathsf{e}]{s}&=
+    \begin{cases}
+      \langle\ell,h'\cup\{\ell\Rightarrow v\}\rangle & \text{if $\type(e)$ is a box}\\
+      \langle\ell,h'\cup\{\ell\leadsto v\}\rangle & \text{otherwise, if $\type(e)$ is $\mathtt{mut}\borrow$}\\
+      \langle\ell,h'\cup\{\ell\to v\}\rangle & \text{otherwise}
+    \end{cases}\\
     & \text{where $\den[\mathsf{e}]{s}=\langle v, h'\rangle$ and $\ell$ is fresh}
   \end{align*}
   For expressions that are leftvalues, see Def.~\ref{def:semantics_leftvalues}.
@@ -192,24 +212,24 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
   \begin{align*}
     \denl[\mathsf{w}=\mathsf{e}]{m}{s}&=
     \begin{cases}
-      \langle\rho,h''[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ is a box}\\
-      \langle\rho,h''[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ is not a box}
+      \text{undefined} & \text{if $\ell$ is borrowed in $h'$}\\
+      \langle\rho,h''[\ell\Rightarrow v]\rangle & \text{otherwise, if $\type(e)$ is a box}\\
+      \langle\rho,h''[\ell\leadsto v]\rangle & \text{otherwise, if $\type(e)$ is a $\mathtt{mut}\borrow$ and $h''[\ell\leadsto v]$ is consistent}\\
+      \langle\rho,h''[\ell\to v]\rangle & \text{otherwise, if $h''[\ell\to v]$ is consistent}\\
+      \text{undefined} & \text{otherwise}
     \end{cases}\\
     &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$, $\ell=\loc(\mathsf{w},\langle\rho,h'\rangle)$ and
       $h''=\drop(\{\ell\},h')$}\\
+    \mbox{}\\
     \denl[\mathtt{let\ mut}\ x=\mathsf{e}]{m}{s}&=
     \begin{cases}
-      \langle\rho[x\to^m\ell],h'[\ell\Rightarrow v]\rangle & \text{if the static type of $\mathsf{e}$ is a box}\\
-      \langle\rho[x\to^m\ell],h'[\ell\to v]\rangle & \text{if the static type of $\mathsf{e}$ is not a box}
+      \langle\rho[x\to^m\ell],h'[\ell\Rightarrow v]\rangle & \text{if $\type(e)$ is a box}\\
+      \langle\rho[x\to^m\ell],h'[\ell\leadsto v]\rangle & \text{otherwise, if $\type(e)$ is a $\mathtt{mut}\borrow$ and $h'[\ell\leadsto v]$ is consistent}\\
+      \langle\rho[x\to^m\ell],h'[\ell\to v]\rangle & \text{otherwise, if $h'[\ell\to v]$ is consistent}\\
+      \text{undefined} & \text{otherwise}
     \end{cases}\\
-    &\text{where $\mathsf{e}\neq \mathtt{mut}\borrow\mathsf{w}$,
-    $\den[\mathsf{e}]{s}=\langle v,h'\rangle$ and $\ell$ is fresh}\\
-    \denl[\mathtt{let\ mut}\ x=\mathtt{mut}\borrow\mathsf{w}]{m}{s}&=
-    \begin{cases}
-      \mathit{undefined} & \text{if $\ell_{\mathsf{w}} \in \ran(h)$}\\
-      \langle\rho[x\to^m\ell],h[\ell\to \ell_{\mathsf{w}}]\rangle & \text{otherwise}
-    \end{cases}\\
-    &\text{where $\ell_{\mathsf{w}}=\loc(\mathsf{w},s)$ and $\ell$ is fresh}\\
+    &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$ and $\ell$ is fresh}\\
+    \mbox{}\\
     \denl[\{\mathsf{t_1};\ldots;\mathsf{t_n}\}^l]{m}{s}&=\langle\rho,\drop(\{\ell\mid x\to^l\ell\in\rho'\},h')\rangle\\
     &\text{where $\langle\rho',h'\rangle=\denl[\mathsf{t_n}]{l}{\denl[\mathsf{t_{n-1}}]{l}{\cdots\denl[\mathsf{t_1}]{l}{s}}}$.}
   \end{align*}
