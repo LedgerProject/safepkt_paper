@@ -93,19 +93,19 @@ through the $\leadsto$ bindings, but also normal (that is, non-mutable) borrows,
 just a special case of not owned bindings, hence through the $\to$ bindings.
 
 \begin{definition}[Borrowed locations]
-  Let $h\in\mathbb{H}$ and $l'\in\Locs$.
-  Location $l$ is \emph{non-mutably borrowed} in $h$
+  Let $h\in\mathbb{H}$. % and $l'\in\Locs$.
+  A location $\ell$ is \emph{non-mutably borrowed} in $h$
   if there exists $\ell'\in\Locs$ such that $\ell'\to\ell$.
-  Location $l$ is \emph{mutably borrowed} in $h$
+  A location $\ell$ is \emph{mutably borrowed} in $h$
   if there exists $\ell'\in\Locs$ such that $\ell'\leadsto\ell$.
-  Location $l$ is \emph{borrowed} in $h$
+  A location $\ell$ is \emph{borrowed} in $h$
   if it is mutably or non-mutably borrowed in $h$.
 \end{definition}
 
 \begin{definition}[Consistent heaps]
   Given $h\in\mathbb{H}$, it is \emph{consistent} when
   \begin{enumerate}
-  \item no location is at the same time mutably and not mutably borrowed in $h$
+  \item no location is at the same time mutably and non-mutably borrowed in $h$
   \item no location is mutably borrowed more than once, that is, for every
     $\ell\in\Locs$ there are not $\ell'\in\Locs$ and $\ell''\in\Locs$ such that
     $\ell'\not=\ell''$, $\ell'\leadsto\ell\in h$ and $\ell''\leadsto\ell\in h$.
