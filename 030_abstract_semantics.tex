@@ -1,0 +1,28 @@
+\section{Abstract Semantics}\label{sec:abstract_semantics}
+
+\begin{definition}[Types]
+  The set of \emph{types} is defined as:
+  \begin{align*}
+    \mathsf{T} ::= &\ \borrow\mathsf{w} & \text{borrow}\\
+    | &\ \mathtt{mut}\borrow\mathsf{w} & \text{mutable borrow}\\
+    | &\ \mathtt{box}\ \mathsf{T} & \text{box}
+  \end{align*}
+  where $\mathsf{w}$ is a leftvalue.
+\end{definition}
+
+A concrete value (location or integer) is abstracted by an
+\emph{abstract value}.
+
+\begin{definition}[Abstract values]
+  The set $\mathbb{AV}$ of \emph{abstract values} is $\wp(\mathsf{T})$.
+\end{definition}
+
+An \emph{abstract store} maps variables into abstract values:
+
+\begin{definition}[Abstract stores]
+  The set $\mathbb{AS}$ of \emph{abstract stores} contains bindings
+  from variables to abstract values, decorated with a lifetime:
+  \[
+  \mathbb{AS}=\{x\to^m v\mid v\in\mathbb{AV}\text{ and }m\in\Lifetimes\}
+  \]
+\end{definition}

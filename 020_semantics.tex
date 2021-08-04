@@ -107,7 +107,7 @@ just a special case of not owned bindings, hence through the $\to$ bindings.
   \begin{enumerate}
   \item no location is at the same time mutably and non-mutably borrowed in $h$
   \item no location is mutably borrowed more than once, that is, for every
-    $\ell\in\Locs$ there are not $\ell'\in\Locs$ and $\ell''\in\Locs$ such that
+    $\ell\in\Locs$ there are no $\ell'\in\Locs$ and $\ell''\in\Locs$ such that
     $\ell'\not=\ell''$, $\ell'\leadsto\ell\in h$ and $\ell''\leadsto\ell\in h$.
   \end{enumerate}
   We say that a store is consistent when its heap is consistent.
