@@ -574,3 +574,73 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
   \end{itemize}
   \qed
 \end{example}
+
+\begin{example}\label{ex:program-reborrow-valid}
+  Consider the following valid program $P_6$:
+  \[
+    \{
+      \mathtt{let\ mut}\ x = 0;\
+      \{
+        \mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+        \{
+          \mathtt{let\ mut}\ z = \borrow*y;\
+        \}^l;\
+        *y = 1
+      \}^n
+    \}^m
+  \]
+  \begin{itemize}
+    \item Let $s_0=\emptyset \star \emptyset$.
+    We have $\den[0]{s_0} = \langle 0,\emptyset\rangle$, hence
+    $\denl[\mathtt{let\ mut}\ x = 0]{m}{s_0} =
+    \langle \rho_1,\ h_1\rangle$ where
+    \[\rho_1=\{x\to^m\ell_x\} \qquad
+    h_1 = \{\ell_x\to 0\}\]
+    and $\ell_x$ is fresh.
+    %
+    \item Let $s_1 = \rho_1 \star h_1$.
+    Then, we have $\loc(x,s_1) = \ell_x$, so
+    $\den[\mathtt{mut}\borrow x]{s_1} = \langle\ell_x, h_1\rangle$.
+    Therefore, we have
+    $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{n}{s_1} =
+    \langle \rho_2,\ h_2\rangle$
+    where
+    \begin{align*}
+      \rho_2 & = \rho_1[y\to^n\ell_y] = \{y\to^n\ell_y,\ x\to^m\ell_x\}\\
+      h_2 & = h_1[\ell_y\leadsto \ell_x] =
+      \{\ell_y\leadsto \ell_x,\ \ell_x\to 0\}
+    \end{align*}
+    and $\ell_y$ is fresh.
+    \item Let $s_2 = \rho_2 \star h_2$.
+    We have $\loc(*y,s_2) = s_2(\loc(y,s_2)) = s_2(\ell_y) = h_2(\ell_y) = \ell_x$,
+    so $\den[\borrow*y]{s_2} = \langle \ell_x,h_2\rangle$.
+    Moreover, $\type(\borrow*y)$ is not a box nor a $\mathtt{mut}\borrow$ and
+    $h_2[\ell_z\to \ell_x] =
+    \{\ell_z\to \ell_x,\ \ell_y\leadsto \ell_x,\ \ell_x\to 0\}$ is not consistent
+    because $\ell_x$ is both mutably and non-mutably borrowed.
+    Consequently, $\denl[\mathtt{let\ mut}\ z = \borrow*y]{l}{s_2}$
+    is undefined.
+  \end{itemize}
+  \qed
+\end{example}
+
+\begin{example}
+  Consider the following program $P'_6$ which is a variant of $P_6$:
+  \[
+  \{
+    \mathtt{let\ mut}\ x = 0;\
+    \{
+      \mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+        \{
+          \mathtt{let\ mut}\ z = \borrow*y;\
+          *y = 1
+        \}^l
+      \}^n
+    \}^m
+  \]
+  $P'_6$ is illegal because the immutable reborrow $\borrow *y$ in the inner
+  block prohibits the writing $*y = 1$ in this block. Starting from the
+  store $s_0=\emptyset\star\emptyset$, one gets the same result
+  as in Ex.~\ref{ex:program-reborrow-valid}.
+  \qed
+\end{example}
