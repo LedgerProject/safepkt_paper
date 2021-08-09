@@ -92,6 +92,11 @@ We observe that the above definition of $\mathbb{H}$ allows one to represent mut
 through the $\leadsto$ bindings, but also normal (that is, non-mutable) borrows, that are
 just a special case of not owned bindings, hence through the $\to$ bindings.
 
+\begin{definition}[Dangling locations]
+  Let $h\in\mathbb{H}$. A location $\ell$ is \emph{dangling} in $h$ if
+  and only if $h(\ell)$ is undefined.
+\end{definition}
+
 \begin{definition}[Borrowed locations]
   Let $h\in\mathbb{H}$. % and $l'\in\Locs$.
   A location $\ell$ is \emph{non-mutably borrowed} in $h$
@@ -102,16 +107,17 @@ just a special case of not owned bindings, hence through the $\to$ bindings.
   if it is mutably or non-mutably borrowed in $h$.
 \end{definition}
 
-\begin{definition}[Consistent heaps]
-  Given $h\in\mathbb{H}$, it is \emph{consistent} when
-  \begin{enumerate}
-  \item no location is at the same time mutably and non-mutably borrowed in $h$
-  \item no location is mutably borrowed more than once, that is, for every
-    $\ell\in\Locs$ there are no $\ell'\in\Locs$ and $\ell''\in\Locs$ such that
-    $\ell'\not=\ell''$, $\ell'\leadsto\ell\in h$ and $\ell''\leadsto\ell\in h$.
-  \end{enumerate}
-  We say that a store is consistent when its heap is consistent.
-\end{definition}
+%\begin{definition}[Consistent heaps]
+%  Given $h\in\mathbb{H}$, it is \emph{consistent} when
+  %\begin{enumerate}
+  %\item no location is at the same time mutably and non-mutably borrowed in $h$
+  %\item
+%  no location is mutably borrowed more than once, that is, for every
+%    $\ell\in\Locs$ there are no $\ell'\in\Locs$ and $\ell''\in\Locs$ such that
+%    $\ell'\not=\ell''$, $\ell'\leadsto\ell\in h$ and $\ell''\leadsto\ell\in h$.
+  %\end{enumerate}
+%  We say that a store is consistent when its heap is consistent.
+%\end{definition}
 
 \begin{definition}[Locate]\label{def:locate}
   The partial function $\loc(\mathsf{w},s)$ determines the location that holds
@@ -154,10 +160,12 @@ The evaluation of a leftvalue yields the value of the leftvalue and a potentiall
   Given $s=\rho\star h$, we define
   \[
   \den[\mathsf{w}]{s}=\begin{cases}
-  \langle s(\loc(\mathsf{w},s)), h\rangle & \text{if $\type(\mathsf{w})$ has copy semantics}\\
-  \langle s(\loc(\mathsf{w},s)), h|_{-\loc(\mathsf{w},s)}\rangle & \text{if $\type(\mathsf{w})$ has move semantics}
+  \text{undefined} & \text{if $v\in\Locs$ and $v$ is dangling in $h$}\\
+  \langle v, h\rangle & \text{otherwise, if $\type(\mathsf{w})$ has copy semantics}\\
+  \langle v, h|_{-\loc(\mathsf{w},s)}\rangle & \text{otherwise, if $\type(\mathsf{w})$ has move semantics}
   \end{cases}
   \]
+  where $v=s(\loc(\mathsf{w},s))$.
 \end{definition}
 
 \noindent
@@ -210,23 +218,37 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
 \begin{definition}[Semantics of terms]\label{def:semantics_terms}
   Given $s=\rho\star h$ and $m\in\Lifetimes$, we define
   \begin{align*}
-    \denl[\mathsf{w}=\mathsf{e}]{m}{s}&=
+    \denl[x=\mathsf{e}]{m}{s}&=
     \begin{cases}
       \text{undefined} & \text{if $\ell$ is borrowed in $h'$}\\
       \langle\rho,h''[\ell\Rightarrow v]\rangle & \text{otherwise, if $\type(\mathsf{e})$ is a box}\\
-      \langle\rho,h''[\ell\leadsto v]\rangle & \text{otherwise, if $\type(\mathsf{e})$ is a $\mathtt{mut}\borrow$ and $h''[\ell\leadsto v]$ is consistent}\\
-      \langle\rho,h''[\ell\to v]\rangle & \text{otherwise, if $h''[\ell\to v]$ is consistent}\\
-      \text{undefined} & \text{otherwise}
+      \langle\rho,h''[\ell\leadsto v]\rangle & \text{otherwise, if $\type(\mathsf{e})$ is a $\mathtt{mut}\borrow$}\\
+                                             & \text{and $v$ is not mutably borrowed in $h'$}\\
+      \text{undefined} & \text{otherwise, if $\type(\mathsf{e})$ is a $\mathtt{mut}\borrow$}\\
+                       & \text{and $v$ is mutably borrowed in $h'$}\\
+      \langle\rho,h''[\ell\to v]\rangle & \text{otherwise}
     \end{cases}\\
-    &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$, $\ell=\loc(\mathsf{w},\langle\rho,h'\rangle)$ and
+    &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$, $\ell=\loc(x,\langle\rho,h'\rangle)$ and
       $h''=\drop(\{\ell\},h')$}\\
+    \mbox{}\\
+    \denl[*\mathsf{w}=\mathsf{e}]{m}{s}&=
+    \begin{cases}
+      \text{undefined} & \text{if $\ell$ is immutably borrowed in $h'$ or $\ell_{\mathsf{w}}\leadsto\ell\not\in h'$}\\
+      \langle\rho,h''[\ell\Rightarrow v]\rangle & \text{otherwise, if $\type(\mathsf{e})$ is a box}\\
+      \langle\rho,h''[\ell\leadsto v]\rangle & \text{otherwise, if $\type(\mathsf{e})$ is a $\mathtt{mut}\borrow$}\\
+      \langle\rho,h''[\ell\to v]\rangle & \text{otherwise}
+    \end{cases}\\
+    &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$, $\ell_{\mathsf{w}}=\loc(\mathsf{w},\langle\rho,h'\rangle)$,
+      $\ell=s(\ell_{\mathsf{w}})$ and $h''=\drop(\{\ell\},h')$}\\
     \mbox{}\\
     \denl[\mathtt{let\ mut}\ x=\mathsf{e}]{m}{s}&=
     \begin{cases}
       \langle\rho[x\to^m\ell],h'[\ell\Rightarrow v]\rangle & \text{if $\type(\mathsf{e})$ is a box}\\
-      \langle\rho[x\to^m\ell],h'[\ell\leadsto v]\rangle & \text{otherwise, if $\type(\mathsf{e})$ is a $\mathtt{mut}\borrow$ and $h'[\ell\leadsto v]$ is consistent}\\
-      \langle\rho[x\to^m\ell],h'[\ell\to v]\rangle & \text{otherwise, if $h'[\ell\to v]$ is consistent}\\
-      \text{undefined} & \text{otherwise}
+      \langle\rho[x\to^m\ell],h'[\ell\leadsto v]\rangle & \text{otherwise, if $\type(\mathsf{e})$ is a $\mathtt{mut}\borrow$}\\
+                                                        & \text{and $v$ is not mutably borrowed in $h'$}\\
+      \text{undefined} & \text{otherwise, if $\type(\mathsf{e})$ is a $\mathtt{mut}\borrow$}\\
+                       & \text{and $v$ is mutably borrowed in $h'$}\\
+      \langle\rho[x\to^m\ell],h'[\ell\to v]\rangle & \text{otherwise}
     \end{cases}\\
     &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$ and $\ell$ is fresh}\\
     \mbox{}\\
