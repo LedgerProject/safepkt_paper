@@ -282,8 +282,9 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_1 = \rho_1 \star h_1$.
     Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mathtt{mut}\borrow x]{s_1} = \langle\ell_x, h_1\rangle$.
-    Therefore, we have
+    $\den[\mathtt{mut}\borrow x]{s_1} = \langle\ell_x, h_1\rangle$
+    with $\ell_x$ not mutably borrowed in $h_1$.
+    So, we have
     $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{l}{s_1} =
     \langle \rho_2,\ h_2\rangle$
     where
@@ -299,10 +300,9 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     $\den[\mathtt{box}\ 1]{s_2} =
     \langle\ell',h_2[\ell'\to 1]\rangle$ where $\ell'$ is fresh.
     %
-    If we let $h'_2 = h_2[\ell'\to 1]$ and $s'_2=\langle\rho_2,h'_2\rangle$,
-    we have $\loc(\mathtt{*}y,s'_2) = s'_2(\loc(y,s'_2)) =
-    s'_2(s'_2(y)) = s'_2(\rho_2(y)) = s'_2(\ell_y) = h'_2(\ell_y) = \ell_x$
-    is not borrowed in $h'_2$.
+    If we let $h'_2 = h_2[\ell'\to 1]$,
+    we have $\loc(y,\langle\rho_2,h'_2\rangle) = \ell_y$ and
+    $s_2(\ell_y) = h_2(\ell_y) = \ell_x$.
     Moreover, $h^{''}_2=\drop(\{\ell_x\},h'_2) =
     \{\ell_y\leadsto \ell_x,\ell'\to 1\}$. Consequently,
     $\denl[\mathtt{*}y = \mathtt{box}\ 1]{l}{s_2} =
@@ -325,11 +325,11 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     \langle \rho_4,h_4\rangle$ where
     \[\rho_4 = \rho_1 \text{ and } h_4 = \{\ell_x\Rightarrow\ell',\ell'\to 1\}\]
     %
-    \item Let $s_4 = \rho_4 \star h_4$. As $\type(x)$ is a box,  $x$ has
-    move semantics. Consequently, $\den[x]{s_4} =
-    \langle s_4(\loc(x,s_4)), {h_4}|_{-\loc(x,s_4)}\rangle$
-    with $\loc(x,s_4)=\ell_x$ and $s_4(\loc(x,s_4)) = s_4(\ell_x)
-    = h_4(\ell_x)=\ell'$\ie
+    \item Let $s_4 = \rho_4 \star h_4$. We have
+    $s_4(\loc(x,s_4)) = s_4(\ell_x) = h_4(\ell_x)=\ell'$ and
+    $\ell'$ is not dangling in $h_4$ (because $\ell'\to 1 \in h_4$).
+    As $\type(x)$ is a box, $x$ has move semantics. Consequently,
+    $\den[x]{s_4} = \langle \ell', {h_4}|_{-\ell_x}\rangle$\ie
     $\den[x]{s_4} = \langle \ell', \{\ell'\to 1\} \rangle$.
     So, $\denl[\mathtt{let\ mut}\ z = x]{m}{s_4} = \langle \rho_5,h_5\rangle$
     where
@@ -364,8 +364,9 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_1 = \rho_1 \star h_1$.
     Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mathtt{mut}\borrow x]{s_1} = \langle \ell_x,h_1\rangle$.
-    Therefore, we have
+    $\den[\mathtt{mut}\borrow x]{s_1} = \langle \ell_x,h_1\rangle$
+    with $\ell_x$ not mutably borrowed in $h_1$.
+    So, we have
     $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{m}{s_1} =
     \langle \rho_2,\ h_2\rangle$
     where
@@ -378,10 +379,10 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_2 = \rho_2 \star h_2$.
     Then, we have $\loc(x,s_2) = \ell_x$, so
-    $\den[\mathtt{mut}\borrow x]{s_2} = \langle \ell_x,h_2\rangle$.
-    As $h_2[\ell_z\leadsto \ell_x]$ is not consistent for any fresh location
-    $\ell_z$, we have that
-    $\denl[\mathtt{let\ mut}\ z = \mathtt{mut}\borrow x]{m}{s_2}$
+    $\den[\mathtt{mut}\borrow x]{s_2} = \langle \ell_x,h_2\rangle$
+    where $\ell_x$ is mutably borrowed in $h_2$
+    (because $\ell_y\leadsto \ell_x \in h_2$).
+    So, $\denl[\mathtt{let\ mut}\ z = \mathtt{mut}\borrow x]{m}{s_2}$
     is undefined.
   \end{itemize}
   \qed
@@ -459,8 +460,9 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_1 = \rho_1 \star h_1$.
     Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mathtt{mut}\borrow x]{s_1} = \langle \ell_x,h_1\rangle$.
-    Therefore, we have
+    $\den[\mathtt{mut}\borrow x]{s_1} = \langle \ell_x,h_1\rangle$
+    with $\ell_x$ not mutably borrowed in $h_1$.
+    So, we have
     $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{m}{s_1} =
     \langle \rho_2,\ h_2\rangle$
     where
@@ -473,8 +475,7 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_2 = \rho_2 \star h_2$.
     Then, we have $\den[1]{s_2} = \langle 1,h'_2\rangle$ with $h'_2=h_2$.
-    Moreover, $\loc(x,\langle\rho_2,h'_2\rangle) = \ell_x$ is
-    mutably borrowed in $h'_2$.
+    Moreover, $\loc(x,\langle\rho_2,h'_2\rangle) = \ell_x$ is borrowed in $h'_2$.
     Therefore, $\denl[x = 1]{m}{s_2}$ is undefined.
   \end{itemize}
   \qed
@@ -533,8 +534,9 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_1 = \rho_1 \star h_1$.
     Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mathtt{mut}\borrow x]{s_1} = \langle\ell_x, h_1\rangle$.
-    Therefore, we have
+    $\den[\mathtt{mut}\borrow x]{s_1} = \langle\ell_x, h_1\rangle$
+    with $\ell_x$ not mutably borrowed in $h_1$.
+    So, we have
     $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{m}{s_1} =
     \langle \rho_2,\ h_2\rangle$
     where
@@ -560,9 +562,10 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     \item Let $s_3 = \rho_3 \star h_3$.
     Then, we have $\loc(z,s_3) = \ell_z$, so
     $\den[\mathtt{mut}\borrow z]{s_3} = \langle\ell_z, h'_3\rangle$
-    with $h'_3=h_3$.
+    with $h'_3=h_3$ and $\ell_z$ is not mutably borrowed in $h'_3$.
     Moreover, $\loc(y,\langle \rho_3,h'_3\rangle) = \ell_y$ is not
-    borrowed in $h'_3$ and $\drop(\{\ell_y\},h'_3) =
+    borrowed in $h'_3$
+    and $\drop(\{\ell_y\},h'_3) =
     \{\ell_z\to 0,\ell_x\to 0\}$. Consequently,
     $\denl[y = \mathtt{mut}\borrow z]{l}{s_3} = \langle \rho_4,\ h_4\rangle$
     where
@@ -581,18 +584,11 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     \[\rho_5 = \rho_2 \text{ and }
     h_5 = \{\ell_y\leadsto\ell_z,\ \ell_x\to 0\}\]
     %
-    \item Let $s_5 = \rho_5 \star h_5$. As $\type(y)$ has move semantics
-    and $\loc(y,s_5)=\ell_y$, we have
-    $\den[y]{s_5} = \langle s_5(\ell_y), h_5|_{-\ell_y}\rangle =
-    \langle \ell_z, \{\ell_x\to 0\}\rangle$. Therefore,
-    $\denl[\mathtt{let\ mut}\ w = y]{m}{s_5} =
-    \langle \rho_6,\ h_6\rangle$ where
-    \begin{align*}
-      \rho_6 & = \rho_5[w\to^m\ell_w] =
-      \{w\to^m\ell_w,\ y\to^m\ell_y,\ x\to^m\ell_x\}\\
-      h_6 & = \{\ell_w \leadsto \ell_z,\ \ell_x\to 0\}
-    \end{align*}
-    and $\ell_w$ is fresh.
+    \item Let $s_5 = \rho_5 \star h_5$.
+    We have $s_5(\loc(y,s_5)) = s_5(\ell_y) = h_5(\ell_y) = \ell_z$
+    and $\ell_z$ is dangling in $h_5$. Therefore, $\den[y]{s_5}$
+    is undefined. So,
+    $\denl[\mathtt{let\ mut}\ w = y]{m}{s_5}$ is undefined.
   \end{itemize}
   \qed
 \end{example}
@@ -605,7 +601,7 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
       \{
         \mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
         \{
-          \mathtt{let\ mut}\ z = \borrow*y;\
+          \mathtt{let\ mut}\ z = \borrow*y
         \}^l;\
         *y = 1
       \}^n
@@ -622,8 +618,9 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_1 = \rho_1 \star h_1$.
     Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mathtt{mut}\borrow x]{s_1} = \langle\ell_x, h_1\rangle$.
-    Therefore, we have
+    $\den[\mathtt{mut}\borrow x]{s_1} = \langle\ell_x, h_1\rangle$
+    with $\ell_x$ not mutably borrowed in $h_1$.
+    So, we have
     $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{n}{s_1} =
     \langle \rho_2,\ h_2\rangle$
     where
@@ -636,12 +633,43 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     \item Let $s_2 = \rho_2 \star h_2$.
     We have $\loc(*y,s_2) = s_2(\loc(y,s_2)) = s_2(\ell_y) = h_2(\ell_y) = \ell_x$,
     so $\den[\borrow*y]{s_2} = \langle \ell_x,h_2\rangle$.
-    Moreover, $\type(\borrow*y)$ is not a box nor a $\mathtt{mut}\borrow$ and
-    $h_2[\ell_z\to \ell_x] =
-    \{\ell_z\to \ell_x,\ \ell_y\leadsto \ell_x,\ \ell_x\to 0\}$ is not consistent
-    because $\ell_x$ is both mutably and non-mutably borrowed.
-    Consequently, $\denl[\mathtt{let\ mut}\ z = \borrow*y]{l}{s_2}$
-    is undefined.
+    Moreover, $\type(\borrow*y)$ is not a box nor a $\mathtt{mut}\borrow$, so
+    $\denl[\mathtt{let\ mut}\ z = \borrow*y]{l}{s_2} =
+    \langle \rho_3,\ h_3\rangle$
+    where
+    \begin{align*}
+      \rho_3 & = \rho_2[z\to^l\ell_z] = \{z\to^l\ell_z,\ y\to^n\ell_y,\ x\to^m\ell_x\}\\
+      h_3 & = h_2[\ell_z\to \ell_x] =
+      \{\ell_z\to \ell_x,\ \ell_y\leadsto \ell_x,\ \ell_x\to 0\}
+    \end{align*}
+    and $\ell_z$ is fresh.
+    \item Let us evaluate $\denl[\{\mathtt{let\ mut}\ z = \borrow*y\}^l]{n}{s_2}$.
+    Above, we have computed $\denl[\mathtt{let\ mut}\ z = \borrow*y]{l}{s_2} =
+    \langle \rho_3,\ h_3\rangle$. Moreover,
+    $\drop(\{\ell\mid x\to^l\ell\in\rho_3\},h_3) = \drop(\{\ell_z\},h_3) =
+    \{\ell_y\leadsto \ell_x,\ \ell_x\to 0\}$. Hence,
+    $\denl[\{\mathtt{let\ mut}\ z = \borrow*y\}^l]{n}{s_2}=\langle \rho_4,\ h_4\rangle$
+    where
+    \[\rho_4 = \rho_2 \text{ and } h_4 = \{\ell_y\leadsto \ell_x,\ \ell_x\to 0\}\]
+    \item Let $s_4 = \rho_4 \star h_4$.
+    We have $\den[1]{s_4} = \langle 1,h_4\rangle$. Moreover,
+    $\loc(y,s_4) = \ell_y$, $s_4(\ell_y) = h_4(\ell_y) = \ell_x$ and
+    $\drop(\{\ell_x\}, h_4) = \{\ell_y\leadsto \ell_x\}$. Therefore,
+    $\denl[*y = 1]{n}{s_4}=\langle \rho_5,\ h_5\rangle$ where
+    \[\rho_5 = \rho_4 \text{ and } h_5 = \{\ell_y\leadsto \ell_x,\ \ell_x\to 1\}\]
+    \item Let us evaluate $\denl[\{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+    \{ \mathtt{let\ mut}\ z = \borrow*y \}^l;\ *y = 1 \}^n]{m}{s_1}$.
+    Above, we have computed
+    \[\denl[*y = 1]{n}{
+      \denl[\{\mathtt{let\ mut}\ z = \borrow*y\}^l]{n}{
+        \denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{n}{s_1}
+      } = \langle \rho_5,\ h_5\rangle
+    }\]
+    Moreover, $\drop(\{\ell\mid x\to^n\ell\in\rho_5\},h_5) =
+    \drop(\{\ell_y\},h_5) = \{\ell_x\to 1\}$. So,
+    $\denl[\{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+    \{ \mathtt{let\ mut}\ z = \borrow*y \}^l;\ *y = 1 \}^n]{m}{s_1} =
+    \langle \{x\to^m\ell_x\},\ \{\ell_x\to 1\}\rangle$.
   \end{itemize}
   \qed
 \end{example}
@@ -661,8 +689,48 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     \}^m
   \]
   $P'_6$ is illegal because the immutable reborrow $\borrow *y$ in the inner
-  block prohibits the writing $*y = 1$ in this block. Starting from the
-  store $s_0=\emptyset\star\emptyset$, one gets the same result
-  as in Ex.~\ref{ex:program-reborrow-valid}.
+  block prohibits the writing $*y = 1$ in this block.
+  \begin{itemize}
+    \item Let $s_0=\emptyset \star \emptyset$.
+    We have $\den[0]{s_0} = \langle 0,\emptyset\rangle$, hence
+    $\denl[\mathtt{let\ mut}\ x = 0]{m}{s_0} =
+    \langle \rho_1,\ h_1\rangle$ where
+    \[\rho_1=\{x\to^m\ell_x\} \qquad
+    h_1 = \{\ell_x\to 0\}\]
+    and $\ell_x$ is fresh.
+    %
+    \item Let $s_1 = \rho_1 \star h_1$.
+    Then, we have $\loc(x,s_1) = \ell_x$, so
+    $\den[\mathtt{mut}\borrow x]{s_1} = \langle\ell_x, h_1\rangle$
+    with $\ell_x$ not mutably borrowed in $h_1$.
+    So, we have
+    $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{n}{s_1} =
+    \langle \rho_2,\ h_2\rangle$
+    where
+    \begin{align*}
+      \rho_2 & = \rho_1[y\to^n\ell_y] = \{y\to^n\ell_y,\ x\to^m\ell_x\}\\
+      h_2 & = h_1[\ell_y\leadsto \ell_x] =
+      \{\ell_y\leadsto \ell_x,\ \ell_x\to 0\}
+    \end{align*}
+    and $\ell_y$ is fresh.
+    \item Let $s_2 = \rho_2 \star h_2$.
+    We have $\loc(*y,s_2) = s_2(\loc(y,s_2)) = s_2(\ell_y) = h_2(\ell_y) = \ell_x$,
+    so $\den[\borrow*y]{s_2} = \langle \ell_x,h_2\rangle$.
+    Moreover, $\type(\borrow*y)$ is not a box nor a $\mathtt{mut}\borrow$, so
+    $\denl[\mathtt{let\ mut}\ z = \borrow*y]{l}{s_2} =
+    \langle \rho_3,\ h_3\rangle$
+    where
+    \begin{align*}
+      \rho_3 & = \rho_2[z\to^l\ell_z] = \{z\to^l\ell_z,\ y\to^n\ell_y,\ x\to^m\ell_x\}\\
+      h_3 & = h_2[\ell_z\to \ell_x] =
+      \{\ell_z\to \ell_x,\ \ell_y\leadsto \ell_x,\ \ell_x\to 0\}
+    \end{align*}
+    and $\ell_z$ is fresh.
+    \item Let $s_3 = \rho_3 \star h_3$.
+    We have $\den[1]{s_3} = \langle 1,h_3\rangle$. Moreover,
+    $\loc(y,s_3) = \ell_y$ and $s_3(\ell_y) = h_3(\ell_y) = \ell_x$
+    is non-mutably borrowed in $h_3$ (because $\ell_z\to \ell_x \in h_3$).
+    Therefore, $\denl[*y = 1]{n}{s_3}$ is undefined.
+  \end{itemize}
   \qed
 \end{example}
