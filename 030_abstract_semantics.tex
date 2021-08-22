@@ -10,27 +10,68 @@
     | &\ \bot & \text{undefined}
   \end{align*}
   where $n\ge 1$ and the $\mathsf{w}_i$, with $1\le i\le n$, are leftvalues
-  using only variables in $\dom(\kappa)$.
+  using only variables in $\dom(\kappa)$. This set is ordered by $\sqsubseteq$, defined as
+  \begin{align*}
+    \mathsf{int}&\sqsubseteq\mathsf{int}\\
+    \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \sqsubseteq
+    \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} \quad\text{iff $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\subseteq\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}$}\\
+    \mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \sqsubseteq
+    \mathtt{mut}\borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} \quad\text{iff $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\subseteq\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}$}\\
+    \mathtt{box}\ t_1&\sqsubseteq\mathtt{box}\ t_2 \quad\text{iff $t_1\sqsubseteq t_2$}\\
+    \bot&\sqsubseteq t\qquad\text{for every $t$.}
+  \end{align*}
 \end{definition}
 
-An \emph{abstract store} maps variables to types:
+\begin{definition}
+  The greatest lower bound operator over $\mathbb{T}_\kappa$ is defined as
+  \begin{align*}
+    \mathsf{int}\sqcap\mathsf{int} &= \mathsf{int}\\
+    \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \borrow b\\
+    & \text{if $b=\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cap\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}\not=\varnothing$}\\
+    \mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \mathtt{mut}\borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \mathtt{mut}\borrow b\\
+    & \text{if $b=\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cap\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}\not=\varnothing$}\\
+    (\mathtt{box}\ t_1) \sqcap (\mathtt{box}\ t_2) &=\mathtt{box}\ (t_1\sqcap t_2).
+  \end{align*}
+  In all other cases, $t_1\sqcap t_2=\bot$.
+\end{definition}
 
 \begin{definition}[Abstract stores]
-  Given a context $\kappa$, the
-  set $\mathbb{AS}_\kappa$ of the \emph{abstract stores} over $\kappa$ contains bindings
+  Given a context $\kappa$, the abstract domain
+  $\mathbb{AS}_\kappa$ of the \emph{abstract stores} over $\kappa$ contains bindings
   from variables to types, decorated with a lifetime:
   \[
-  \mathbb{AS}_\kappa=\{x\to^m t\mid x\to^m\in\kappa\text{ and }t\in\mathsf{T_\kappa}\}
+  \mathbb{AS}_\kappa=\{x\to^m t\mid x\to^m\in\kappa\text{ and }t\in\mathsf{T_\kappa}\}\cup\{\top\}
+  \]
+  where the extra element $\top$ is added as top element of the abstract domain.
+  It is ordered by $\sqsubseteq$, defined as $a_1\sqsubseteq a_2$ iff $a_2=\top$ or
+  ($a_1,a_2\not=\top$ and for every $x\to^mt_1\in a_1$ there is $x\to^mt_2\in a_2$
+  such that $t_1\sqsubseteq t_2$).
+\end{definition}
+
+\begin{definition}
+  The greatest lower bound operator over $\mathbb{AS}_\kappa$ is defined as
+  $a\sqcap\top=a$, $\top\sqcap a=a$ and, when $a_1,a_2\not=\top$,
+  \[
+  a_1\sqcap a_2=\{x\to^m(t_1\sqcap t_2)\mid x\to^m t_1\in a_1\text{ and }x\to^m t_2\in a_2\}.
   \]
 \end{definition}
 
-\begin{definition}[Concretization map]
+\begin{proposition}\label{prop:complete_lattice}
+  The abstract domain $\mathbb{AS}_\kappa$ is a complete lattice \wrt $\sqsubseteq$,
+  with $\sqcap$ as greatest lower bound operator.
+\end{proposition}
+\begin{proof}
+  \textbf{TODO}.
+\end{proof}
+
+\begin{definition}[Concretization map]\label{def:concretization}
   An abstract store $a\in\mathbb{AS}_\kappa$ represents a set of concrete stores
-  in $\mathbb{S}_\kappa$, according to the following \emph{concretization map}
-  $\gamma_\kappa:\mathbb{AS}_\kappa\to\mathbb{S}_\kappa$:
+  in $\mathbb{S}_\kappa$, according to the \emph{concretization map}
+  $\gamma_\kappa:\mathbb{AS}_\kappa\to\wp(\mathbb{S}_\kappa)$, defined as
+  $\gamma_\kappa(\top)=\mathbb{S}_\kappa$ and, for $a\not=\top$,
   \[
   \gamma_\kappa(a)=\left\{\rho\star h\in\mathbb{S}_\kappa\left|\begin{array}{l}
-  \text{for every }x\to^m\ell\in\rho\text{ and }x\to^m t\in a\text{ we have }\ell\approx_{\rho\star h}t
+  \text{for every }x\to^m\ell\in\rho\text{ there is }x\to^m t\in a\text{ s.t.\ }\ell\approx_{\rho\star h}t
   \end{array}
   \right.\right\}
   \]
@@ -43,3 +84,27 @@ An \emph{abstract store} maps variables to types:
     \ell&\approx_{\rho\star h}\bot & \text{iff $h(\ell)$ is undefined}
   \end{align*}
 \end{definition}
+
+\begin{lemma}\label{lem:co-additive}
+  The map $\gamma_\kappa$ of Def.~\ref{def:concretization} is co-additive.
+\end{lemma}
+\begin{proof}
+  Let $I\subseteq\mathbb{N}$ and $\{a_i\}_{i\in I}\subseteq\mathbb{AS}_\kappa$. We prove that
+  $\gamma_\kappa(\sqcap_{i\in I}a_i)=\cap_{i\in I}\gamma_\kappa(a_i)$.
+  \textbf{TODO}
+  \qed
+\end{proof}
+
+\begin{proposition}\label{prop:abstract_interpretation}
+  The domain $\mathbb{AS}_\kappa$ is an abstract interpretation of $\wp(\mathbb{S}_\kappa)$
+  with $\gamma_\kappa$ as concretization map.
+\end{proposition}
+\begin{proof}
+  The abstract domain $\mathbb{AS}_\kappa$ is a complete lattice \wrt $\sqsubseteq$
+  with $\sqcap$ as greatest lower bound operator (Prop.~\ref{prop:complete_lattice}).
+  The domain $\wp(\mathbb{S}_\kappa)$ is a complete lattice \wrt $\subseteq$ with $\cap$ as
+  greatest lower bound operator. The map $\gamma_\kappa$ is co-additive (Lem.~\ref{lem:co-additive}).
+  The thesis follows by a general result of abstract interpretation~\cite{CousotC77}.
+  \qed
+\end{proof}
+
