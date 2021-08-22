@@ -47,21 +47,30 @@
   \qed
 \end{example}
 
-\begin{definition}
-  We assume that there is an infinite set $\Locs$ of \emph{locations}.
-  The set of \emph{values} is defined as $\mathbb{V}=\mathbb{Z}\cup\Locs$,
-  where $\mathbb{Z}$ is the set of integers.
+\begin{definition}[Context]\label{def:context}
+  A context $\kappa$ is a set of tags $\{x_1\to^{m_1},\ldots,x_n\to^{m_n}\}$,
+  meaning that the variables in scope are exactly
+  $\dom(\kappa)=\{x_1,\ldots,x_n\}$, with the given lifetimes,
+  with the constraint that there is at most a tag for each
+  given variable.
+\end{definition}
 
-  The set $\mathbb{E}$
+\begin{definition}[Values]\label{def:values}
+  The set of \emph{values} is defined as $\mathbb{V}=\mathbb{Z}\cup\Locs$,
+  where $\mathbb{Z}$ is the set of integers and
+  $\Locs$ is an infinite set $\Locs$ of \emph{locations}.
+\end{definition}
+
+\begin{definition}[Domains]\label{def:domains}
+  Given a context $\kappa$, the set $\mathbb{E}_\kappa$
   of \emph{environments} contains bindings from variables to locations,
   decorated with a \emph{lifetime}:
-  % and existing in two versions, owned and not owned:
   \[
-  \mathbb{E}=\{x\to^m\ell\mid x\in\Vars,\ m\in\Lifetimes\text{ and }\ \ell\in\Locs\}
+  \mathbb{E}_\kappa=\{x\to^m\ell\mid x\to^m\in\kappa\text{ and }\ell\in\Locs\}
   \]
-  with the constraint that, for each $\rho\in\mathbb{E}$, there is at most a binding for each
-  given variable $x$. Moreover, we write $\rho(x)=\ell$ when
-  $x\rightarrow^m\ell\in\rho$, for some $m$.
+  Often, to simplify the notation, we will write $\mathbb{E}$ for $\mathbb{E}_\kappa$.
+  Given $s=\rho\star h\in\mathbb{S}_\kappa$, we define $s(x)=\rho(x)$ for all
+  We write $\rho(x)=\ell$ when $x\rightarrow^m\ell\in\rho$, for some $m$.  
 
   The set $\mathbb{H}$ of \emph{heaps} contains bindings from locations to values,
   existing in three versions: owned, not owned and mutable borrows:
@@ -80,10 +89,11 @@
   we write $h|_{-L}$ meaning $h$ where the bindings for the locations in $L$
   have been removed (if any).
 
-  The set of \emph{stores} $\mathbb{S}$ is the set of pairs
-  $\mathbb{E}\times\mathbb{H}$, whose elements are written as $\rho\star h$.
-  Given $s=\rho\star h\in\mathbb{S}$, we define $s(x)=\rho(x)$ for all
-  $x\in\Vars$, and $s(\ell)=h(\ell)$ for all $\ell\in\Locs$.
+  The set of \emph{stores} $\mathbb{S}_\kappa$ is the set of pairs
+  $\mathbb{E}_\kappa\times\mathbb{H}$, whose elements are written as $\rho\star h$.
+  Often, to simplify the notation, we will write $\mathbb{S}$ for $\mathbb{S}_\kappa$.
+  Given $s=\rho\star h\in\mathbb{S}_\kappa$, we define $s(x)=\rho(x)$ for all
+  $x\in\dom(\kappa)$, and $s(\ell)=h(\ell)$ for all $\ell\in\Locs$.
   Given $L\subseteq\Locs$, we define $(\rho\star h)|_{-L}=\rho\star(h|_{-L})$.
 \end{definition}
 

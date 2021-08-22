@@ -1,42 +1,45 @@
 \section{Abstract Semantics}\label{sec:abstract_semantics}
 
 \begin{definition}[Types]
-  The set of \emph{types} is defined as:
+  The set of \emph{types} over a context $\kappa$ (Def.~\ref{def:context}) is
   \begin{align*}
-    \mathsf{T} ::=&\ \mathsf{int} & \text{integer}\\
+    \mathsf{T}_\kappa ::=&\ \mathsf{int} & \text{integer}\\
     | &\ \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{borrow}\\
     | &\ \mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{mutable borrow}\\
-    | &\ \mathtt{box}\ \mathsf{T} & \text{box}\\
+    | &\ \mathtt{box}\ \mathsf{T}_\kappa & \text{box}\\
     | &\ \bot & \text{undefined}
   \end{align*}
-  where $n\ge 1$ and $\mathsf{w}_i$ is a leftvalue, for $1\le i\le n$.
+  where $n\ge 1$ and the $\mathsf{w}_i$, with $1\le i\le n$, are leftvalues
+  using only variables in $\dom(\kappa)$.
 \end{definition}
 
 An \emph{abstract store} maps variables to types:
 
 \begin{definition}[Abstract stores]
-  The set $\mathbb{AS}$ of \emph{abstract stores} contains bindings
+  Given a context $\kappa$, the
+  set $\mathbb{AS}_\kappa$ of the \emph{abstract stores} over $\kappa$ contains bindings
   from variables to types, decorated with a lifetime:
   \[
-  \mathbb{AS}=\{x\to^m t\mid x\in\Vars,\ t\in\mathsf{T}\text{ and }m\in\Lifetimes\}
+  \mathbb{AS}_\kappa=\{x\to^m t\mid x\to^m\in\kappa\text{ and }t\in\mathsf{T_\kappa}\}
   \]
 \end{definition}
 
 \begin{definition}[Concretization map]
-  An abstract store $a\in\mathbb{AS}$ represents a set of concrete stores, according
-  to the following \emph{concretization map} $\gamma$:
+  An abstract store $a\in\mathbb{AS}_\kappa$ represents a set of concrete stores
+  in $\mathbb{S}_\kappa$, according to the following \emph{concretization map}
+  $\gamma_\kappa:\mathbb{AS}_\kappa\to\mathbb{S}_\kappa$:
   \[
-  \gamma(a)=\left\{\rho\star h\in\mathbb{S}\left|\begin{array}{l}
-  \text{for every }x\to^m\ell\in\rho\text{ there exists }x\to^m t\in a\text{ s.t. }\ell\approx_{\rho\star h}t
+  \gamma_\kappa(a)=\left\{\rho\star h\in\mathbb{S}_\kappa\left|\begin{array}{l}
+  \text{for every }x\to^m\ell\in\rho\text{ and }x\to^m t\in a\text{ we have }\ell\approx_{\rho\star h}t
   \end{array}
   \right.\right\}
   \]
   where
   \begin{align*}
-    \ell&\approx_{\rho\star h}\mathsf{int} & \text{if $h(\ell)\in\mathbb{Z}$}\\
-    \ell&\approx_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{if $\exists i.1\le i\le n$ s.t.\ }\loc(\mathsf{w}_i,s)\to\ell\in\rho\\
-    \ell&\approx_{\rho\star h}\mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{if $\exists i.1\le i\le n$ s.t.\ }\loc(\mathsf{w}_i,s)\leadsto\ell\in\rho\\
-    \ell&\approx_{\rho\star h}\mathtt{box}\ t & \text{if $\ell\Rightarrow\ell'\in h$ and $\ell'\approx_{\rho\star h}t$}\\
-    \ell&\approx_{\rho\star h}\bot & \text{if $h(\ell)$ is undefined}
+    \ell&\approx_{\rho\star h}\mathsf{int} & \text{iff $h(\ell)\in\mathbb{Z}$}\\
+    \ell&\approx_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{iff $\exists i.1\le i\le n$ s.t.\ }\loc(\mathsf{w}_i,s)\to\ell\in\rho\\
+    \ell&\approx_{\rho\star h}\mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{iff $\exists i.1\le i\le n$ s.t.\ }\loc(\mathsf{w}_i,s)\leadsto\ell\in\rho\\
+    \ell&\approx_{\rho\star h}\mathtt{box}\ t & \text{iff $\ell\Rightarrow\ell'\in h$ and $\ell'\approx_{\rho\star h}t$}\\
+    \ell&\approx_{\rho\star h}\bot & \text{iff $h(\ell)$ is undefined}
   \end{align*}
 \end{definition}
