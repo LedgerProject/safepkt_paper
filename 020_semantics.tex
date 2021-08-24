@@ -49,6 +49,7 @@
 
 \begin{definition}[Context]\label{def:context}
   A context $\kappa$ is a set of tags $\{x_1\to^{m_1},\ldots,x_n\to^{m_n}\}$,
+  for distinct variables $x_1,\ldots,x_n$,
   meaning that the variables in scope are exactly
   $\dom(\kappa)=\{x_1,\ldots,x_n\}$, with the given lifetimes,
   with the constraint that there is at most a tag for each
@@ -62,32 +63,33 @@
 \end{definition}
 
 \begin{definition}[Domains]\label{def:domains}
-  Given a context $\kappa$, the set $\mathbb{E}_\kappa$
-  of \emph{environments} contains bindings from variables to locations,
-  decorated with a \emph{lifetime}:
+  Given a context $\kappa$, an \emph{environment} $\rho$ over $\kappa$
+  is a set of bindings from variables to locations, decorated with a \emph{lifetime}:
   \[
-  \mathbb{E}_\kappa=\{x\to^m\ell\mid x\to^m\in\kappa\text{ and }\ell\in\Locs\}
+  \rho\subseteq\{x\to^m\ell\mid x\to^m\in\kappa\text{ and }\ell\in\Locs\}
   \]
+  with the constraint that exactly one binding exists for each given variable in $\dom(\kappa)$.
+  The set of all environments over $\kappa$ is $\mathbb{E}_\kappa$.
   Often, to simplify the notation, we will write $\mathbb{E}$ for $\mathbb{E}_\kappa$.
-  Given $s=\rho\star h\in\mathbb{S}_\kappa$, we define $s(x)=\rho(x)$ for all
   We write $\rho(x)=\ell$ when $x\rightarrow^m\ell\in\rho$, for some $m$.  
 
-  The set $\mathbb{H}$ of \emph{heaps} contains bindings from locations to values,
+  A \emph{heap} $h$ is a set of bindings from locations to values,
   existing in three versions: owned, not owned and mutable borrows:
   \[
-  \mathbb{H}=
+  h\subseteq
   \underbrace{\{\ell\Rightarrow\ell'\mid\ell,\ell'\in\Locs\}}_{\text{owned bindings}}
   \cup
   \underbrace{\{\ell\rightarrow v\mid\ell\in\Locs\text{ and }v\in\mathbb{V}\}}_{\text{not owned bindings}}
   \cup
   \underbrace{\{\ell\leadsto\ell'\mid\ell,\ell'\in\Locs\}}_{\text{mutable borrows}}
   \]
-  with the constraint that, for each $h\in\mathbb{H}$, there is at most a binding for each
+  with the constraint that there is at most a binding for each
   location $\ell$ (owned, not owned or mutable borrow). We write $h(\ell)=v$ meaning that
   either $\ell\Rightarrow v\in h$ or $\ell\rightarrow v\in h$ or $\ell\leadsto v\in h$.
   Given $L\subseteq\Locs$,
   we write $h|_{-L}$ meaning $h$ where the bindings for the locations in $L$
   have been removed (if any).
+  The set of all heaps is $\mathbb{H}$.
 
   The set of \emph{stores} $\mathbb{S}_\kappa$ is the set of pairs
   $\mathbb{E}_\kappa\times\mathbb{H}$, whose elements are written as $\rho\star h$.

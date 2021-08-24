@@ -23,7 +23,7 @@
 \end{definition}
 
 \begin{definition}
-  The greatest lower bound operator over $\mathbb{T}_\kappa$ is defined as
+  The greatest lower bound operator over $\mathsf{T}_\kappa$ is defined as
   \begin{align*}
     \mathsf{int}\sqcap\mathsf{int} &= \mathsf{int}\\
     \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \borrow b\\
@@ -36,14 +36,14 @@
 \end{definition}
 
 \begin{definition}[Abstract stores]
-  Given a context $\kappa$, the abstract domain
-  $\mathbb{AS}_\kappa$ of the \emph{abstract stores} over $\kappa$ contains bindings
-  from variables to types, decorated with a lifetime:
+  Given a context $\kappa$, an \emph{abstract store} $a$ over $\kappa$ is either $\top$
+  or a set of bindings from variables to types, decorated with a lifetime:
   \[
-  \mathbb{AS}_\kappa=\{x\to^m t\mid x\to^m\in\kappa\text{ and }t\in\mathsf{T_\kappa}\}\cup\{\top\}
+  a\subseteq\{x\to^m t\mid x\to^m\in\kappa\text{ and }t\in\mathsf{T_\kappa}\}\cup\{\top\}
   \]
-  where the extra element $\top$ is added as top element of the abstract domain.
-  It is ordered by $\sqsubseteq$, defined as $a_1\sqsubseteq a_2$ iff $a_2=\top$ or
+  with the constraint that exactly one binding exists for each given variable in $\dom(\kappa)$.
+  The set of all abstract stores over $\kappa$ is $\mathbb{AS}_\kappa$.
+  The latter is ordered by $\sqsubseteq$, defined as $a_1\sqsubseteq a_2$ iff $a_2=\top$ or
   ($a_1,a_2\not=\top$ and for every $x\to^mt_1\in a_1$ there is $x\to^mt_2\in a_2$
   such that $t_1\sqsubseteq t_2$).
 \end{definition}
