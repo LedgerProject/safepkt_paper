@@ -22,6 +22,13 @@
   \end{align*}
 \end{definition}
 
+\begin{lemma}
+  \label{lemma:partial-order-types}
+  $(\mathsf{T}_\kappa,\sqsubseteq)$ is a partially ordered set.
+\end{lemma}
+\begin{proof}
+\end{proof}
+
 \begin{definition}
   The greatest lower bound operator over $\mathsf{T}_\kappa$ is defined as
   \begin{align*}
@@ -36,6 +43,7 @@
 \end{definition}
 
 \begin{definition}[Abstract stores]
+  \label{def:abstract-store}
   Given a context $\kappa$, an \emph{abstract store} $a$ over $\kappa$ is either $\top$
   or a set of bindings from variables to types, decorated with a lifetime:
   \[
@@ -61,7 +69,48 @@
   with $\sqcap$ as greatest lower bound operator.
 \end{proposition}
 \begin{proof}
-  \textbf{TODO}.
+  First we prove that $(\mathbb{AS}_\kappa,\sqsubseteq)$ is a partially
+  ordered set.
+  \begin{itemize}
+    \item (Reflexivity) By Def.~\ref{def:abstract-store}, we have
+    $\top\sqsubseteq \top$. Let $a\in\mathbb{AS}_\kappa$ with $a\neq \top$.
+    {\bf\color{red}If $a$ is empty, then ???}
+    Otherwise, for every $x\to^mt\in a$ there is $x\to^mt\in a$ with
+    $t\sqsubseteq t$ (see Lemma~\ref{lemma:partial-order-types}), hence by
+    Def.~\ref{def:abstract-store} we have $a\sqsubseteq a$.
+    %
+    \item (Antisymmetry) Suppose that $a_1 \sqsubseteq a_2$ and
+    $a_2 \sqsubseteq a_1$. If $a_2=\top$, then, as $a_2 \sqsubseteq a_1$,
+    we necessarily have $a_1=\top$ by Def.~\ref{def:abstract-store}, so
+    $a_1=a_2$. Otherwise, we necessarily
+    have $a_1\neq\top$. Moreover, as $a_1 \sqsubseteq a_2$, for every
+    $x\to^mt_1\in a_1$ there is $x\to^mt_2\in a_2$ such that
+    $t_1\sqsubseteq t_2$ and, as $a_2 \sqsubseteq a_1$, there is
+    $x\to^mt'_1\in a_1$ such that $t_2\sqsubseteq t'_1$.
+    As in $a_1$ there is exactly one binding for $x\in\dom(\kappa)$, we have
+    $t_1=t'_1$. Consequently, $t_1\sqsubseteq t_2$ and $t_2\sqsubseteq t_1$
+    so, by Lemma~\ref{lemma:partial-order-types}, $t_1=t_2$. So, we have
+    proved that for every $x\to^mt_1\in a_1$ we have $x\to^mt_1\in a_2$.
+    Identically, by considering $a_2 \sqsubseteq a_1$, we prove that
+    for every $x\to^mt_2\in a_2$ we have $x\to^mt_2\in a_1$.
+    Therefore, $a_1=a_2$.
+    %
+    \item (Transitivity) Suppose that $a_1 \sqsubseteq a_2$ and
+    $a_2 \sqsubseteq a_3$. If $a_3=\top$, then by Def.~\ref{def:abstract-store}
+    we have $a_1\sqsubseteq a_3$. Otherwise, as $a_2 \sqsubseteq a_3$,
+    we have $a_2\neq\top$ and so, as $a_1 \sqsubseteq a_2$, we also have
+    $a_1\neq\top$. Consequently, for every $x\to^mt_1\in a_1$ there is
+    $x\to^mt_2\in a_2$ such that $t_1\sqsubseteq t_2$ and there is
+    $x\to^mt_3\in a_3$ such that $t_2\sqsubseteq t_3$. Hence, by
+    Lemma~\ref{lemma:partial-order-types}, we have $t_1\sqsubseteq t_3$.
+    Therefore, by Def.~\ref{def:abstract-store}, we have $a_1\sqsubseteq a_3$.
+  \end{itemize}
+
+  Now we prove that every subset of $\mathbb{AS}_\kappa$ has a greatest
+  lower bound.
+
+  Finally, we prove that every subset of $\mathbb{AS}_\kappa$ has a least
+  upper bound.
 \end{proof}
 
 \begin{definition}[Concretization map]\label{def:concretization}
@@ -107,4 +156,3 @@
   The thesis follows by a general result of abstract interpretation~\cite{CousotC77}.
   \qed
 \end{proof}
-
