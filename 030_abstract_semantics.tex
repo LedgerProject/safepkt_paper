@@ -99,6 +99,13 @@
   In all other cases, $t_1\sqcap t_2=\bot$.
 \end{definition}
 
+\begin{lemma}\label{lemma:glb-type}
+  Let $I\subseteq\mathbb{N}$ and $\{t_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$.
+  Then, $\sqcap_{i\in I}t_i$ is the greatest lower bound of $\{t_i\}_{i\in I}$.
+\end{lemma}
+\begin{proof}
+\end{proof}
+
 \begin{definition}[Abstract stores]
   \label{def:abstract-store}
   Given a context $\kappa$, an \emph{abstract store} $a$ over $\kappa$ is either $\top$
@@ -132,7 +139,7 @@
     \item (Reflexivity) Let $a\in\mathbb{AS}_\kappa$. If $a=\top$, then
     $a\sqsubseteq a$. Otherwise, if $a$ is empty, then $a\sqsubseteq a$ holds
     vacuously. Otherwise, for every $x\to^mt\in a$ there is $x\to^mt\in a$ with
-    $t\sqsubseteq t$ (see Lemma~\ref{lemma:partial-order-types}), hence we have
+    $t\sqsubseteq t$ (see Lem.~\ref{lemma:partial-order-types}), hence we have
     $a\sqsubseteq a$.
     %
     \item (Antisymmetry) Suppose that $a_1 \sqsubseteq a_2$ and
@@ -144,7 +151,7 @@
     $x\to^mt'_1\in a_1$ such that $t_2\sqsubseteq t'_1$.
     As in $a_1$ there is exactly one binding for $x\in\dom(\kappa)$, we have
     $t_1=t'_1$. Consequently, $t_1\sqsubseteq t_2$ and $t_2\sqsubseteq t_1$
-    so, by Lemma~\ref{lemma:partial-order-types}, $t_1=t_2$. So, we have
+    so, by Lem.~\ref{lemma:partial-order-types}, $t_1=t_2$. So, we have
     proved that for every $x\to^mt_1\in a_1$ we have $x\to^mt_1\in a_2$.
     Identically, by considering $a_2 \sqsubseteq a_1$, we prove that
     for every $x\to^mt_2\in a_2$ we have $x\to^mt_2\in a_1$.
@@ -156,15 +163,28 @@
     $a_1 \sqsubseteq a_2$, we also have $a_1\neq\top$. Consequently, for every
     $x\to^mt_1\in a_1$ there is $x\to^mt_2\in a_2$ such that
     $t_1\sqsubseteq t_2$ and there is $x\to^mt_3\in a_3$ such that
-    $t_2\sqsubseteq t_3$. Hence, by Lemma~\ref{lemma:partial-order-types},
+    $t_2\sqsubseteq t_3$. Hence, by Lem.~\ref{lemma:partial-order-types},
     we have $t_1\sqsubseteq t_3$. Therefore, we have $a_1\sqsubseteq a_3$.
   \end{itemize}
 
   Now we prove that every subset of $\mathbb{AS}_\kappa$ has a greatest
-  lower bound.
+  lower bound. Let $I\subseteq\mathbb{N}$ and
+  $\{a_i\}_{i\in I}\subseteq\mathbb{AS}_\kappa$.
 
   Finally, we prove that every subset of $\mathbb{AS}_\kappa$ has a least
-  upper bound.
+  upper bound. Let $I\subseteq\mathbb{N}$ and
+  $\{a_i\}_{i\in I}\subseteq\mathbb{AS}_\kappa$. We prove that
+  $\mu_I=\sqcap_{i\in I}a_i$ is the least upper bound of $\{a_i\}_{i\in I}$.
+  Let $i\in I$. If $\mu_I$ is empty or $a_i=\top$ then we have
+  $\mu_I \sqsubseteq a_i$. If $\mu_I = \top$ then $\{a_i\}_{i\in I}=\{\top\}$,
+  so we have $a_i=\top$, hence $\mu_I \sqsubseteq a_i$.
+  Otherwise (\textit{ie.} $\mu_I\neq\emptyset$, $\mu_I\neq\top$ and
+  $a_i\neq\top$), let $x\to^m t\in \mu_I$. Then, for all $j\in I$ there is a
+  binding $x\to^m t_j$ in $a_j$ and $t = \sqcap_{j\in I}t_j$. In particular,
+  there is a binding $x\to^m t_i$ in $a_i$ and, by Lem.~\ref{lemma:glb-type},
+  $\sqcap_{j\in I}t_j \sqsubseteq t_i$. Consequently, we have
+  $\mu_I \sqsubseteq a_i$. Hence, we have proved that $\mu_I$ is a lower bound
+  of $\{a_i\}_{i\in I}$. It remains to prove that it is the greatest.
 \end{proof}
 
 \begin{definition}[Concretization map]\label{def:concretization}
