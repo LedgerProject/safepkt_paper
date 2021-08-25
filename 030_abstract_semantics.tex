@@ -27,6 +27,63 @@
   $(\mathsf{T}_\kappa,\sqsubseteq)$ is a partially ordered set.
 \end{lemma}
 \begin{proof}
+  We prove that $\sqsubseteq$ is reflexive, antisymmetric and transitive.
+  We proceed by structural induction.
+  \begin{itemize}
+    \item (Reflexivity)
+    \begin{itemize}
+      \item (Base) For any type $t$ that is not a box we have
+      $t\sqsubseteq t$.
+      \item (Induction step) If $t\sqsubseteq t$ for a type $t$ then
+      $\mathtt{box}\ t\sqsubseteq \mathtt{box}\ t$.
+    \end{itemize}
+    %
+    \item (Antisymmetry) Suppose that $t_1 \sqsubseteq t_2$ and
+    $t_2 \sqsubseteq t_1$.
+    \begin{itemize}
+      \item (Base: $t_1$ or $t_2$ is not a box)
+      If $t_1$ or $t_2$ is $\bot$, then so is the other
+      because $\bot$ can only be greater than itself, and so $t_1 = t_2$.
+      If $t_1$ or $t_2$ is $\mathsf{int}$, then so is the other
+      because $\mathsf{int}$ can only precede itself, and so $t_1 = t_2$.
+      If $t_1$ or $t_2$ is a borrow, then so is the other because
+      a borrow can only precede a borrow, and so we have $t_1 = t_2$
+      by antisymmetry of $\subseteq$.
+      Identically, if $t_1$ or $t_2$ is a mutable borrow, we have $t_1 = t_2$.
+      \item (Induction step) Suppose that $t_1=\mathtt{box}\ t'_1$ and
+      $t_2=\mathtt{box}\ t'_2$ for types $t'_1,t'_2$ such that
+      $(t'_1 \sqsubseteq t'_2 \land t'_2 \sqsubseteq t'_1) \Rightarrow t'_1 = t'_2$.
+      As $t_1 \sqsubseteq t_2$ and $t_2 \sqsubseteq t_1$, we have
+      $t'_1 \sqsubseteq t'_2$ and $t'_2 \sqsubseteq t'_1$, so
+      $t'_1 = t'_2$, hence $t_1 = t_2$.
+    \end{itemize}
+    %
+    \item (Transitivity) Suppose that $t_1 \sqsubseteq t_2$ and
+    $t_2 \sqsubseteq t_3$.
+    \begin{itemize}
+      \item (Base: $t_1$, $t_2$ or $t_3$ is not a box)
+      If $t_1=\bot$, then $t_1\sqsubseteq t_3$.
+      If $t_2=\bot$, then $t_1=\bot$, so $t_1\sqsubseteq t_3$.
+      If $t_3=\bot$, then $t_2=\bot$, so $t_1=\bot$, hence $t_1\sqsubseteq t_3$.
+      Now, suppose that none of $t_1,t_2,t_3$ is $\bot$.
+      Then, if $t_1$, $t_2$ or $t_3$ is $\mathsf{int}$, we necessarily have
+      $t_1=t_2=t_3=\mathsf{int}$ because $\mathsf{int}$ is only related to
+      itself or to $\bot$, and so $t_1\sqsubseteq t_3$.
+      If $t_1$, $t_2$ or $t_3$ is a borrow, then so are the others because
+      a borrow is only related to a borrow or to $\bot$, and so we have
+      $t_1\sqsubseteq t_3$ by transitivity of $\subseteq$.
+      Identically, if $t_1$, $t_2$ or $t_3$ is a mutable borrow, we have
+      $t_1\sqsubseteq t_3$.
+      \item (Induction step) Suppose that $t_1=\mathtt{box}\ t'_1$,
+      $t_2=\mathtt{box}\ t'_2$ and $t_3=\mathtt{box}\ t'_3$ for types
+      $t'_1,t'_2,t'_3$ such that
+      $(t'_1 \sqsubseteq t'_2 \land t'_2 \sqsubseteq t'_3) \Rightarrow
+      t'_1 \sqsubseteq t'_3$.
+      As $t_1 \sqsubseteq t_2$ and $t_2 \sqsubseteq t_3$, we have
+      $t'_1 \sqsubseteq t'_2$ and $t'_2 \sqsubseteq t'_3$, so
+      $t'_1 \sqsubseteq t'_3$, hence $t_1 \sqsubseteq t_3$.
+    \end{itemize}
+  \end{itemize}
 \end{proof}
 
 \begin{definition}
@@ -72,17 +129,15 @@
   First we prove that $(\mathbb{AS}_\kappa,\sqsubseteq)$ is a partially
   ordered set.
   \begin{itemize}
-    \item (Reflexivity) By Def.~\ref{def:abstract-store}, we have
-    $\top\sqsubseteq \top$. Let $a\in\mathbb{AS}_\kappa$ with $a\neq \top$.
-    {\bf\color{red}If $a$ is empty, then ???}
-    Otherwise, for every $x\to^mt\in a$ there is $x\to^mt\in a$ with
-    $t\sqsubseteq t$ (see Lemma~\ref{lemma:partial-order-types}), hence by
-    Def.~\ref{def:abstract-store} we have $a\sqsubseteq a$.
+    \item (Reflexivity) Let $a\in\mathbb{AS}_\kappa$. If $a=\top$, then
+    $a\sqsubseteq a$. Otherwise, if $a$ is empty, then $a\sqsubseteq a$ holds
+    vacuously. Otherwise, for every $x\to^mt\in a$ there is $x\to^mt\in a$ with
+    $t\sqsubseteq t$ (see Lemma~\ref{lemma:partial-order-types}), hence we have
+    $a\sqsubseteq a$.
     %
     \item (Antisymmetry) Suppose that $a_1 \sqsubseteq a_2$ and
     $a_2 \sqsubseteq a_1$. If $a_2=\top$, then, as $a_2 \sqsubseteq a_1$,
-    we necessarily have $a_1=\top$ by Def.~\ref{def:abstract-store}, so
-    $a_1=a_2$. Otherwise, we necessarily
+    we necessarily have $a_1=\top$, so $a_1=a_2$. Otherwise, we necessarily
     have $a_1\neq\top$. Moreover, as $a_1 \sqsubseteq a_2$, for every
     $x\to^mt_1\in a_1$ there is $x\to^mt_2\in a_2$ such that
     $t_1\sqsubseteq t_2$ and, as $a_2 \sqsubseteq a_1$, there is
@@ -96,14 +151,13 @@
     Therefore, $a_1=a_2$.
     %
     \item (Transitivity) Suppose that $a_1 \sqsubseteq a_2$ and
-    $a_2 \sqsubseteq a_3$. If $a_3=\top$, then by Def.~\ref{def:abstract-store}
-    we have $a_1\sqsubseteq a_3$. Otherwise, as $a_2 \sqsubseteq a_3$,
-    we have $a_2\neq\top$ and so, as $a_1 \sqsubseteq a_2$, we also have
-    $a_1\neq\top$. Consequently, for every $x\to^mt_1\in a_1$ there is
-    $x\to^mt_2\in a_2$ such that $t_1\sqsubseteq t_2$ and there is
-    $x\to^mt_3\in a_3$ such that $t_2\sqsubseteq t_3$. Hence, by
-    Lemma~\ref{lemma:partial-order-types}, we have $t_1\sqsubseteq t_3$.
-    Therefore, by Def.~\ref{def:abstract-store}, we have $a_1\sqsubseteq a_3$.
+    $a_2 \sqsubseteq a_3$. If $a_3=\top$, then we have $a_1\sqsubseteq a_3$.
+    Otherwise, as $a_2 \sqsubseteq a_3$, we have $a_2\neq\top$ and so, as
+    $a_1 \sqsubseteq a_2$, we also have $a_1\neq\top$. Consequently, for every
+    $x\to^mt_1\in a_1$ there is $x\to^mt_2\in a_2$ such that
+    $t_1\sqsubseteq t_2$ and there is $x\to^mt_3\in a_3$ such that
+    $t_2\sqsubseteq t_3$. Hence, by Lemma~\ref{lemma:partial-order-types},
+    we have $t_1\sqsubseteq t_3$. Therefore, we have $a_1\sqsubseteq a_3$.
   \end{itemize}
 
   Now we prove that every subset of $\mathbb{AS}_\kappa$ has a greatest
