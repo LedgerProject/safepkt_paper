@@ -103,35 +103,44 @@
   Then, $\sqcap_{i\in I}t_i$ is the greatest lower bound of $\{t_i\}_{i\in I}$.
 \end{lemma}
 \begin{proof}
-  We proceed by structural induction.
   Let $\mu_I = \sqcap_{i\in I}t_i$.
+  We proceed by structural induction.
   \begin{itemize}
-    \item First, let us prove that $\mu_I$ is a lower bound.
-    \begin{itemize}
-      \item (Base: there is a $t_k$ which is not a box)
-      If $t_k=\bot$ then $\mu_I=\bot$ and so $\mu_I$ is a lower bound of
-      $\{t_i\}_{i\in I}$.
-      If $t_k=\mathsf{int}$ then either $\mu_I=\bot$ (this happens when
-      there is a $t_{k'}$ which is not $\mathsf{int}$) or $\mu_I=\mathsf{int}$
-      (this happens when all the $t_i$'s are $\mathsf{int}$), and so
-      $\mu_I$ is a lower bound of $\{t_i\}_{i\in I}$.
-      If $t_k$ is a borrow then either there is a $t_{k'}$ which is not a borrow,
-      and so $\mu_I=\bot$, or all the $t_i$'s are a borrow, and so $\mu_I$ is
-      a borrow which results from the intersection of all the $t_i$'s; hence
-      $\mu_I$ is a lower bound of $\{t_i\}_{i\in I}$.
-      Identically, if $t_k$ is a mutable borrow then $\mu_I$ is a lower bound
-      of $\{t_i\}_{i\in I}$.
-      \item (Induction step) Suppose that for all $i\in I$ we have
-      $t_i = \mathtt{box}\ t'_i$ and that $\sqcap_{i\in I}t'_i$ is a lower
-      bound of $\{t'_i\}_{i\in I}$. Then,
-      $\mu_I = \mathtt{box}\ \sqcap_{i\in I}t'_i$ is a lower bound
-      of $\{t_i\}_{i\in I}$.
-    \end{itemize}
-    \item Now, let us prove that $\mu_I$ is the greatest.
-    \begin{itemize}
-      \item (Base: there is a $t_k$ which is not a box)
-      \item (Induction step)
-    \end{itemize}
+    \item (Base: there is a $t_k$ which is not a box)
+    If $t_k=\bot$ then $\mu_I=\bot$ and so $\mu_I$ is a lower bound of
+    $\{t_i\}_{i\in I}$.
+    If $t_k=\mathsf{int}$ then either $\mu_I=\bot$ (this happens when
+    there is a $t_{k'}$ which is not $\mathsf{int}$) or $\mu_I=\mathsf{int}$
+    (this happens when each $t_i$ is $\mathsf{int}$), and so
+    $\mu_I$ is a lower bound of $\{t_i\}_{i\in I}$.
+    If $t_k$ is a borrow then either there is a $t_{k'}$ which is not a borrow,
+    and so $\mu_I=\bot$, or each $t_i$ is a borrow, and so $\mu_I$ is
+    a borrow which results from the intersection of all the $t_i$'s; hence
+    $\mu_I$ is a lower bound of $\{t_i\}_{i\in I}$.
+    Identically, if $t_k$ is a mutable borrow then $\mu_I$ is a lower bound
+    of $\{t_i\}_{i\in I}$.
+
+    Now, suppose that $\mu'_I$ is also a lower bound of $\{t_i\}_{i\in I}$.
+    If $\mu'_I=\bot$ then $\mu'_I\sqsubseteq\mu_I$.
+    If $\mu'_I=\mathsf{int}$ then each $t_i$ is $\mathsf{int}$, so
+    $\mu_I=\mathsf{int}$ and we have $\mu'_I\sqsubseteq\mu_I$.
+    If $\mu'_I=\borrow b$, then for all $i\in I$ we have $t_i = \borrow b_i$
+    and $b \subseteq b_i$; hence, $b \subseteq \cap_{i\in I}b_i$ and so
+    $\borrow b \sqsubseteq \borrow\cap_{i\in I}b_i$; consequently, we have
+    $\mu'_I\sqsubseteq\mu_I$ because $\mu_I=\borrow\cap_{i\in I}b_i$ in this case.
+    Identically, if $\mu'_I$ is a mutable borrow then $\mu'_I\sqsubseteq\mu_I$.
+    %
+    \item (Induction step) Suppose that for all $i\in I$ we have
+    $t_i = \mathtt{box}\ t'_i$ and that $\sqcap_{i\in I}t'_i$ is the greatest
+    lower bound of $\{t'_i\}_{i\in I}$. Then,
+    $\mu_I = \mathtt{box}\ \sqcap_{i\in I}t'_i$ is a lower bound
+    of $\{t_i\}_{i\in I}$. Suppose that $\mu'_I$ is also a lower bound
+    of $\{t_i\}_{i\in I}$. Then, either $\mu'_I=\bot$, and so
+    $\mu'_I\sqsubseteq\mu_I$. Or, $\mu'_I=\mathtt{box}\ t$ with
+    $t\sqsubseteq t'_i$ for all $i\in I$, and so $t$ is a lower bound
+    of $\{t'_i\}_{i\in I}$; hence, we have $t\sqsubseteq \sqcap_{i\in I}t'_i$
+    because $\sqcap_{i\in I}t'_i$ is the greatest lower bound and,
+    consequently, $\mu'_I\sqsubseteq\mu_I$.
   \end{itemize}
 \end{proof}
 
