@@ -167,20 +167,31 @@
     we have $t_1\sqsubseteq t_3$. Therefore, we have $a_1\sqsubseteq a_3$.
   \end{itemize}
 
-  Now we prove that every subset of $\mathbb{AS}_\kappa$ has a greatest
-  lower bound. Let $I\subseteq\mathbb{N}$ and
-  $\{a_i\}_{i\in I}\subseteq\mathbb{AS}_\kappa$. We prove that
-  $\mu_I=\sqcap_{i\in I}a_i$ is the greatest lower bound of $\{a_i\}_{i\in I}$.
-  Let $i\in I$. If $\mu_I$ is empty or $a_i=\top$ then we have
-  $\mu_I \sqsubseteq a_i$. If $\mu_I = \top$ then $\{a_i\}_{i\in I}=\{\top\}$,
-  so we have $a_i=\top$, hence $\mu_I \sqsubseteq a_i$.
-  Otherwise (\textit{ie.} $\mu_I\neq\emptyset$, $\mu_I\neq\top$ and
-  $a_i\neq\top$), let $x\to^m t\in \mu_I$. Then, for all $j\in I$ there is a
-  binding $x\to^m t_j$ in $a_j$ and $t = \sqcap_{j\in I}t_j$. In particular,
-  there is a binding $x\to^m t_i$ in $a_i$ and, by Lem.~\ref{lemma:glb-type},
-  $\sqcap_{j\in I}t_j \sqsubseteq t_i$. Consequently, we have
-  $\mu_I \sqsubseteq a_i$. Hence, we have proved that $\mu_I$ is a lower bound
-  of $\{a_i\}_{i\in I}$. It remains to prove that it is the greatest.
+  Let $I\subseteq\mathbb{N}$ and $\{a_i\}_{i\in I}\subseteq\mathbb{AS}_\kappa$.
+  We prove that $\mu_I=\sqcap_{i\in I}a_i$ is the greatest lower bound of
+  $\{a_i\}_{i\in I}$.
+  \begin{itemize}
+    \item First, we prove that $\mu_I$ is a lower bound.
+    Let $k\in I$. If $\mu_I$ is empty or $a_k=\top$ then we have
+    $\mu_I \sqsubseteq a_k$. If $\mu_I = \top$ then $\{a_i\}_{i\in I}=\{\top\}$,
+    so we have $a_k=\top$, hence $\mu_I \sqsubseteq a_k$.
+    Otherwise (\textit{ie.} $\mu_I\neq\emptyset$, $\mu_I\neq\top$ and
+    $a_k\neq\top$), let $x\to^m t\in \mu_I$. Then, for all $i\in I$ either
+    $a_i=\top$ or there is a binding $x\to^m t_i$ in $a_i$, and we have
+    $t = \sqcap_{i\in J}t_i$ where $J=\{i\in I\mid a_i\neq\top\}$. In particular,
+    there is a binding $x\to^m t_k$ in $a_k$ and, by Lem.~\ref{lemma:glb-type},
+    $\sqcap_{i\in J}t_i \sqsubseteq t_k$. Consequently, we have
+    $\mu_I \sqsubseteq a_k$.
+    \item Now, we prove that $\mu_I$ is the greatest.
+    Suppose that $\mu'_I$ is also a lower bound of $\{a_i\}_{i\in I}$.
+    If $\mu'_I$ is empty then $\mu'_I \sqsubseteq \mu_I$.
+    If $\mu'_I=\top$ then necessarily $\{a_i\}_{i\in I}=\{\top\}$, so
+    we have $\mu_I=\top$, hence $\mu'_I \sqsubseteq \mu_I$.
+    Otherwise (\textit{ie.} $\mu'_I\neq\emptyset$ and $\mu'_I\neq\top$),
+    let $x\to^m t\in \mu'_I$. As $\mu'_I$ is a lower bound of $\{a_i\}_{i\in I}$,
+    for all $i\in I$ either $a_i=\top$ or there is $x\to^m t_i\in a_i$ such
+    that $t\sqsubseteq t_i$.
+  \end{itemize}
 
   Finally, we prove that every subset of $\mathbb{AS}_\kappa$ has a least
   upper bound. Let $I\subseteq\mathbb{N}$ and
