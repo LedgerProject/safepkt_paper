@@ -83,6 +83,7 @@
       $t'_1 \sqsubseteq t'_3$, hence $t_1 \sqsubseteq t_3$.
     \end{itemize}
   \end{itemize}
+  \qed
 \end{proof}
 
 \begin{definition}
@@ -142,6 +143,7 @@
     because $\sqcap_{i\in I}t'_i$ is the greatest lower bound and,
     consequently, $\mu'_I\sqsubseteq\mu_I$.
   \end{itemize}
+  \qed
 \end{proof}
 
 \begin{definition}[Abstract stores]
@@ -176,8 +178,8 @@
   \begin{itemize}
     \item (Reflexivity) Let $a\in\mathbb{AS}_\kappa$. If $a=\top$, then
       $a\sqsubseteq a$.
-      \issue{Otherwise, if $a$ is empty, then $a\sqsubseteq a$ holds
-      vacuously.}{I would remove this}
+      % \issue{Otherwise, if $a$ is empty, then $a\sqsubseteq a$ holds
+      % vacuously.}{I would remove this}
       Otherwise, for every $x\to^mt\in a$ there is $x\to^mt\in a$ with
     $t\sqsubseteq t$ (see Lem.~\ref{lemma:partial-order-types}), hence we have
     $a\sqsubseteq a$.
@@ -213,11 +215,12 @@
   \begin{itemize}
     \item First, we prove that $\mu_I$ is a lower bound.
       Let $k\in I$. If
-      \issue{$\mu_I$ is empty or}{I would remove this}
+      % \issue{$\mu_I$ is empty or}{I would remove this}
       $a_k=\top$ then we have
     $\mu_I \sqsubseteq a_k$. If $\mu_I = \top$ then $\{a_i\}_{i\in I}=\{\top\}$,
     so we have $a_k=\top$, hence $\mu_I \sqsubseteq a_k$.
-    Otherwise (\textit{ie.} \issue{$\mu_I\neq\emptyset$,}{I would remove this} $\mu_I\neq\top$ and
+    Otherwise (\textit{ie.} % \issue{$\mu_I\neq\emptyset$,}{I would remove this}
+    $\mu_I\neq\top$ and
     $a_k\neq\top$), let $x\to^m t\in \mu_I$. Then, for all $i\in I$ either
     $a_i=\top$ or there is a binding $x\to^m t_i$ in $a_i$, and we have
     $t = \sqcap_{i\in J}t_i$ where $J=\{i\in I\mid a_i\neq\top\}$. In particular,
@@ -226,11 +229,12 @@
     $\mu_I \sqsubseteq a_k$.
     \item Now, we prove that $\mu_I$ is the greatest.
     Suppose that $\mu'_I$ is also a lower bound of $\{a_i\}_{i\in I}$.
-    If \issue{$\mu'_I$ is empty or}{I would remove this} $\mu_I=\top$ then $\mu'_I \sqsubseteq \mu_I$.
+    If % \issue{$\mu'_I$ is empty or}{I would remove this}
+    $\mu_I=\top$ then $\mu'_I \sqsubseteq \mu_I$.
     If $\mu'_I=\top$ then necessarily $\{a_i\}_{i\in I}=\{\top\}$, so
     we have $\mu_I=\top$, hence $\mu'_I \sqsubseteq \mu_I$.
-    Otherwise (\textit{ie.} \issue{$\mu'_I\neq\emptyset$,}{I would remove this} $\mu'_I\neq\top$
-    and $\mu_I\neq\top$),
+    Otherwise (\textit{ie.} % \issue{$\mu'_I\neq\emptyset$,}{I would remove this}
+    $\mu'_I\neq\top$ and $\mu_I\neq\top$),
     let $x\to^m t\in \mu'_I$. As $\mu'_I$ is a lower bound of $\{a_i\}_{i\in I}$,
     for all $i\in I$ either $a_i=\top$ or there is $x\to^m t_i\in a_i$ such
     that $t\sqsubseteq t_i$, so $t$ is a lower bound of $\{t_i\}_{i\in J}$
@@ -244,6 +248,7 @@
   since for every $a\in\mathbb{AS}_\kappa$ we have $a\sqsubseteq\top$.
   Hence there is a least upper bound operator, \issue{induced by $\sqcap$}{Will add reference later},
   and $\mathbb{AS}_\kappa$ is a complete lattice.
+  \qed
 \end{proof}
 
 \begin{definition}[Concretization map]\label{def:concretization}
@@ -267,13 +272,61 @@
   \end{align*}
 \end{definition}
 
+\begin{lemma}\label{lem:co-additive-type}
+  Let $I\subseteq\mathbb{N}$ and $\{t_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$.
+  For any $\rho\star h\in\mathbb{S}_\kappa$ and $\ell\in\Locs$,
+  if $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$ then
+  $\ell\approx_{\rho\star h}t_i$ for all $i\in I$.
+\end{lemma}
+\begin{proof}
+  We proceed by structural induction. % on $t = \sqcap_{i\in I}t_i$.
+  \begin{itemize}
+    \item (Base: there is a $t_k$ which is not a box)
+    Let $\rho\star h\in\mathbb{S}_\kappa$ and $\ell\in\Locs$.
+    Suppose that $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$.
+    If $t_k=\bot$ then $\sqcap_{i\in I}t_i = \bot$, hence
+    $h(\ell)$ is undefined. So,
+    \issue{$\ell\approx_{\rho\star h}t_k$}{What about the other $t_i$'s?}.
+    If $t_k=\mathsf{int}$ then either $\sqcap_{i\in I}t_i = \bot$ (this happens
+    when there is a $t_{k'}$ which is not $\mathsf{int}$) or
+    $\sqcap_{i\in I}t_i = \mathsf{int}$ (this happens when each $t_i$ is
+    $\mathsf{int}$);
+    in the former case, \issue{$h(\ell)$ is undefined}{so we do not have $\ell\approx_{\rho\star h}t_k$};
+    in the latter case, we have $h(\ell)\in\mathbb{Z}$
+    so $\ell\approx_{\rho\star h}t_i$ for all $i\in I$.
+    %
+    \item (Induction step) Suppose that $t_i=\mathtt{box}\ t'_i$ for all
+    $i\in I$. Suppose also that for any
+    $\rho\star h\in\mathbb{S}_\kappa$ and $\ell\in\Locs$, if
+    $\ell\approx_{\rho\star h}\sqcap_{i\in I}t'_i$ then
+    $\ell\approx_{\rho\star h}t'_i$ for all $i\in I$.
+    Let $\rho\star h\in\mathbb{S}_\kappa$ and $\ell\in\Locs$.
+    If $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$ then
+    $\ell\approx_{\rho\star h} \mathtt{box}\ \sqcap_{i\in I}t'_i$. So,
+    $\ell\Rightarrow\ell'\in h$ and $\ell'\approx_{\rho\star h}\sqcap_{i\in I}t'_i$.
+    Hence, by induction hypothesis, $\ell'\approx_{\rho\star h}t'_i$ for all $i\in I$.
+    Consequently, for all $i\in I$, $\ell\approx_{\rho\star h} \mathtt{box}\ t'_i$
+    \ie $\ell\approx_{\rho\star h} t_i$.
+  \end{itemize}
+\end{proof}
+
 \begin{lemma}\label{lem:co-additive}
   The map $\gamma_\kappa$ of Def.~\ref{def:concretization} is co-additive.
 \end{lemma}
 \begin{proof}
   Let $I\subseteq\mathbb{N}$ and $\{a_i\}_{i\in I}\subseteq\mathbb{AS}_\kappa$. We prove that
   $\gamma_\kappa(\sqcap_{i\in I}a_i)=\cap_{i\in I}\gamma_\kappa(a_i)$.
-  \textbf{TODO}
+  \begin{itemize}
+    \item First we prove that
+    $\gamma_\kappa(\sqcap_{i\in I}a_i)\subseteq\cap_{i\in I}\gamma_\kappa(a_i)$.
+    Let $\rho\star h\in\gamma_\kappa(\sqcap_{i\in I}a_i)$.
+    Then for every $x\to^m\ell\in\rho$ there is $x\to^m t\in \sqcap_{i\in I}a_i$ s.t.
+    $\ell\approx_{\rho\star h}t$. By definition of $\sqcap$, for all $i\in I$
+    either $a_i=\top$ or there is $x\to^m t_i\in a_i$, and
+    $t=\sqcap_{i\in J}t_i$ where $J=\{i\in I\mid a_i\neq\top\}$.
+    \item Now we prove that
+    $\gamma_\kappa(\sqcap_{i\in I}a_i)\supseteq\cap_{i\in I}\gamma_\kappa(a_i)$.
+  \end{itemize}
   \qed
 \end{proof}
 
