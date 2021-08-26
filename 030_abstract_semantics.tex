@@ -166,8 +166,10 @@
   ordered set.
   \begin{itemize}
     \item (Reflexivity) Let $a\in\mathbb{AS}_\kappa$. If $a=\top$, then
-    $a\sqsubseteq a$. Otherwise, if $a$ is empty, then $a\sqsubseteq a$ holds
-    vacuously. Otherwise, for every $x\to^mt\in a$ there is $x\to^mt\in a$ with
+      $a\sqsubseteq a$.
+      \issue{Otherwise, if $a$ is empty, then $a\sqsubseteq a$ holds
+      vacuously.}{I would remove this}
+      Otherwise, for every $x\to^mt\in a$ there is $x\to^mt\in a$ with
     $t\sqsubseteq t$ (see Lem.~\ref{lemma:partial-order-types}), hence we have
     $a\sqsubseteq a$.
     %
@@ -201,10 +203,12 @@
   $\{a_i\}_{i\in I}$.
   \begin{itemize}
     \item First, we prove that $\mu_I$ is a lower bound.
-    Let $k\in I$. If $\mu_I$ is empty or $a_k=\top$ then we have
+      Let $k\in I$. If
+      \issue{$\mu_I$ is empty or}{I would remove this}
+      $a_k=\top$ then we have
     $\mu_I \sqsubseteq a_k$. If $\mu_I = \top$ then $\{a_i\}_{i\in I}=\{\top\}$,
     so we have $a_k=\top$, hence $\mu_I \sqsubseteq a_k$.
-    Otherwise (\textit{ie.} $\mu_I\neq\emptyset$, $\mu_I\neq\top$ and
+    Otherwise (\textit{ie.} \issue{$\mu_I\neq\emptyset$,}{I would remove this} $\mu_I\neq\top$ and
     $a_k\neq\top$), let $x\to^m t\in \mu_I$. Then, for all $i\in I$ either
     $a_i=\top$ or there is a binding $x\to^m t_i$ in $a_i$, and we have
     $t = \sqcap_{i\in J}t_i$ where $J=\{i\in I\mid a_i\neq\top\}$. In particular,
@@ -213,10 +217,10 @@
     $\mu_I \sqsubseteq a_k$.
     \item Now, we prove that $\mu_I$ is the greatest.
     Suppose that $\mu'_I$ is also a lower bound of $\{a_i\}_{i\in I}$.
-    If $\mu'_I$ is empty or $\mu_I=\top$ then $\mu'_I \sqsubseteq \mu_I$.
+    If \issue{$\mu'_I$ is empty or}{I would remove this} $\mu_I=\top$ then $\mu'_I \sqsubseteq \mu_I$.
     If $\mu'_I=\top$ then necessarily $\{a_i\}_{i\in I}=\{\top\}$, so
     we have $\mu_I=\top$, hence $\mu'_I \sqsubseteq \mu_I$.
-    Otherwise (\textit{ie.} $\mu'_I\neq\emptyset$, $\mu'_I\neq\top$
+    Otherwise (\textit{ie.} \issue{$\mu'_I\neq\emptyset$,}{I would remove this} $\mu'_I\neq\top$
     and $\mu_I\neq\top$),
     let $x\to^m t\in \mu'_I$. As $\mu'_I$ is a lower bound of $\{a_i\}_{i\in I}$,
     for all $i\in I$ either $a_i=\top$ or there is $x\to^m t_i\in a_i$ such
@@ -227,9 +231,10 @@
     $\mu'_I \sqsubseteq \mu_I$.
   \end{itemize}
 
-  Finally, we prove that every subset of $\mathbb{AS}_\kappa$ has a least
-  upper bound. Let $I\subseteq\mathbb{N}$ and
-  $\{a_i\}_{i\in I}\subseteq\mathbb{AS}_\kappa$.
+  Finally, $\top$ is the top element of $\mathbb{AS}_\kappa$
+  since for every $a\in\mathbb{AS}_\kappa$ we have $a\sqsubseteq\top$.
+  Hence there is a least upper bound operator, \issue{induced by $\sqcap$}{Will add reference later},
+  and $\mathbb{AS}_\kappa$ is a complete lattice.
 \end{proof}
 
 \begin{definition}[Concretization map]\label{def:concretization}

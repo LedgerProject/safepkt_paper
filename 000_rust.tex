@@ -10,12 +10,15 @@
 \usepackage{tcolorbox}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{stmaryrd}
+\usepackage{sidenotes}
+\usepackage{xcolor}
 
 \usepackage{svg}
 \newcommand{\orcid}[1]{\href{https://orcid.org/#1}{\includesvg[height = 2ex]{svg-inkscape/ORCID_iD}}}
 
 \newcommand{\ie}{\textit{, ie.\ }}
 \newcommand{\wrt}{\textit{wrt.\ }}
+\newcommand{\issue}[2]{{\color{red}{#1}\sidenote{#2}}}
 
 \def\codesize{\smaller}
 \def\<#1>{\codeid{#1}}
