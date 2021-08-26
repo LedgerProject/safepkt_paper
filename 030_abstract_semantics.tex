@@ -27,7 +27,6 @@
   $(\mathsf{T}_\kappa,\sqsubseteq)$ is a partially ordered set.
 \end{lemma}
 \begin{proof}
-  We prove that $\sqsubseteq$ is reflexive, antisymmetric and transitive.
   We proceed by structural induction.
   \begin{itemize}
     \item (Reflexivity)
@@ -104,6 +103,36 @@
   Then, $\sqcap_{i\in I}t_i$ is the greatest lower bound of $\{t_i\}_{i\in I}$.
 \end{lemma}
 \begin{proof}
+  We proceed by structural induction.
+  Let $\mu_I = \sqcap_{i\in I}t_i$.
+  \begin{itemize}
+    \item First, let us prove that $\mu_I$ is a lower bound.
+    \begin{itemize}
+      \item (Base: there is a $t_k$ which is not a box)
+      If $t_k=\bot$ then $\mu_I=\bot$ and so $\mu_I$ is a lower bound of
+      $\{t_i\}_{i\in I}$.
+      If $t_k=\mathsf{int}$ then either $\mu_I=\bot$ (this happens when
+      there is a $t_{k'}$ which is not $\mathsf{int}$) or $\mu_I=\mathsf{int}$
+      (this happens when all the $t_i$'s are $\mathsf{int}$), and so
+      $\mu_I$ is a lower bound of $\{t_i\}_{i\in I}$.
+      If $t_k$ is a borrow then either there is a $t_{k'}$ which is not a borrow,
+      and so $\mu_I=\bot$, or all the $t_i$'s are a borrow, and so $\mu_I$ is
+      a borrow which results from the intersection of all the $t_i$'s; hence
+      $\mu_I$ is a lower bound of $\{t_i\}_{i\in I}$.
+      Identically, if $t_k$ is a mutable borrow then $\mu_I$ is a lower bound
+      of $\{t_i\}_{i\in I}$.
+      \item (Induction step) Suppose that for all $i\in I$ we have
+      $t_i = \mathtt{box}\ t'_i$ and that $\sqcap_{i\in I}t'_i$ is a lower
+      bound of $\{t'_i\}_{i\in I}$. Then,
+      $\mu_I = \mathtt{box}\ \sqcap_{i\in I}t'_i$ is a lower bound
+      of $\{t_i\}_{i\in I}$.
+    \end{itemize}
+    \item Now, let us prove that $\mu_I$ is the greatest.
+    \begin{itemize}
+      \item (Base: there is a $t_k$ which is not a box)
+      \item (Induction step)
+    \end{itemize}
+  \end{itemize}
 \end{proof}
 
 \begin{definition}[Abstract stores]
