@@ -184,13 +184,18 @@
     $\mu_I \sqsubseteq a_k$.
     \item Now, we prove that $\mu_I$ is the greatest.
     Suppose that $\mu'_I$ is also a lower bound of $\{a_i\}_{i\in I}$.
-    If $\mu'_I$ is empty then $\mu'_I \sqsubseteq \mu_I$.
+    If $\mu'_I$ is empty or $\mu_I=\top$ then $\mu'_I \sqsubseteq \mu_I$.
     If $\mu'_I=\top$ then necessarily $\{a_i\}_{i\in I}=\{\top\}$, so
     we have $\mu_I=\top$, hence $\mu'_I \sqsubseteq \mu_I$.
-    Otherwise (\textit{ie.} $\mu'_I\neq\emptyset$ and $\mu'_I\neq\top$),
+    Otherwise (\textit{ie.} $\mu'_I\neq\emptyset$, $\mu'_I\neq\top$
+    and $\mu_I\neq\top$),
     let $x\to^m t\in \mu'_I$. As $\mu'_I$ is a lower bound of $\{a_i\}_{i\in I}$,
     for all $i\in I$ either $a_i=\top$ or there is $x\to^m t_i\in a_i$ such
-    that $t\sqsubseteq t_i$.
+    that $t\sqsubseteq t_i$, so $t$ is a lower bound of $\{t_i\}_{i\in J}$
+    where $J=\{i\in I\mid a_i\neq\top\}$. By Lem.~\ref{lemma:glb-type},
+    $t\sqsubseteq \sqcap_{i\in J}t_i$. Note that
+    $x\to^m \sqcap_{i\in J}t_i\in \mu_I$. Therefore, we have
+    $\mu'_I \sqsubseteq \mu_I$.
   \end{itemize}
 
   Finally, we prove that every subset of $\mathbb{AS}_\kappa$ has a least
