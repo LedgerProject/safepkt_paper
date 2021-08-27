@@ -265,8 +265,8 @@
   where
   \begin{align*}
     \ell&\approx_{\rho\star h}\mathsf{int} & \text{iff $h(\ell)\in\mathbb{Z}$}\\
-    \ell&\approx_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{iff $\exists i.1\le i\le n$ s.t.\ }\loc(\mathsf{w}_i,s)\to\ell\in\rho\\
-    \ell&\approx_{\rho\star h}\mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{iff $\exists i.1\le i\le n$ s.t.\ }\loc(\mathsf{w}_i,s)\leadsto\ell\in\rho\\
+    \ell&\approx_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{iff $\exists i.1\le i\le n$ s.t.\ }\ell\to\loc(\mathsf{w}_i,s)\in\rho\\
+    \ell&\approx_{\rho\star h}\mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{iff $\exists i.1\le i\le n$ s.t.\ }\ell\leadsto\loc(\mathsf{w}_i,s)\in\rho\\
     \ell&\approx_{\rho\star h}\mathtt{box}\ t & \text{iff $\ell\Rightarrow\ell'\in h$ and $\ell'\approx_{\rho\star h}t$}\\
     \ell&\approx_{\rho\star h}\bot & \text{iff $h(\ell)$ is undefined}
   \end{align*}
