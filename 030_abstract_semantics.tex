@@ -135,6 +135,29 @@
   \qed
 \end{proof}
 
+\begin{lemma}\label{lemma:technical-type}
+  Let $t\in\mathsf{T}_\kappa$. For any $t_1,t_2\in\mathsf{T}_\kappa$,
+  if $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$ then $t_1\sqcap t_2$ is defined.
+\end{lemma}
+\begin{proof}
+  We proceed by structural induction on $t$.
+  \begin{itemize}
+    \item (Base: $t$ is not a box)
+    Let $t_1,t_2\in\mathsf{T}_\kappa$ with $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$.
+    If $t$ is $\mathsf{int}$ (resp. a borrow, a mutable borrow or $\mathsf{nothing}$)
+    then, necessarily, $t_1$ and $t_2$ are $\mathsf{int}$ (resp. a borrow,
+    a mutable borrow or $\mathsf{nothing}$), hence $t_1\sqcap t_2$ is defined.
+    %
+    \item (Induction step) Suppose that $t = \mathtt{box}\ t'$.
+    Let $t_1,t_2\in\mathsf{T}_\kappa$ with $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$.
+    Then, necessarily, $t_1 = \mathtt{box}\ t'_1$ and $t_2 = \mathtt{box}\ t'_2$
+    with $t'\sqsubseteq t'_1$ and $t'\sqsubseteq t'_2$. By induction
+    hypothesis, $t'_1\sqcap t'_2$ is defined, so
+    $(\mathtt{box}\ t'_1) \sqcap (\mathtt{box}\ t'_2) = t_1 \sqcap t_2$ is defined.
+    \qed
+  \end{itemize}
+\end{proof}
+
 \begin{definition}[Abstract stores]
   \label{def:abstract-store}
   Given a context $\kappa$, an \emph{abstract store} $a$ over $\kappa$ is either $\top$ or $\bot$
@@ -152,7 +175,7 @@
 
 \begin{definition}
   The greatest lower bound operator over $\mathbb{AS}_\kappa$ is defined as
-  $a\sqcap\top=a$, $\top\sqcap a=a$, $\bot\sqcap a=\bot$, $a\sqcap a=\bot$
+  $a\sqcap\top=a$, $\top\sqcap a=a$, $\bot\sqcap a=\bot$, $a\sqcap \bot=\bot$
   and, when $a_1,a_2\not=\top,\bot$,
   \[
   a_1\sqcap a_2=\begin{cases}
@@ -167,21 +190,22 @@
   with $\sqcap$ as greatest lower bound operator.
 \end{proposition}
 \begin{proof}
-  \issue{TODO}{All this proof should be checked}
+  % \issue{TODO}{All this proof should be checked}
   First we prove that $(\mathbb{AS}_\kappa,\sqsubseteq)$ is a partially ordered set.
   \begin{itemize}
-    \item (Reflexivity) Let $a\in\mathbb{AS}_\kappa$. If $a=\top$ ot $a=\bot$, then
+    \item (Reflexivity) Let $a\in\mathbb{AS}_\kappa$. If $a=\top$ or $a=\bot$, then
     $a\sqsubseteq a$.
     Otherwise, for every $x\to^mt\in a$ there is $x\to^mt\in a$ with
     $t\sqsubseteq t$ (see Lem.~\ref{lemma:partial-order-types}), hence we have
     $a\sqsubseteq a$.
     %
     \item (Antisymmetry) Suppose that $a_1 \sqsubseteq a_2$ and
-    $a_2 \sqsubseteq a_1$. If $a_2=\top$, then, as $a_2 \sqsubseteq a_1$,
-    we necessarily have $a_1=\top$, so $a_1=a_2$.
-    If $a_2=\bot$ then, as $a_1\sqsubseteq a_2$, we necessarily have $a_1=\bot$, so $a_1=a_2$.
-    Otherwise, we necessarily
-    have $a_1\neq\top,\bot$. Moreover, as $a_1 \sqsubseteq a_2$, for every
+    $a_2 \sqsubseteq a_1$. If $a_1=\top$, then, as $a_1 \sqsubseteq a_2$,
+    we necessarily have $a_2=\top$, so $a_1=a_2$.
+    If $a_1=\bot$ then, as $a_2\sqsubseteq a_1$, we necessarily have $a_2=\bot$,
+    so $a_1=a_2$.
+    Identically, if $a_2=\top$ or $a_2=\bot$ then we have $a_1=a_2$.
+    Now, suppose that $a_1,a_2\not=\top,\bot$. As $a_1 \sqsubseteq a_2$, for every
     $x\to^mt_1\in a_1$ there is $x\to^mt_2\in a_2$ such that
     $t_1\sqsubseteq t_2$ and, as $a_2 \sqsubseteq a_1$, there is
     $x\to^mt'_1\in a_1$ such that $t_2\sqsubseteq t'_1$.
@@ -194,11 +218,15 @@
     Therefore, $a_1=a_2$.
     %
     \item (Transitivity) Suppose that $a_1 \sqsubseteq a_2$ and
-    $a_2 \sqsubseteq a_3$. If $a_3=\top$, then we have $a_1\sqsubseteq a_3$.
+    $a_2 \sqsubseteq a_3$.
     If $a_1=\bot$ then $a_1\sqsubseteq a_3$.
-    Otherwise, as $a_2\sqsubseteq a_3$, we have $a_2\neq\top$ and so, as
-    $a_1 \sqsubseteq a_2$, we also have $a_1\neq\top$. Consequently, for every
-    $x\to^mt_1\in a_1$ there is $x\to^mt_2\in a_2$ such that
+    If $a_1=\top$ then $a_2=\top$ and so $a_3=\top$, hence $a_1\sqsubseteq a_3$.
+    If $a_2=\bot$ then $a_1=\bot$, so $a_1\sqsubseteq a_3$.
+    If $a_2=\top$ then $a_3=\top$, hence $a_1\sqsubseteq a_3$.
+    If $a_3=\bot$ then $a_2=\bot$ and so $a_1=\bot$, hence $a_1\sqsubseteq a_3$.
+    If $a_3=\top$ then $a_1\sqsubseteq a_3$.
+    Now suppose that $a_1,a_2,a_3\not=\top,\bot$.
+    Then, for every $x\to^mt_1\in a_1$ there is $x\to^mt_2\in a_2$ such that
     $t_1\sqsubseteq t_2$ and there is $x\to^mt_3\in a_3$ such that
     $t_2\sqsubseteq t_3$. Hence, by Lem.~\ref{lemma:partial-order-types},
     we have $t_1\sqsubseteq t_3$. Therefore, we have $a_1\sqsubseteq a_3$.
@@ -209,13 +237,14 @@
   $\{a_i\}_{i\in I}$.
   \begin{itemize}
     \item First, we prove that $\mu_I$ is a lower bound.
-    Let $k\in I$. If $a_k=\top$ then we have
-    $\mu_I \sqsubseteq a_k$. If $a_k=\bot$ then
-    $\mu_I=\bot$ and $\mu_I\sqsubseteq a_k$. If $\mu_I = \top$ then $\{a_i\}_{i\in I}=\{\top\}$,
-    so we have $a_k=\top$, hence $\mu_I \sqsubseteq a_k$.
+    Let $k\in I$.
+    If $a_k=\top$ then we have $\mu_I \sqsubseteq a_k$.
+    If $a_k=\bot$ then $\mu_I=\bot$ and $\mu_I\sqsubseteq a_k$.
+    If $\mu_I = \top$ then $\{a_i\}_{i\in I}=\{\top\}$, so we have $a_k=\top$,
+    hence $\mu_I \sqsubseteq a_k$.
     If $\mu_I=\bot$ then $\mu_I\sqsubseteq a_k$.
-    Otherwise (\textit{ie.} $\mu_I\neq\top,\bot$ and
-    $a_k\neq\top,\bot$), let $x\to^m t\in \mu_I$. Then, for all $i\in I$ either
+    Otherwise (\textit{ie.} $\mu_I,a_k\neq\top,\bot$),
+    let $x\to^m t\in \mu_I$. Then, for all $i\in I$ either
     $a_i=\top$ or there is a binding $x\to^m t_i$ in $a_i$, and we have
     $t = \sqcap_{i\in J}t_i$ where $J=\{i\in I\mid a_i\neq\top\}$. In particular,
     there is a binding $x\to^m t_k$ in $a_k$ and, by Lem.~\ref{lemma:glb-type},
@@ -223,17 +252,23 @@
     $\mu_I \sqsubseteq a_k$.
     \item Now, we prove that $\mu_I$ is the greatest.
     Suppose that $\mu'_I$ is also a lower bound of $\{a_i\}_{i\in I}$.
-    If % \issue{$\mu'_I$ is empty or}{I would remove this}
-    $\mu_I=\top$ then $\mu'_I \sqsubseteq \mu_I$.
     If $\mu'_I=\top$ then necessarily $\{a_i\}_{i\in I}=\{\top\}$, so
     we have $\mu_I=\top$, hence $\mu'_I \sqsubseteq \mu_I$.
-    Otherwise (\textit{ie.} % \issue{$\mu'_I\neq\emptyset$,}{I would remove this}
-    $\mu'_I\neq\top$ and $\mu_I\neq\top$),
+    If $\mu'_I=\bot$ or $\mu_I=\top$ then $\mu'_I \sqsubseteq \mu_I$.
+    Otherwise, if $\mu_I=\bot$ then either $\bot\in\{a_i\}_{i\in I}$ and so
+    $\mu'_I=\bot$, hence $\mu'_I \sqsubseteq \mu_I$; or, for some
+    $a_i,a_j$ there is  $x\to^m t_i\in a_i$ and $x\to^m t_j\in a_j$ s.t.\
+    $t_i\sqcap t_j$ is undefined; by Lem.~\ref{lemma:technical-type}, this
+    is not possible, because there would be exactly one binding
+    $x\to^m t\in\mu'_I$ and we would have $t \sqsubseteq t_i$ and
+    $t \sqsubseteq t_j$.
+    Otherwise (\textit{ie.} $\mu'_I,\mu_I\neq\bot,\top$),
     let $x\to^m t\in \mu'_I$. As $\mu'_I$ is a lower bound of $\{a_i\}_{i\in I}$,
     for all $i\in I$ either $a_i=\top$ or there is $x\to^m t_i\in a_i$ such
     that $t\sqsubseteq t_i$, so $t$ is a lower bound of $\{t_i\}_{i\in J}$
-    where $J=\{i\in I\mid a_i\neq\top\}$. By Lem.~\ref{lemma:glb-type},
-    $t\sqsubseteq \sqcap_{i\in J}t_i$. Note that
+    where $J=\{i\in I\mid a_i\neq\top\}$.
+    As $\mu_I\neq\bot$, $\sqcap_{i\in J}t_i$ is defined, so by Lem.~\ref{lemma:glb-type}
+    we have $t\sqsubseteq \sqcap_{i\in J}t_i$. Note that
     $x\to^m \sqcap_{i\in J}t_i\in \mu_I$. Therefore, we have
     $\mu'_I \sqsubseteq \mu_I$.
   \end{itemize}
@@ -266,43 +301,75 @@
   \end{align*}
 \end{definition}
 
+
 \begin{lemma}\label{lem:co-additive-type}
-  Let $I\subseteq\mathbb{N}$ and $\{t_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$ be such that
-  $\sqcap_{i\in I}t_i$ is defined.
+  Let $I\subseteq\mathbb{N}$ and $\{t_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$.
+  % be such that $\sqcap_{i\in I}t_i$ is defined.
   For any $\rho\star h\in\mathbb{S}_\kappa$ and $\ell\in\Locs$,
-  if $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$ then
-  $\ell\approx_{\rho\star h}t_i$ for all $i\in I$.
+  \[(\sqcap_{i\in I}t_i \text{ is defined} \land
+  \ell\approx_{\rho\star h}\sqcap_{i\in I}t_i)
+  \iff \forall i\in I\ \ell\approx_{\rho\star h}t_i\]
 \end{lemma}
 \begin{proof}
-  \issue{TODO}{This proof should be redone}
+  \issue{TODO}{Fix Def. 18 (borrows)}
   We proceed by structural induction. % on $t = \sqcap_{i\in I}t_i$.
   \begin{itemize}
     \item (Base: there is a $t_k$ which is not a box)
     Let $\rho\star h\in\mathbb{S}_\kappa$ and $\ell\in\Locs$.
-    Suppose that $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$.
-    If $t_k=\bot$ then $\sqcap_{i\in I}t_i = \bot$, hence
-    $h(\ell)$ is undefined. So,
-    \issue{$\ell\approx_{\rho\star h}t_k$}{What about the other $t_i$'s?}.
-    If $t_k=\mathsf{int}$ then either $\sqcap_{i\in I}t_i = \bot$ (this happens
-    when there is a $t_{k'}$ which is not $\mathsf{int}$) or
-    $\sqcap_{i\in I}t_i = \mathsf{int}$ (this happens when each $t_i$ is
-    $\mathsf{int}$);
-    in the former case, \issue{$h(\ell)$ is undefined}{so we do not have $\ell\approx_{\rho\star h}t_k$};
-    in the latter case, we have $h(\ell)\in\mathbb{Z}$
-    so $\ell\approx_{\rho\star h}t_i$ for all $i\in I$.
+    \begin{itemize}
+      \item Suppose that $\sqcap_{i\in I}t_i$ is defined and
+      $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$.
+      If $t_k$ is $\mathsf{int}$ (resp. $\mathsf{nothing}$) then,
+      as $\sqcap_{i\in I}t_i$ is defined, each $t_i$ is $\mathsf{int}$
+      (resp. $\mathsf{nothing}$) and we have $\sqcap_{i\in I}t_i=\mathsf{int}$
+      (resp. $\sqcap_{i\in I}t_i=\mathsf{nothing}$).
+      Moreover, as $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$, we have
+      $h(\ell)\in\mathbb{Z}$ (resp. $h(\ell)$ is undefined). Consequently,
+      for all $i\in I$ we have $\ell\approx_{\rho\star h}t_i$.
+      If $t_k$ is a borrow (resp. mutable borrow) then, as $\sqcap_{i\in I}t_i$
+      is defined, each $t_i$ is a borrow (resp. mutable borrow) and
+      $\sqcap_{i\in I}t_i=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
+      (resp. $\sqcap_{i\in I}t_i=\mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$)
+      is the union of all the $t_i$'s. Moreover, as
+      $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$, for all $1\le i\le n$
+      we have $\ell\to\loc(\mathsf{w}_i,s)\in h$
+      (resp. $\ell\leadsto\loc(\mathsf{w}_i,s)\in h$). Consequently,
+      for all $i\in I$ we have $\ell\approx_{\rho\star h}t_i$.
+      \item Now, suppose that for all $i\in I$ we have $\ell\approx_{\rho\star h}t_i$.
+      If $t_k$ is $\mathsf{int}$ (resp. $\mathsf{nothing}$) then
+      $h(\ell)\in\mathbb{Z}$ (resp. $h(\ell)$ is undefined). Consequently,
+      for all $i\in I$ we have $t_i = \mathsf{int}$ (resp. $t_i = \mathsf{nothing}$).
+      So, $\sqcap_{i\in I}t_i = \mathsf{int}$
+      (resp. $\sqcap_{i\in I}t_i=\mathsf{nothing}$) is defined and
+      $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$.
+      If $t_k=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$ then
+      for all $1\le i\le n$ we have $\ell\to\loc(\mathsf{w}_i,s)\in h$.
+    \end{itemize}
     %
     \item (Induction step) Suppose that $t_i=\mathtt{box}\ t'_i$ for all
-    $i\in I$. Suppose also that for any
-    $\rho\star h\in\mathbb{S}_\kappa$ and $\ell\in\Locs$, if
-    $\ell\approx_{\rho\star h}\sqcap_{i\in I}t'_i$ then
-    $\ell\approx_{\rho\star h}t'_i$ for all $i\in I$.
-    Let $\rho\star h\in\mathbb{S}_\kappa$ and $\ell\in\Locs$.
-    If $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$ then
-    $\ell\approx_{\rho\star h} \mathtt{box}\ \sqcap_{i\in I}t'_i$. So,
-    $\ell\Rightarrow\ell'\in h$ and $\ell'\approx_{\rho\star h}\sqcap_{i\in I}t'_i$.
-    Hence, by induction hypothesis, $\ell'\approx_{\rho\star h}t'_i$ for all $i\in I$.
-    Consequently, for all $i\in I$, $\ell\approx_{\rho\star h} \mathtt{box}\ t'_i$
-    \ie $\ell\approx_{\rho\star h} t_i$.
+    $i\in I$. Let $\rho\star h\in\mathbb{S}_\kappa$ and $\ell\in\Locs$.
+    \begin{itemize}
+      \item If $\sqcap_{i\in I}t_i$ is defined and
+      $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$ then
+      $\sqcap_{i\in I}t_i = \mathtt{box}\ (\sqcap_{i\in I}t'_i)$ and
+      $\sqcap_{i\in I}t'_i$ is defined. Moreover, $\ell\Rightarrow\ell'\in h$
+      and $\ell'\approx_{\rho\star h}\sqcap_{i\in I}t'_i$. Consequently,
+      by induction hypothesis, for all $i\in I$ we have
+      $\ell'\approx_{\rho\star h}t'_i$. Therefore, for all $i\in I$ we have
+      $\ell\approx_{\rho\star h}\mathtt{box}\ t'_i$ \ie
+      $\ell\approx_{\rho\star h}t_i$.
+      \item Now, suppose that for all $i\in I$ we have $\ell\approx_{\rho\star h}t_i$
+      \ie $\ell\approx_{\rho\star h}\mathtt{box}\ t'_i$. Then, for all $i\in I$,
+      $\ell\Rightarrow\ell'\in h$ and  $\ell'\approx_{\rho\star h}t'_i$.
+      Note that the same location $\ell'$ is used for each $i\in I$ because,
+      by definition of a heap, there is at most a binding in $h$ for location $\ell$.
+      By induction hypothesis, $\sqcap_{i\in I}t'_i$ is defined and
+      $\ell'\approx_{\rho\star h}\sqcap_{i\in I}t'_i$.
+      Consequently, $\sqcap_{i\in I}t_i = \sqcap_{i\in I} \mathtt{box}\ t'_i =
+      \mathtt{box}\ (\sqcap_{i\in I}t'_i)$ is defined and
+      $\ell\approx_{\rho\star h}\mathtt{box}\ (\sqcap_{i\in I}t'_i)$ \ie
+      $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$.
+    \end{itemize}
   \end{itemize}
 \end{proof}
 
@@ -310,19 +377,59 @@
   The map $\gamma_\kappa$ of Def.~\ref{def:concretization} is co-additive.
 \end{lemma}
 \begin{proof}
-  \issue{TODO}{This proof should be redone}
-  Let $I\subseteq\mathbb{N}$ and $\{a_i\}_{i\in I}\subseteq\mathbb{AS}_\kappa$. We prove that
-  $\gamma_\kappa(\sqcap_{i\in I}a_i)=\cap_{i\in I}\gamma_\kappa(a_i)$.
+  % \issue{TODO}{This proof should be redone}
+  Let $I\subseteq\mathbb{N}$ and $\{a_i\}_{i\in I}\subseteq\mathbb{AS}_\kappa$.
+  We prove that $\gamma_\kappa(\sqcap_{i\in I}a_i)=\cap_{i\in I}\gamma_\kappa(a_i)$.
+  \begin{itemize}
+    \item If $\sqcap_{i\in I}a_i=\top$, then for all $i\in I$ we have $a_i=\top$.
+    Hence, $\gamma_\kappa(\sqcap_{i\in I}a_i) =
+    \gamma_\kappa(\top) =
+    \mathbb{S}_\kappa =
+    \cap_{i\in I}\mathbb{S}_\kappa =
+    \cap_{i\in I}\gamma_\kappa(\top) =
+    \cap_{i\in I}\gamma_\kappa(a_i)$.
+    \item Suppose that $\sqcap_{i\in I}a_i=\bot$. Then, either there is $i\in I$ s.t.
+    $a_i=\bot$, and so $\gamma_\kappa(\sqcap_{i\in I}a_i) = \varnothing =
+    \cap_{i\in I}\gamma_\kappa(a_i)$. Or, for some $a_j,a_k\not=\top,\bot$
+    there is $x\to^m t_j\in a_j$ and $x\to^m t_k\in a_k$ s.t.
+    $t_j\sqcap t_k$ is undefined. Let us show that
+    $\gamma_\kappa(a_j)\cap\gamma_\kappa(a_k)=\varnothing$.
+    Let $\rho\star h\in\gamma_\kappa(a_j)$.
+    Necessarily, there is a binding $x\to^m\ell$ in $\rho$ and
+    we have $\ell\approx_{\rho\star h}t_j$.
+    Consequently, by Lem.~\ref{lem:co-additive-type},
+    $\ell\approx_{\rho\star h}t_k$ does not hold, so
+    $\rho\star h\not\in\gamma_\kappa(a_k)$.
+    Finally, we have $\cap_{i\in I}\gamma_\kappa(a_i) = \varnothing =
+    \gamma_\kappa(\sqcap_{i\in I}a_i)$.
+  \end{itemize}
+  From now on, we suppose that $\sqcap_{i\in I}a_i\not=\top,\bot$.
+  Then, necessarily, for all $i\in I$ we have $a_i\not=\bot$.
+  Moreover, $J=\{i\in I\mid a_i\neq\top\}\not=\varnothing$ and
+  $\sqcap_{i\in I}a_i = \sqcap_{i\in J}a_i$ and
+  $\cap_{i\in I}\gamma_\kappa(a_i)=\cap_{i\in J}\gamma_\kappa(a_i)$.
   \begin{itemize}
     \item First we prove that
-    $\gamma_\kappa(\sqcap_{i\in I}a_i)\subseteq\cap_{i\in I}\gamma_\kappa(a_i)$.
-    Let $\rho\star h\in\gamma_\kappa(\sqcap_{i\in I}a_i)$.
-    Then for every $x\to^m\ell\in\rho$ there is $x\to^m t\in \sqcap_{i\in I}a_i$ s.t.
-    $\ell\approx_{\rho\star h}t$. By definition of $\sqcap$, for all $i\in I$
-    either $a_i=\top$ or there is $x\to^m t_i\in a_i$, and
-    $t=\sqcap_{i\in J}t_i$ where $J=\{i\in I\mid a_i\neq\top\}$.
+    $\gamma_\kappa(\sqcap_{i\in J}a_i)\subseteq\cap_{i\in J}\gamma_\kappa(a_i)$.
+    Let $\rho\star h\in\gamma_\kappa(\sqcap_{i\in J}a_i)$.
+    Let $x\to^m\ell\in\rho$. Then, there is $x\to^m t\in \sqcap_{i\in J}a_i$ s.t.
+    $\ell\approx_{\rho\star h}t$. By definition of $\sqcap$, for all $i\in J$
+    there is $x\to^m t_i\in a_i$, and $t=\sqcap_{i\in J}t_i$ is defined.
+    By Lem.~\ref{lem:co-additive-type}, $\ell\approx_{\rho\star h}t_i$
+    for all $i\in J$. Therefore, $\rho\star h\in\gamma_\kappa(a_i)$
+    for all $i\in J$. Consequently,
+    $\rho\star h\in\cap_{i\in J}\gamma_\kappa(a_i)$.
     \item Now we prove that
-    $\gamma_\kappa(\sqcap_{i\in I}a_i)\supseteq\cap_{i\in I}\gamma_\kappa(a_i)$.
+    $\gamma_\kappa(\sqcap_{i\in J}a_i)\supseteq\cap_{i\in J}\gamma_\kappa(a_i)$.
+    Let $\rho\star h\in\cap_{i\in J}\gamma_\kappa(a_i)$.
+    Let $x\to^m\ell\in\rho$.
+    For all $i\in J$, $\rho\star h\in\gamma_\kappa(a_i)$ and there
+    is $x\to^m t_i\in a_i$ s.t. $\ell\approx_{\rho\star h}t_i$.
+    % As $\sqcap_{i\in I}a_i\not=\bot$, $\sqcap_{i\in J}t_i$ is defined
+    So, by Lem.~\ref{lem:co-additive-type}, $\sqcap_{i\in J}t_i$ is defined
+    and $\ell\approx_{\rho\star h}\sqcap_{i\in J}t_i$.
+    Moreover, $x\to^m \sqcap_{i\in J}t_i \in \sqcap_{i\in J}a_i$.
+    Consequently, we have $\rho\star h\in\gamma_\kappa(\sqcap_{i\in J}a_i)$.
   \end{itemize}
   \qed
 \end{proof}
