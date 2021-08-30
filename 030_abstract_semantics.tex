@@ -304,15 +304,14 @@
 
 \begin{lemma}\label{lem:co-additive-type}
   Let $I\subseteq\mathbb{N}$ and $\{t_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$.
-  % be such that $\sqcap_{i\in I}t_i$ is defined.
   For any $\rho\star h\in\mathbb{S}_\kappa$ and $\ell\in\Locs$,
   \[(\sqcap_{i\in I}t_i \text{ is defined} \land
   \ell\approx_{\rho\star h}\sqcap_{i\in I}t_i)
   \iff \forall i\in I\ \ell\approx_{\rho\star h}t_i\]
 \end{lemma}
 \begin{proof}
-  \issue{TODO}{Fix Def. 18 (borrows)}
-  We proceed by structural induction. % on $t = \sqcap_{i\in I}t_i$.
+  % \issue{TODO}{Fix Def. 18 (borrows)}
+  We proceed by structural induction.
   \begin{itemize}
     \item (Base: there is a $t_k$ which is not a box)
     Let $\rho\star h\in\mathbb{S}_\kappa$ and $\ell\in\Locs$.
@@ -330,7 +329,7 @@
       is defined, each $t_i$ is a borrow (resp. mutable borrow) and
       $\sqcap_{i\in I}t_i=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
       (resp. $\sqcap_{i\in I}t_i=\mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$)
-      is the union \issue{of all the $t_i$'s}{Maybe of all the $\mathsf{w}_i?$}. Moreover, as
+      is the union of all the $\mathsf{w}_i$'s. Moreover, as
       $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$, for all $1\le i\le n$
       we have $\ell\to\loc(\mathsf{w}_i,s)\in h$
       (resp. $\ell\leadsto\loc(\mathsf{w}_i,s)\in h$). Consequently,
@@ -342,8 +341,15 @@
       So, $\sqcap_{i\in I}t_i = \mathsf{int}$
       (resp. $\sqcap_{i\in I}t_i=\mathsf{nothing}$) is defined and
       $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$.
-      If $t_k=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$ then
-      for all $1\le i\le n$ we have $\ell\to\loc(\mathsf{w}_i,s)\in h$.
+      If $t_k=\borrow\{\mathsf{w}_{k,1},\ldots,\mathsf{w}_{k,n_k}\}$ then
+      for all $1\le j\le n_k$ we have $\ell\to\loc(\mathsf{w}_{k,j},s)\in h$.
+      By definition of a heap, there is at most a binding in $h$ for location
+      $\ell$, hence all the $\loc(\mathsf{w}_{k,j},s)$'s are equal to a same
+      location $\ell'$. Then, for all $i\in I$, $t_i$ has the form
+      $\borrow\{\mathsf{w}_{i,1},\ldots,\mathsf{w}_{i,n_i}\}$ necessarily
+      and $\loc(\mathsf{w}_{i,j},s)=\ell'$ for all $1\le j\le n_i$. So,
+      $\sqcap_{i\in I}t_i = \cup_{i\in I}\{\mathsf{w}_{i,1},\ldots,\mathsf{w}_{i,n_i}\}$
+      is defined and $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$.
     \end{itemize}
     %
     \item (Induction step) Suppose that $t_i=\mathtt{box}\ t'_i$ for all
@@ -360,7 +366,7 @@
       $\ell\approx_{\rho\star h}t_i$.
       \item Now, suppose that for all $i\in I$ we have $\ell\approx_{\rho\star h}t_i$
       \ie $\ell\approx_{\rho\star h}\mathtt{box}\ t'_i$. Then, for all $i\in I$,
-      $\ell\Rightarrow\ell'\in h$ and  $\ell'\approx_{\rho\star h}t'_i$.
+      $\ell\Rightarrow\ell'\in h$ and $\ell'\approx_{\rho\star h}t'_i$.
       Note that the same location $\ell'$ is used for each $i\in I$ because,
       by definition of a heap, there is at most a binding in $h$ for location $\ell$.
       By induction hypothesis, $\sqcap_{i\in I}t'_i$ is defined and
