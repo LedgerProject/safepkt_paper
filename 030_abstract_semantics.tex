@@ -330,7 +330,7 @@
       is defined, each $t_i$ is a borrow (resp. mutable borrow) and
       $\sqcap_{i\in I}t_i=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
       (resp. $\sqcap_{i\in I}t_i=\mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$)
-      is the union of all the $t_i$'s. Moreover, as
+      is the union \issue{of all the $t_i$'s}{Maybe of all the $\mathsf{w}_i?$}. Moreover, as
       $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$, for all $1\le i\le n$
       we have $\ell\to\loc(\mathsf{w}_i,s)\in h$
       (resp. $\ell\leadsto\loc(\mathsf{w}_i,s)\in h$). Consequently,
