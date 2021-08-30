@@ -172,7 +172,7 @@ The evaluation of a leftvalue yields the value of the leftvalue and a potentiall
   Given $s=\rho\star h$, we define
   \[
   \den[\mathsf{w}]{s}=\begin{cases}
-  \text{undefined} & \text{if $v\in\Locs$ and $v$ is dangling in $h$}\\
+  \text{undefined} & \text{if \sout{$v\in\Locs$ and $v$ is dangling in $h$} $v$ is undefined}\\
   \langle v, h\rangle & \text{otherwise, if $\type(\mathsf{w})$ has copy semantics}\\
   \langle v, h|_{-\loc(\mathsf{w},s)}\rangle & \text{otherwise, if $\type(\mathsf{w})$ has move semantics}
   \end{cases}
@@ -182,7 +182,7 @@ The evaluation of a leftvalue yields the value of the leftvalue and a potentiall
 
 \noindent
 Note that the last case above makes $\mathsf{w}$ point to a dangling location, hence
-$\mathsf{w}$ becomes unusable.
+$\mathsf{w}$ becomes unusable, for the first case.
 
 The evaluation of an expression yields the value of the expression and a potentially updated heap:
 
@@ -190,17 +190,18 @@ The evaluation of an expression yields the value of the expression and a potenti
   Given $s=\rho\star h$, we define
   \begin{align*}
     \den[i]{s}&=\langle i,h\rangle\\
-    \den[\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\\
-    \den[\mathtt{mut}\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\\
+    \den[\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\qquad\text{if $s(\loc(\mathsf{w},s))$ is defined}\\
+    \den[\mathtt{mut}\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\qquad\text{if $s(\loc(\mathsf{w},s))$ is defined}\\
     \den[\mathtt{box}\ \mathsf{e}]{s}&=
     \begin{cases}
       \langle\ell,h'\cup\{\ell\Rightarrow v\}\rangle & \text{if $\type(e)$ is a box}\\
       \langle\ell,h'\cup\{\ell\leadsto v\}\rangle & \text{otherwise, if $\type(e)$ is $\mathtt{mut}\borrow$}\\
       \langle\ell,h'\cup\{\ell\to v\}\rangle & \text{otherwise}
     \end{cases}\\
-    & \text{where $\den[\mathsf{e}]{s}=\langle v, h'\rangle$ and $\ell$ is fresh}
+    & \text{where $\den[\mathsf{e}]{s}=\langle v, h'\rangle$ is defined and $\ell$ is fresh}
   \end{align*}
   For expressions that are leftvalues, see Def.~\ref{def:semantics_leftvalues}.
+  In all other cases, the semantics of expressions in undefined.
 \end{definition}
 
 The set of locations reachable by following owned bindings only, and starting from a set of locations $\psi$,
