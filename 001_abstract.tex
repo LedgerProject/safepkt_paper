@@ -1,0 +1,11 @@
+This paper provides a formal foundation of the semantics of
+a significant subset of the Rust programming
+language, defines a type system over it, and gives a soundness proof
+of the type system through the formal framework of abstract interpretation.
+This allows one to derive proofs of specific features of the
+type system of Rust, including borrowing of values and their related
+constraints, that are simpler than those already proposed in the past,
+since abstract intepretation provides a standard
+methodology for definitions and proofs.
+The same semantics is the basis of future implementations of static analyses
+for Rust, built over this formal framework.

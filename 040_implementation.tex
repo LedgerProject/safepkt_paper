@@ -1,7 +1,14 @@
 \section{Implementation}\label{sec:implementation}
 
 This section will present the implementation of the abstract semantics
-for the subset of Rust considered in the paper. This implementation allows
-to check the execution of the abstract semantics.
+for the subset of Rust considered in the paper. This implementation can be
+used to improve the precision of type-checking of existing compilers,
+by allowing more code to be type-checked and executed. Moreover,
+types can be used to identify variables that can never be aliased, because
+they have distinct, incompatible types. Code working on such variables can
+then be run in distinct threads and automatically parallelized.
+Finally, the abstract semantics can be the basis of static analyses,
+different from type-checking, that can be defined, proved correct and
+added to existing static analyzers for Rust.
 
 \textbf{TODO}
