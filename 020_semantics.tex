@@ -172,7 +172,7 @@ The evaluation of a leftvalue yields the value of the leftvalue and a potentiall
   Given $s=\rho\star h$, we define
   \[
   \den[\mathsf{w}]{s}=\begin{cases}
-  \text{undefined} & \text{if \sout{$v\in\Locs$ and $v$ is dangling in $h$} $v$ is undefined}\\
+  \text{undefined} & \text{if $v$ is undefined}\\
   \langle v, h\rangle & \text{otherwise, if $\type(\mathsf{w})$ has copy semantics}\\
   \langle v, h|_{-\loc(\mathsf{w},s)}\rangle & \text{otherwise, if $\type(\mathsf{w})$ has move semantics}
   \end{cases}
