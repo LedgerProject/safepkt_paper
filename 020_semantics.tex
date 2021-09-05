@@ -3,7 +3,7 @@
 \begin{definition}
   We assume there is a set of variables $\Vars$
   and a finite set $\Lifetimes$ of \emph{lifetimes}.
-  The set of \emph{leftvalues} \textsf{w} is defined as:
+  The set of $\Leftvalues$ of \emph{leftvalues} is defined as:
   \begin{align*}
     \mathsf{w} ::= &\ x & \text{variable, with $x\in\Vars$}\\
     | &\ \mathtt{*}\mathsf{w} & \text{dereference}
@@ -13,7 +13,7 @@
     \mathsf{e} ::= &\ i & \text{integer}\\
     | &\ \mathsf{w} & \text{leftvalue}\\
     | &\ \borrow\mathsf{w} & \text{borrow}\\
-    | &\ \mathtt{mut}\borrow\mathsf{w} & \text{mutable borrow}\\
+    | &\ \mutborrow\mathsf{w} & \text{mutable borrow}\\
     | &\ \mathtt{box}\ \mathsf{e} & \text{heap allocation}
   \end{align*}
   The sets of \emph{terms} \textsf{t} and \emph{blocks} \textsf{b}
@@ -25,21 +25,12 @@
   \end{align*}
 \end{definition}
 
-\begin{definition}[Static types]
-  We assume that expressions in a program have a static type, written $\type(e)$, that allows one
-  to identify expressions that contain a box or a mutable borrow. We will write that
-  ``$\type(e)$ is a box'', and that ``$\type(e)$ is a $\texttt{mut}\borrow$'' for that, respectively.
-  Expressions whose type is a box or a $\texttt{mut}\borrow$ are said to have move semantics.
-  All other expressions have copy semantics.
-\end{definition}
-
 \begin{example}\label{ex:program}
-  The following valid program $P_1$ consists of a block that contains
-  an inner block.
+  The following valid program $P_1$ consists of a block that contains an inner block.
   \[
     \{
       \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
-      \{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+      \{\mathtt{let\ mut}\ y = \mutborrow x;\
       \mathtt{*}y = \mathtt{box}\ 1\}^l;\
       \mathtt{let\ mut}\ z = x
     \}^m
@@ -71,21 +62,21 @@
   with the constraint that exactly one binding exists for each given variable in $\dom(\kappa)$.
   The set of all environments over $\kappa$ is $\mathbb{E}_\kappa$.
   Often, to simplify the notation, we will write $\mathbb{E}$ for $\mathbb{E}_\kappa$.
-  We write $\rho(x)=\ell$ when $x\rightarrow^m\ell\in\rho$, for some $m$.
+  We write $\rho(x)=\ell$ when $x\to^m\ell\in\rho$, for some $m$.
 
   A \emph{heap} $h$ is a set of bindings from locations to values,
-  existing in three versions: owned, not owned and mutable borrows:
+  existing in three versions: owned, immutable borrows and mutable borrows:
   \[
   h\subseteq
-  \underbrace{\{\ell\Rightarrow\ell'\mid\ell,\ell'\in\Locs\}}_{\text{owned bindings}}
+  \underbrace{\{\ell\Rightarrow v\mid\ell\in\Locs\text{ and }v\in\mathbb{V}\}}_{\text{owned bindings}}
   \cup
-  \underbrace{\{\ell\rightarrow v\mid\ell\in\Locs\text{ and }v\in\mathbb{V}\}}_{\text{not owned bindings}}
+  \underbrace{\{\ell\to\ell'\mid\ell,\ell'\in\Locs\}}_{\text{immutable borrows}}
   \cup
   \underbrace{\{\ell\leadsto\ell'\mid\ell,\ell'\in\Locs\}}_{\text{mutable borrows}}
   \]
   with the constraint that there is at most a binding for each
-  location $\ell$ (owned, not owned or mutable borrow). We write $h(\ell)=v$ meaning that
-  either $\ell\Rightarrow v\in h$ or $\ell\rightarrow v\in h$ or $\ell\leadsto v\in h$.
+  location $\ell$ (owned, immutable borrow or mutable borrow). We write $h(\ell)=v$ meaning that
+  either $\ell\Rightarrow v\in h$ or $\ell\to v\in h$ or $\ell\leadsto v\in h$.
   Given $L\subseteq\Locs$,
   we write $h|_{-L}$ meaning $h$ where the bindings for the locations in $L$
   have been removed (if any).
@@ -99,24 +90,19 @@
   Given $L\subseteq\Locs$, we define $(\rho\star h)|_{-L}=\rho\star(h|_{-L})$.
 \end{definition}
 
-\noindent
-We observe that the above definition of $\mathbb{H}$ allows one to represent mutable borrows
-through the $\leadsto$ bindings, but also normal (that is, non-mutable) borrows, that are
-just a special case of not owned bindings, hence through the $\to$ bindings.
-
 \begin{definition}[Dangling locations]
   Let $h\in\mathbb{H}$. A location $\ell$ is \emph{dangling} in $h$ if
   and only if $h(\ell)$ is undefined.
 \end{definition}
 
 \begin{definition}[Borrowed locations]
-  Let $h\in\mathbb{H}$. % and $l'\in\Locs$.
-  A location $\ell$ is \emph{non-mutably borrowed} in $h$
+  Let $h\in\mathbb{H}$.
+  A location $\ell$ is \emph{borrowed as immutable} in $h$
   if there exists $\ell'\in\Locs$ such that $\ell'\to\ell$.
-  A location $\ell$ is \emph{mutably borrowed} in $h$
+  A location $\ell$ is \emph{borrowed as mutable} in $h$
   if there exists $\ell'\in\Locs$ such that $\ell'\leadsto\ell$.
   A location $\ell$ is \emph{borrowed} in $h$
-  if it is mutably or non-mutably borrowed in $h$.
+  if it is borrowed either as immutable or as mutable in $h$.
 \end{definition}
 
 %\begin{definition}[Consistent heaps]
@@ -138,7 +124,7 @@ just a special case of not owned bindings, hence through the $\to$ bindings.
     \loc(x,s) &= s(x)\\
     \loc(*\mathsf{w},s) &= \left\{\begin{array}{ll}
       s(\loc(\mathsf{w},s)) & \text{if } s(\loc(\mathsf{w},s)) \in \Locs\\
-      \text{undefined} & \text{otherwise}
+      \text{undefined} & \text{otherwise.}
     \end{array}\right.
   \end{align*}
 \end{definition}
@@ -150,58 +136,71 @@ $s(\loc(\mathsf{w},s))\not\in\Locs$. In the following, when $\loc$ is undefined,
 semantics will be stuck.
 
 \begin{example}
-  Let $\rho = \left\{x\rightarrow^m\ell_x\right\}$.
+  Let $\rho = \left\{x\to^m\ell_x\right\}$.
   \begin{itemize}
     \item Let $s = \rho\star h$ with
-    $h = \left\{\ell_x\rightarrow\ell,\ \ell\rightarrow 1\right\}$.
+    $h = \left\{\ell_x\to\ell,\ \ell\Rightarrow 1\right\}$.
     Then, $s(\loc(x,s)) = s(s(x)) = s(\rho(x)) = s(\ell_x) =
     h(\ell_x) = \ell\in\Locs$, so
     $\loc(\mathtt{*}x,s)= s(\loc(x,s)) = \ell$.
     %
     \item Let $s' = \rho\star h'$ with
-    $h' = \left\{\ell_x\rightarrow 1\right\}$. Then,
+    $h' = \left\{\ell_x\Rightarrow 1\right\}$. Then,
     $s'(\loc(x,s')) = s'(s'(x)) = s'(\rho(x)) = s'(\ell_x) =
     h'(\ell_x) = 1 \not\in\Locs$, so $\loc(\mathtt{*}x,s')$ is undefined.
     \qed
   \end{itemize}
 \end{example}
 
-The evaluation of a leftvalue yields the value of the leftvalue and a potentially updated heap:
+The evaluation of an expression yields the value of the leftvalue, a potentially updated heap
+and an arrow that expresses the nature of the value: a owned value, an immutable borrow
+or a mutable borrow. Let us start from the leftvalues, then consider the other kinds of
+expressions.
 
 \begin{definition}[Semantics of leftvalues]\label{def:semantics_leftvalues}
-  Given $s=\rho\star h$, we define
+  Given $s=\rho\star h$ and $\mathsf{w}\in\Leftvalues$, let $\ell=\loc(\mathsf{w},s)$.
+  We define
   \[
   \den[\mathsf{w}]{s}=\begin{cases}
-  \text{undefined} & \text{if $v$ is undefined}\\
-  \langle v, h\rangle & \text{otherwise, if $\type(\mathsf{w})$ has copy semantics}\\
-  \langle v, h|_{-\loc(\mathsf{w},s)}\rangle & \text{otherwise, if $\type(\mathsf{w})$ has move semantics}
+  \text{undefined} & \text{if $\ell$ is undefined}\\
+  \text{undefined} & \text{otherwise, if $\ell$ is borrowed as mutable in $h$}\\
+  \text{undefined} & \text{otherwise, if $\ell$ is dangling in $h$}\\
+  \langle v, h, \to\rangle & \text{otherwise, if $\ell\to v\in h$}\\
+  \langle v, h, \Rightarrow\rangle & \text{otherwise, if $\ell\Rightarrow v\in h$ and $v\in\mathbb{Z}$}\\
+  \langle v, h|_{-\ell}, \Rightarrow\rangle & \text{otherwise, if $\ell\Rightarrow v\in h$ and $v\not\in\mathbb{Z}$}\\
+  \langle v, h|_{-\ell}, \leadsto\rangle & \text{otherwise, if $\ell\leadsto v\in h$.}\\
   \end{cases}
   \]
-  where $v=s(\loc(\mathsf{w},s))$.
 \end{definition}
 
 \noindent
-Note that the last case above makes $\mathsf{w}$ point to a dangling location, hence
-$\mathsf{w}$ becomes unusable, for the first case.
-
-The evaluation of an expression yields the value of the expression and a potentially updated heap:
+The second case above specifies that a leftvalue borrowed as mutable cannot be read.
+The third case specifies that a leftvalue, whose value has been moved out, cannot be read.
+The last two cases perform a move of the value out of $\mathsf{w}$, by transforming
+$\mathsf{w}$'s location into a dangling location. These last two cases deal with
+values with move semantics (the former of the two with boxes, the latter of the two
+with mutable borrows).
 
 \begin{definition}[Semantics of expressions]\label{def:semantics_expressions}
   Given $s=\rho\star h$, we define
   \begin{align*}
-    \den[i]{s}&=\langle i,h\rangle\\
-    \den[\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\qquad\text{if $s(\loc(\mathsf{w},s))$ is defined}\\
-    \den[\mathtt{mut}\borrow\mathsf{w}]{s}&=\langle\loc(\mathsf{w},s),h\rangle\qquad\text{if $s(\loc(\mathsf{w},s))$ is defined}\\
+    \den[i]{s}&=\langle i,h,\Rightarrow\rangle\\
+    \den[\borrow\mathsf{w}]{s}&=\begin{cases}
+    \text{undefined} & \text{if $h(\loc(\mathsf{w},s))$ is undefined}\\
+    \langle\loc(\mathsf{w},s),h,\to\rangle & \text{otherwise}
+    \end{cases}\\
+    \den[\mutborrow\mathsf{w}]{s}&=\begin{cases}
+    \text{undefined} & \text{if $h(\loc(\mathsf{w},s))$ is undefined}\\
+    \langle\loc(\mathsf{w},s),h,\leadsto\rangle & \text{otherwise}
+    \end{cases}\\
     \den[\mathtt{box}\ \mathsf{e}]{s}&=
     \begin{cases}
-      \langle\ell,h'\cup\{\ell\Rightarrow v\}\rangle & \text{if $\type(e)$ is a box}\\
-      \langle\ell,h'\cup\{\ell\leadsto v\}\rangle & \text{otherwise, if $\type(e)$ is $\mathtt{mut}\borrow$}\\
-      \langle\ell,h'\cup\{\ell\to v\}\rangle & \text{otherwise}
-    \end{cases}\\
-    & \text{where $\den[\mathsf{e}]{s}=\langle v, h'\rangle$ is defined and $\ell$ is fresh}
+      \text{undefined} & \text{if $\den[\mathsf{e}]{s}$ is undefined}\\
+      \langle\ell,h'\cup\{\ell\Rightarrow v\},\Rightarrow\rangle & \text{if $\den[\mathsf{e}]{s}=\langle v, h',\Rightarrow\rangle$, with $\ell$ is fresh}\\
+      \langle\ell,h'\cup\{\ell\to v\},\Rightarrow\rangle & \text{if $\den[\mathsf{e}]{s}=\langle v, h',\to\rangle$, with $\ell$ is fresh}\\
+      \langle\ell,h'\cup\{\ell\leadsto v\},\Rightarrow\rangle & \text{if $\den[\mathsf{e}]{s}=\langle v, h',\leadsto\rangle$, with $\ell$ is fresh.}
+    \end{cases}
   \end{align*}
-  For expressions that are leftvalues, see Def.~\ref{def:semantics_leftvalues}.
-  In all other cases, the semantics of expressions in undefined.
 \end{definition}
 
 The set of locations reachable by following owned bindings only, and starting from a set of locations $\psi$,
@@ -219,7 +218,8 @@ is defined as follows:
   \]
 \end{definition}
 
-The function $\drop$ removes the owned locations reachable from a set of locations.
+\noindent
+The function $\drop$ removes from the heap the owned locations reachable from a set of locations.
 %
 \begin{definition}[Drop]\label{def:drop}
   The function $\drop:\wp(\Locs)\times\mathbb{H}\to\mathbb{H}$ is defined as
@@ -234,36 +234,33 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     \denl[x=\mathsf{e}]{m}{s}&=
     \begin{cases}
       \text{undefined} & \text{if $\ell$ is borrowed in $h'$}\\
-      \langle\rho,h''[\ell\Rightarrow v]\rangle & \text{otherwise, if $\type(\mathsf{e})$ is a box}\\
-      \langle\rho,h''[\ell\leadsto v]\rangle & \text{otherwise, if $\type(\mathsf{e})$ is a $\mathtt{mut}\borrow$}\\
-                                             & \text{and $v$ is not mutably borrowed in $h'$}\\
-      \text{undefined} & \text{otherwise, if $\type(\mathsf{e})$ is a $\mathtt{mut}\borrow$}\\
-                       & \text{and $v$ is mutably borrowed in $h'$}\\
-      \langle\rho,h''[\ell\to v]\rangle & \text{otherwise}
+      \langle\rho,h''[\ell\Rightarrow v]\rangle & \text{otherwise, if $a$ is $\Rightarrow$}\\
+      \langle\rho,h''[\ell\leadsto v]\rangle & \text{otherwise, if $a$ is $\leadsto$ and $v$ is not borrowed in $h'$}\\
+      \langle\rho,h''[\ell\to v]\rangle & \text{otherwise, if $a$ is $\to$ and $v$ is not borrowed as mutable in $h'$}\\
+      \text{undefined} & \text{otherwise,}
     \end{cases}\\
-    &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$, $\ell=\loc(x,\langle\rho,h'\rangle)$ and
+    &\text{where $\den[\mathsf{e}]{s}=\langle v,h',a\rangle$, $\ell=\loc(x,\langle\rho,h'\rangle)$ and
       $h''=\drop(\{\ell\},h')$}\\
     \mbox{}\\
     \denl[*\mathsf{w}=\mathsf{e}]{m}{s}&=
     \begin{cases}
-      \text{undefined} & \text{if $\ell$ is immutably borrowed in $h'$ or $\ell_{\mathsf{w}}\leadsto\ell\not\in h'$}\\
-      \langle\rho,h''[\ell\Rightarrow v]\rangle & \text{otherwise, if $\type(\mathsf{e})$ is a box}\\
-      \langle\rho,h''[\ell\leadsto v]\rangle & \text{otherwise, if $\type(\mathsf{e})$ is a $\mathtt{mut}\borrow$}\\
-      \langle\rho,h''[\ell\to v]\rangle & \text{otherwise}
+      \text{undefined} & \text{if $\ell$ is borrowed in $h'$ and $\ell_\mathsf{w}\leadsto\ell\not\in h$}\\
+      \langle\rho,h''[\ell\Rightarrow v]\rangle & \text{otherwise, if $a$ is $\Rightarrow$}\\
+      \langle\rho,h''[\ell\leadsto v]\rangle & \text{otherwise, if $a$ is $\leadsto$ and $v$ is not borrowed in $h'$}\\
+      \langle\rho,h''[\ell\to v]\rangle & \text{otherwise, if $a$ is $\to$ and $v$ is not borrowed as mutable in $h'$}\\
+      \text{undefined} & \text{otherwise,}
     \end{cases}\\
-    &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$, $\ell_{\mathsf{w}}=\loc(\mathsf{w},\langle\rho,h'\rangle)$,
-      $\ell=s(\ell_{\mathsf{w}})$ and $h''=\drop(\{\ell\},h')$}\\
+    &\text{where $\den[\mathsf{e}]{s}=\langle v,h',a\rangle$, $\loc(\mathsf{w})=\ell_\mathsf{w}$, $h(\ell_\mathsf{w})=\ell$ and
+      $h''=\drop(\{\ell\},h')$}\\
     \mbox{}\\
     \denl[\mathtt{let\ mut}\ x=\mathsf{e}]{m}{s}&=
     \begin{cases}
-      \langle\rho[x\to^m\ell],h'[\ell\Rightarrow v]\rangle & \text{if $\type(\mathsf{e})$ is a box}\\
-      \langle\rho[x\to^m\ell],h'[\ell\leadsto v]\rangle & \text{otherwise, if $\type(\mathsf{e})$ is a $\mathtt{mut}\borrow$}\\
-                                                        & \text{and $v$ is not mutably borrowed in $h'$}\\
-      \text{undefined} & \text{otherwise, if $\type(\mathsf{e})$ is a $\mathtt{mut}\borrow$}\\
-                       & \text{and $v$ is mutably borrowed in $h'$}\\
-      \langle\rho[x\to^m\ell],h'[\ell\to v]\rangle & \text{otherwise}
+      \langle\rho[x\to^m\ell],h'[\ell\Rightarrow v]\rangle & \text{if $a$ is $\Rightarrow$}\\
+      \langle\rho[x\to^m\ell],h'[\ell\leadsto v]\rangle & \text{otherwise, if $a$ is $\leadsto$ and $v$ is not borrowed in $h'$}\\
+      \langle\rho[x\to^m\ell],h'[\ell\to v]\rangle & \text{otherwise, if $a$ is $\to$ and $v$ is not borrowed as mutable in $h'$}\\
+      \text{undefined} & \text{otherwise,}
     \end{cases}\\
-    &\text{where $\den[\mathsf{e}]{s}=\langle v,h'\rangle$ and $\ell$ is fresh}\\
+    &\text{where $\den[\mathsf{e}]{s}=\langle v,h',a\rangle$ and $\ell$ is fresh}\\
     \mbox{}\\
     \denl[\{\mathsf{t_1};\ldots;\mathsf{t_n}\}^l]{m}{s}&=\langle\rho,\drop(\{\ell\mid x\to^l\ell\in\rho'\},h')\rangle\\
     &\text{where $\langle\rho',h'\rangle=\denl[\mathsf{t_n}]{l}{\denl[\mathsf{t_{n-1}}]{l}{\cdots\denl[\mathsf{t_1}]{l}{s}}}$.}
@@ -271,11 +268,68 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
 \end{definition}
 
 \begin{example}
+  Show that this is illegal:
+  \[
+    \{
+      \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
+      \mathtt{let\ mut}\ y = x;\
+      \mathtt{let\ mut}\ z = \borrow x;
+    \}^m
+  \]
+\end{example}
+
+\begin{example}
+  Show that this is legal:
+  \[
+    \{
+      \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
+      \mathtt{let\ mut}\ y = \mutborrow \mathtt{*}x;\
+      \mathtt{*}y = 1
+    \}^m
+  \]
+\end{example}
+
+\begin{example}
+  Show that this is illegal:
+  \[
+    \{
+      \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
+      \mathtt{let\ mut}\ y = \mutborrow \mathtt{*}x;\
+      \mathtt{*}x = 1
+    \}^m
+  \]
+\end{example}
+
+\begin{example}
+  Show that this is legal, at the end $x$ holds $1$:
+  \[
+    \{
+      \mathtt{let\ mut}\ x = 0;\
+      \mathtt{let\ mut}\ y = \mathtt{box}(\mutborrow x);\
+      \mathtt{let\ mut}\ z = \mutborrow *y;\
+      **z = 1
+    \}^m
+  \]
+\end{example}
+
+\begin{example}
+  Show that this is legal, at the end $x$ holds $0$:
+  \[
+    \{
+    \mathtt{let\ mut}\ x = 0;\
+    \mathtt{let\ mut}\ k = 1;\
+    \mathtt{let\ mut}\ y = \mathtt{box}(\mutborrow x);\
+    *y = \mutborrow k
+    \}^m
+  \]
+\end{example}
+
+\begin{example}
   Consider again the program $P_1$ of Ex.~\ref{ex:program}:
   \[
     \{
       \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
-      \{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+      \{\mathtt{let\ mut}\ y = \mutborrow x;\
       \mathtt{*}y = \mathtt{box}\ 1\}^l;\
       \mathtt{let\ mut}\ z = x
     \}^m
@@ -295,10 +349,10 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_1 = \rho_1 \star h_1$.
     Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mathtt{mut}\borrow x]{s_1} = \langle\ell_x, h_1\rangle$
-    with $\ell_x$ not mutably borrowed in $h_1$.
+    $\den[\mutborrow x]{s_1} = \langle\ell_x, h_1\rangle$
+    with $\ell_x$ not borrowed as mutable in $h_1$.
     So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{l}{s_1} =
+    $\denl[\mathtt{let\ mut}\ y = \mutborrow x]{l}{s_1} =
     \langle \rho_2,\ h_2\rangle$
     where
     \begin{align*}
@@ -326,14 +380,14 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     \ell'\to 1\}\]
     %
     \item Let us evaluate
-    $\denl[\{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+    $\denl[\{\mathtt{let\ mut}\ y = \mutborrow x;\
     \mathtt{*}y = \mathtt{box}\ 1\}^l]{m}{s_1}$. Above, we have
     computed $\denl[\mathtt{*}y = \mathtt{box}\ 1]{l}{
-    \denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{l}{s_1}} =
+    \denl[\mathtt{let\ mut}\ y = \mutborrow x]{l}{s_1}} =
     \langle\rho_3,h_3\rangle$. Moreover,
     $\drop(\{\ell\mid x\to^l\ell\in\rho_3\},h_3) = \drop(\{\ell_y\},h_3) =
     \{\ell_x\Rightarrow\ell',\ell'\to 1\}$. Consequently,
-    $\denl[\{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+    $\denl[\{\mathtt{let\ mut}\ y = \mutborrow x;\
     \mathtt{*}y = \mathtt{box}\ 1\}^l]{m}{s_1} =
     \langle \rho_4,h_4\rangle$ where
     \[\rho_4 = \rho_1 \text{ and } h_4 = \{\ell_x\Rightarrow\ell',\ell'\to 1\}\]
@@ -362,8 +416,8 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
   \[
     \{
       \mathtt{let\ mut}\ x = 13;\
-      \mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
-      \mathtt{let\ mut}\ z = \mathtt{mut}\borrow x
+      \mathtt{let\ mut}\ y = \mutborrow x;\
+      \mathtt{let\ mut}\ z = \mutborrow x
     \}^m
   \]
   \begin{itemize}
@@ -377,10 +431,10 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_1 = \rho_1 \star h_1$.
     Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mathtt{mut}\borrow x]{s_1} = \langle \ell_x,h_1\rangle$
-    with $\ell_x$ not mutably borrowed in $h_1$.
+    $\den[\mutborrow x]{s_1} = \langle \ell_x,h_1\rangle$
+    with $\ell_x$ not borrowed as mutable in $h_1$.
     So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{m}{s_1} =
+    $\denl[\mathtt{let\ mut}\ y = \mutborrow x]{m}{s_1} =
     \langle \rho_2,\ h_2\rangle$
     where
     \begin{align*}
@@ -392,10 +446,10 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_2 = \rho_2 \star h_2$.
     Then, we have $\loc(x,s_2) = \ell_x$, so
-    $\den[\mathtt{mut}\borrow x]{s_2} = \langle \ell_x,h_2\rangle$
-    where $\ell_x$ is mutably borrowed in $h_2$
+    $\den[\mutborrow x]{s_2} = \langle \ell_x,h_2\rangle$
+    where $\ell_x$ is borrowed as mutable in $h_2$
     (because $\ell_y\leadsto \ell_x \in h_2$).
-    So, $\denl[\mathtt{let\ mut}\ z = \mathtt{mut}\borrow x]{m}{s_2}$
+    So, $\denl[\mathtt{let\ mut}\ z = \mutborrow x]{m}{s_2}$
     is undefined.
   \end{itemize}
   \qed
@@ -458,7 +512,7 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
   \[
     \{
       \mathtt{let\ mut}\ x = 0;\
-      \mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+      \mathtt{let\ mut}\ y = \mutborrow x;\
       x = 1
     \}^m
   \]
@@ -473,10 +527,10 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_1 = \rho_1 \star h_1$.
     Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mathtt{mut}\borrow x]{s_1} = \langle \ell_x,h_1\rangle$
-    with $\ell_x$ not mutably borrowed in $h_1$.
+    $\den[\mutborrow x]{s_1} = \langle \ell_x,h_1\rangle$
+    with $\ell_x$ not borrowed as mutable in $h_1$.
     So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{m}{s_1} =
+    $\denl[\mathtt{let\ mut}\ y = \mutborrow x]{m}{s_1} =
     \langle \rho_2,\ h_2\rangle$
     where
     \begin{align*}
@@ -531,8 +585,8 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
   \[
     \{
       \mathtt{let\ mut}\ x = 0;\
-      \mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
-      \{\mathtt{let\ mut}\ z = 0;\ y = \mathtt{mut}\borrow z\}^l;\
+      \mathtt{let\ mut}\ y = \mutborrow x;\
+      \{\mathtt{let\ mut}\ z = 0;\ y = \mutborrow z\}^l;\
       \mathtt{let\ mut}\ w = y
     \}^m
   \]}
@@ -547,10 +601,10 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_1 = \rho_1 \star h_1$.
     Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mathtt{mut}\borrow x]{s_1} = \langle\ell_x, h_1\rangle$
-    with $\ell_x$ not mutably borrowed in $h_1$.
+    $\den[\mutborrow x]{s_1} = \langle\ell_x, h_1\rangle$
+    with $\ell_x$ not borrowed as mutable in $h_1$.
     So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{m}{s_1} =
+    $\denl[\mathtt{let\ mut}\ y = \mutborrow x]{m}{s_1} =
     \langle \rho_2,\ h_2\rangle$
     where
     \begin{align*}
@@ -574,25 +628,25 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_3 = \rho_3 \star h_3$.
     Then, we have $\loc(z,s_3) = \ell_z$, so
-    $\den[\mathtt{mut}\borrow z]{s_3} = \langle\ell_z, h'_3\rangle$
-    with $h'_3=h_3$ and $\ell_z$ is not mutably borrowed in $h'_3$.
+    $\den[\mutborrow z]{s_3} = \langle\ell_z, h'_3\rangle$
+    with $h'_3=h_3$ and $\ell_z$ is not borrowed as mutable in $h'_3$.
     Moreover, $\loc(y,\langle \rho_3,h'_3\rangle) = \ell_y$ is not
     borrowed in $h'_3$
     and $\drop(\{\ell_y\},h'_3) =
     \{\ell_z\to 0,\ell_x\to 0\}$. Consequently,
-    $\denl[y = \mathtt{mut}\borrow z]{l}{s_3} = \langle \rho_4,\ h_4\rangle$
+    $\denl[y = \mutborrow z]{l}{s_3} = \langle \rho_4,\ h_4\rangle$
     where
     \[\rho_4=\rho_3 \text{ and }
     h_4=\{\ell_y\leadsto\ell_z,\ \ell_z\to 0,\ \ell_x\to 0\}\]
     %
     \item Let us evaluate
-    $\denl[\{\mathtt{let\ mut}\ z = 0;\ y = \mathtt{mut}\borrow z\}^l]{m}{s_2}$.
-    Above, we have computed $\denl[y = \mathtt{mut}\borrow z]{l}{
+    $\denl[\{\mathtt{let\ mut}\ z = 0;\ y = \mutborrow z\}^l]{m}{s_2}$.
+    Above, we have computed $\denl[y = \mutborrow z]{l}{
     \denl[\mathtt{let\ mut}\ z = 0]{l}{s_2}} = \langle\rho_4,h_4\rangle$.
     Moreover, we also have
     $\drop(\{\ell\mid x\to^l\ell\in\rho_4\},h_4) = \drop(\{\ell_z\},h_4) =
     \{\ell_y\leadsto\ell_z,\ \ell_x\to 0\}$. Consequently,
-    $\denl[\{\mathtt{let\ mut}\ z = 0;\ y = \mathtt{mut}\borrow z\}^l]{m}{s_2} =
+    $\denl[\{\mathtt{let\ mut}\ z = 0;\ y = \mutborrow z\}^l]{m}{s_2} =
     \langle \rho_5,h_5\rangle$ where
     \[\rho_5 = \rho_2 \text{ and }
     h_5 = \{\ell_y\leadsto\ell_z,\ \ell_x\to 0\}\]
@@ -612,7 +666,7 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     \{
       \mathtt{let\ mut}\ x = 0;\
       \{
-        \mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+        \mathtt{let\ mut}\ y = \mutborrow x;\
         \{
           \mathtt{let\ mut}\ z = \borrow*y
         \}^l;\
@@ -631,10 +685,10 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_1 = \rho_1 \star h_1$.
     Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mathtt{mut}\borrow x]{s_1} = \langle\ell_x, h_1\rangle$
-    with $\ell_x$ not mutably borrowed in $h_1$.
+    $\den[\mutborrow x]{s_1} = \langle\ell_x, h_1\rangle$
+    with $\ell_x$ not borrowed as mutable in $h_1$.
     So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{n}{s_1} =
+    $\denl[\mathtt{let\ mut}\ y = \mutborrow x]{n}{s_1} =
     \langle \rho_2,\ h_2\rangle$
     where
     \begin{align*}
@@ -646,7 +700,7 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     \item Let $s_2 = \rho_2 \star h_2$.
     We have $\loc(*y,s_2) = s_2(\loc(y,s_2)) = s_2(\ell_y) = h_2(\ell_y) = \ell_x$,
     so $\den[\borrow*y]{s_2} = \langle \ell_x,h_2\rangle$.
-    Moreover, $\type(\borrow*y)$ is not a box nor a $\mathtt{mut}\borrow$, so
+    Moreover, $\type(\borrow*y)$ is not a box nor a $\mutborrow$, so
     $\denl[\mathtt{let\ mut}\ z = \borrow*y]{l}{s_2} =
     \langle \rho_3,\ h_3\rangle$
     where
@@ -670,17 +724,17 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     $\drop(\{\ell_x\}, h_4) = \{\ell_y\leadsto \ell_x\}$. Therefore,
     $\denl[*y = 1]{n}{s_4}=\langle \rho_5,\ h_5\rangle$ where
     \[\rho_5 = \rho_4 \text{ and } h_5 = \{\ell_y\leadsto \ell_x,\ \ell_x\to 1\}\]
-    \item Let us evaluate $\denl[\{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+    \item Let us evaluate $\denl[\{\mathtt{let\ mut}\ y = \mutborrow x;\
     \{ \mathtt{let\ mut}\ z = \borrow*y \}^l;\ *y = 1 \}^n]{m}{s_1}$.
     Above, we have computed
     \[\denl[*y = 1]{n}{
       \denl[\{\mathtt{let\ mut}\ z = \borrow*y\}^l]{n}{
-        \denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{n}{s_1}
+        \denl[\mathtt{let\ mut}\ y = \mutborrow x]{n}{s_1}
       } = \langle \rho_5,\ h_5\rangle
     }\]
     Moreover, $\drop(\{\ell\mid x\to^n\ell\in\rho_5\},h_5) =
     \drop(\{\ell_y\},h_5) = \{\ell_x\to 1\}$. So,
-    $\denl[\{\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+    $\denl[\{\mathtt{let\ mut}\ y = \mutborrow x;\
     \{ \mathtt{let\ mut}\ z = \borrow*y \}^l;\ *y = 1 \}^n]{m}{s_1} =
     \langle \{x\to^m\ell_x\},\ \{\ell_x\to 1\}\rangle$.
   \end{itemize}
@@ -693,7 +747,7 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
   \{
     \mathtt{let\ mut}\ x = 0;\
     \{
-      \mathtt{let\ mut}\ y = \mathtt{mut}\borrow x;\
+      \mathtt{let\ mut}\ y = \mutborrow x;\
         \{
           \mathtt{let\ mut}\ z = \borrow*y;\
           *y = 1
@@ -714,10 +768,10 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     %
     \item Let $s_1 = \rho_1 \star h_1$.
     Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mathtt{mut}\borrow x]{s_1} = \langle\ell_x, h_1\rangle$
-    with $\ell_x$ not mutably borrowed in $h_1$.
+    $\den[\mutborrow x]{s_1} = \langle\ell_x, h_1\rangle$
+    with $\ell_x$ not borrowed as mutable in $h_1$.
     So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mathtt{mut}\borrow x]{n}{s_1} =
+    $\denl[\mathtt{let\ mut}\ y = \mutborrow x]{n}{s_1} =
     \langle \rho_2,\ h_2\rangle$
     where
     \begin{align*}
@@ -729,7 +783,7 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     \item Let $s_2 = \rho_2 \star h_2$.
     We have $\loc(*y,s_2) = s_2(\loc(y,s_2)) = s_2(\ell_y) = h_2(\ell_y) = \ell_x$,
     so $\den[\borrow*y]{s_2} = \langle \ell_x,h_2\rangle$.
-    Moreover, $\type(\borrow*y)$ is not a box nor a $\mathtt{mut}\borrow$, so
+    Moreover, $\type(\borrow*y)$ is not a box nor a $\mutborrow$, so
     $\denl[\mathtt{let\ mut}\ z = \borrow*y]{l}{s_2} =
     \langle \rho_3,\ h_3\rangle$
     where
@@ -742,7 +796,7 @@ The function $\drop$ removes the owned locations reachable from a set of locatio
     \item Let $s_3 = \rho_3 \star h_3$.
     We have $\den[1]{s_3} = \langle 1,h_3\rangle$. Moreover,
     $\loc(y,s_3) = \ell_y$ and $s_3(\ell_y) = h_3(\ell_y) = \ell_x$
-    is non-mutably borrowed in $h_3$ (because $\ell_z\to \ell_x \in h_3$).
+    is borrowed as immutable in $h_3$ (because $\ell_z\to \ell_x \in h_3$).
     Therefore, $\denl[*y = 1]{n}{s_3}$ is undefined.
   \end{itemize}
   \qed
