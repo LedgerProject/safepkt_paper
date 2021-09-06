@@ -5,20 +5,22 @@
   \begin{align*}
     \mathsf{T}_\kappa ::=&\ \mathsf{int} & \text{integer}\\
     | &\ \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{borrow}\\
-    | &\ \mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{mutable borrow}\\
+    | &\ \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{mutable borrow}\\
     | &\ \mathtt{box}\ \mathsf{T}_\kappa & \text{box}\\
-    | &\ \mathsf{nothing} & \text{nothing}
+    | &\ \mathsf{dangling} & \text{dangling}\\
+    | &\ \mathsf{any} & \text{anything}
   \end{align*}
   where $n\ge 1$ and the $\mathsf{w}_i$, with $1\le i\le n$, are leftvalues
   using only variables in $\dom(\kappa)$. This set is ordered by $\sqsubseteq$, defined as
   \begin{align*}
     \mathsf{int}&\sqsubseteq\mathsf{int}\\
     \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \sqsubseteq
-    \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} \quad\text{iff $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\supseteq\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}$}\\
-    \mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \sqsubseteq
-    \mathtt{mut}\borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} \quad\text{iff $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\supseteq\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}$}\\
+    \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} \quad\text{iff $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\subseteq\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}$}\\
+    \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \sqsubseteq
+    \mutborrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} \quad\text{iff $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\subseteq\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}$}\\
     \mathtt{box}\ t_1&\sqsubseteq\mathtt{box}\ t_2 \quad\text{iff $t_1\sqsubseteq t_2$}\\
-    \mathsf{nothing}&\sqsubseteq\mathsf{nothing}.
+    \mathsf{dangling}&\sqsubseteq\mathsf{dangling}\\
+    t &\sqsubseteq\mathsf{any}\quad\text{for all $t$.}
   \end{align*}
 \end{definition}
 
@@ -84,11 +86,13 @@
 \begin{definition}
   The $\sqcap$ operator over $\mathsf{T}_\kappa$ is defined as
   \begin{align*}
+    \mathsf{any}\sqcap t &= t\\
+    t\sqcap\mathsf{any}&=t\\
     \mathsf{int}\sqcap\mathsf{int} &= \mathsf{int}\\
-    \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \borrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cup\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
-    \mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \mathtt{mut}\borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \mathtt{mut}\borrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cup\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
+    \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \borrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cap\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
+    \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \mutborrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \mutborrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cap\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
     (\mathtt{box}\ t_1) \sqcap (\mathtt{box}\ t_2) &=\mathtt{box}\ (t_1\sqcap t_2)\quad\text{if $t_1\sqcap t_2$ is defined}\\
-    \mathsf{nothing}\sqcap\mathsf{nothing} &= \mathsf{nothing}.
+    \mathsf{dangling}\sqcap\mathsf{dangling} &= \mathsf{dangling}.
   \end{align*}
   In all other cases, $t_1\sqcap t_2$ is undefined.
 \end{definition}
@@ -160,23 +164,22 @@
 
 \begin{definition}[Abstract stores]
   \label{def:abstract-store}
-  Given a context $\kappa$, an \emph{abstract store} $a$ over $\kappa$ is either $\top$ or $\bot$
+  Given a context $\kappa$, an \emph{abstract store} $a$ over $\kappa$ is either $\bot$
   or a set of bindings from variables to types, decorated with a lifetime:
   \[
   a\subseteq\{x\to^m t\mid x\to^m\in\kappa\text{ and }t\in\mathsf{T_\kappa}\}
   \]
   with the constraint that exactly one binding exists for each given variable in $\dom(\kappa)$.
   The set of all abstract stores over $\kappa$ is $\mathbb{AS}_\kappa$.
-  The latter is ordered by $\sqsubseteq$, defined as $a_1\sqsubseteq a_2$ iff $a_2=\top$ or
+  The latter is ordered by $\sqsubseteq$, defined as $a_1\sqsubseteq a_2$ iff
   $a_1=\bot$ or
-  ($a_1,a_2\not=\top,\bot$ and for every $x\to^mt_1\in a_1$ there is $x\to^mt_2\in a_2$
+  ($a_1\not=\bot$ and for every $x\to^mt_1\in a_1$ there is $x\to^mt_2\in a_2$
   such that $t_1\sqsubseteq t_2$).
 \end{definition}
 
 \begin{definition}
   The greatest lower bound operator over $\mathbb{AS}_\kappa$ is defined as
-  $a\sqcap\top=a$, $\top\sqcap a=a$, $\bot\sqcap a=\bot$, $a\sqcap \bot=\bot$
-  and, when $a_1,a_2\not=\top,\bot$,
+  $\bot\sqcap a=\bot$, $a\sqcap \bot=\bot$ and, when $a_1,a_2\not=\bot$,
   \[
   a_1\sqcap a_2=\begin{cases}
   \bot\qquad\text{if $\exists x\to^m t_1\in a_1$ and $x\to^m t_2\in a_2$ s.t.\ $t_1\sqcap t_2$ is undefined}\\
@@ -284,7 +287,7 @@
   An abstract store $a\in\mathbb{AS}_\kappa$ represents a set of concrete stores
   in $\mathbb{S}_\kappa$, according to the \emph{concretization map}
   $\gamma_\kappa:\mathbb{AS}_\kappa\to\wp(\mathbb{S}_\kappa)$, defined as
-  $\gamma_\kappa(\top)=\mathbb{S}_\kappa$, $\gamma_\kappa(\bot)=\varnothing$ and, for $a\not=\top,\bot$:
+  $\gamma_\kappa(\bot)=\varnothing$ and, for $a\not=\bot$:
   \[
   \gamma_\kappa(a)=\left\{\rho\star h\in\mathbb{S}_\kappa\left|\begin{array}{l}
   \text{for every }x\to^m\ell\in\rho\text{ there is }x\to^m t\in a\text{ s.t.\ }\ell\approx_{\rho\star h}t
@@ -295,11 +298,12 @@
   \begin{align*}
     \ell&\approx_{\rho\star h}\mathsf{int} && \text{iff $h(\ell)\in\mathbb{Z}$}\\
     \ell&\approx_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $\exists\ell'.\ell\to\ell'\in h$ and}\\
-    &&& \text{$\forall\mathsf{w}\in\Leftvalues.\loc(\mathsf{w},\rho\star h)=\ell'$ implies $\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
-    \ell&\approx_{\rho\star h}\mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $\exists\ell'.\ell\leadsto\ell'\in h$ and}\\
-    &&& \text{$\forall\mathsf{w}\in\Leftvalues.\loc(\mathsf{w},\rho\star h)=\ell'$ implies $\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
+    &&& \forall\mathsf{w}\in\Leftvalues.\left(\loc(\mathsf{w},\rho\star h)=\ell'\text{ implies }\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\right)\\
+    \ell&\approx_{\rho\star h}\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $\exists\ell'.\ell\leadsto\ell'\in h$ and}\\
+    &&& \forall\mathsf{w}\in\Leftvalues.\left(\loc(\mathsf{w},\rho\star h)=\ell'\text{ implies }\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\right)\\
     \ell&\approx_{\rho\star h}\mathtt{box}\ t && \text{iff $\exists\ell'.\ell\Rightarrow\ell'\in h$ and $h(\ell')\approx_{\rho\star h}t$}\\
-    \ell&\approx_{\rho\star h}\mathsf{nothing} && \text{iff $h(\ell)$ is undefined.}
+    \ell&\approx_{\rho\star h}\mathsf{dangling} && \text{iff $h(\ell)$ is undefined}\\
+    \ell&\approx_{\rho\star h}\mathsf{any} && \text{always.}
   \end{align*}
 \end{definition}
 
@@ -330,7 +334,7 @@
       If $t_k$ is a borrow (resp. mutable borrow) then, as $\sqcap_{i\in I}t_i$
       is defined, each $t_i$ is a borrow (resp. mutable borrow) and
       $\sqcap_{i\in I}t_i=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
-      (resp. $\sqcap_{i\in I}t_i=\mathtt{mut}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$)
+      (resp. $\sqcap_{i\in I}t_i=\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$)
       is the union of all the $\mathsf{w}_i$'s. Moreover, as
       $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$, for all $1\le i\le n$
       we have $\ell\to\loc(\mathsf{w}_i,s)\in h$
