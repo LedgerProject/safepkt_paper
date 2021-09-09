@@ -458,3 +458,90 @@
   The thesis follows by a general result of abstract interpretation~\cite{CousotC77}.
   \qed
 \end{proof}
+
+\begin{proposition}[Abstract dangling is a correct approximation of concrete dangling]
+  \label{prop:abstract_dangling_correctness}
+  Let $\mathsf{w}\in\Leftvalues_\kappa$, $\rho\star h\in\mathbb{S}_\kappa$
+  and $a\in\mathbb{AS}_\kappa$ be
+  such that $\rho\star h\in\gamma_\kappa(a)$.
+  If $\loc(\mathsf{w},\rho\star h)$ is borrowed as immutable in $h$, then
+  $\mathsf{w}$ is borrowed as immutable in $a$.
+  If $\loc(\mathsf{w},\rho\star h)$ is borrowed as mutable in $h$, then
+  $\mathsf{w}$ is borrowed as mutable in $a$.
+  If $\loc(\mathsf{w},\rho\star h)$ is borrowed in $h$, then
+  $\mathsf{w}$ is borrowed in $a$.  
+\end{proposition}
+\begin{proof}
+  TODO
+\end{proof}
+
+The concrete semantics uses a precise notion of borrowed locations
+(Def.~\ref{def:borrow}). The abstract semantics has abstracted away the concrete locations
+and can only use types for determining when a value might be borrowed, which leads
+to a coarser notion of \emph{abstract} borrowing for leftvalues (that is, for their value).
+
+\begin{definition}\label{def:abstract_borrow}
+  Let $a\in\mathbb{AS}_\kappa$ and $\mathsf{w}\in\Leftvalues_\kappa$.
+  Then $\mathsf{w}$ is
+  \emph{borrowed as immutable} in $a$ if there exists $v\in\dom(\kappa)$ such that
+  $\beta^\to(a(v),\mathsf{w})$ holds, where
+  \begin{align*}
+    \beta^\to(\mathsf{int},\mathsf{w})&=\mathit{false}\\
+    \beta^\to(\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})&=\exists i.(\mathsf{root}(\mathsf{w}_i)=\mathsf{root}(\mathsf{w}))\\
+    \beta^\to(\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})&=\mathit{false}\\
+    \beta^\to(\mathtt{box}\ \mathsf{T},\mathsf{w})&=\beta^\to(\mathsf{T},\mathsf{w})\\
+    \beta^\to(\mathtt{dangling},\mathsf{w})&=\mathit{false}\\
+    \beta^\to(\mathtt{any},\mathsf{w})&=\mathit{true}.
+  \end{align*}
+  Moreover, $\mathsf{w}$ is
+  \emph{borrowed as mutable} in $a$ if there exists $v\in\dom(\kappa)$ such that
+  $\beta^\leadsto(a(v),\mathsf{w})$ holds, where
+  \begin{align*}
+    \beta^\leadsto(\mathsf{int},\mathsf{w})&=\mathit{false}\\
+    \beta^\leadsto(\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})&=\mathit{false}\\
+    \beta^\leadsto(\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})&=\exists i.(\mathsf{root}(\mathsf{w}_i)=\mathsf{root}(\mathsf{w}))\\
+    \beta^\leadsto(\mathtt{box}\ \mathsf{T},\mathsf{w})&=\beta^\leadsto(\mathsf{T},\mathsf{w})\\
+    \beta^\leadsto(\mathtt{dangling},\mathsf{w})&=\mathit{false}\\
+    \beta^\leadsto(\mathtt{any},\mathsf{w})&=\mathit{true}.
+  \end{align*}
+  Finally, $\mathsf{w}$ is \emph{borrowed} in $a$ if it is borrowed either as immutable
+  or as mutable in $a$.
+\end{definition}
+
+\begin{proposition}[Abstract borrowing is a correct approximation of concrete borrowing]
+  \label{prop:abstract_borrow_correctness}
+  Let $\mathsf{w}\in\Leftvalues_\kappa$, $\rho\star h\in\mathbb{S}_\kappa$
+  and $a\in\mathbb{AS}_\kappa$ be
+  such that $\rho\star h\in\gamma_\kappa(a)$.
+  If $\loc(\mathsf{w},\rho\star h)$ is borrowed as immutable in $h$, then
+  $\mathsf{w}$ is borrowed as immutable in $a$.
+  If $\loc(\mathsf{w},\rho\star h)$ is borrowed as mutable in $h$, then
+  $\mathsf{w}$ is borrowed as mutable in $a$.
+  If $\loc(\mathsf{w},\rho\star h)$ is borrowed in $h$, then
+  $\mathsf{w}$ is borrowed in $a$.  
+\end{proposition}
+\begin{proof}
+  TODO
+\end{proof}
+
+The abstract evaluation of an expression yields the abstraction of the
+value of the leftvalue, a potentially updated abstract store
+and an arrow that expresses the nature of the value: an owned value, an immutable borrow
+or a mutable borrow. Let us start from the leftvalues, then consider the other kinds of
+expressions.
+
+\begin{definition}[Abstract semantics of leftvalues]\label{def:abstract_semantics_leftvalues}
+  Given $a\in\mathbb{AS}_\kappa$ and $\mathsf{w}\in\Leftvalues_\kappa$.
+  We define
+  \[
+  \dena[\mathsf{w}]{a}=\begin{cases}
+  \text{undefined} & \text{if $\ell$ is undefined}\\
+  \text{undefined} & \text{otherwise, if $\ell$ is borrowed as mutable in $h$}\\
+  \text{undefined} & \text{otherwise, if $\ell$ is dangling in $h$}\\
+  \langle v, h, \to\rangle & \text{otherwise, if $\ell\to v\in h$}\\
+  \langle v, h, \Rightarrow\rangle & \text{otherwise, if $\ell\Rightarrow v\in h$ and $v\in\mathbb{Z}$}\\
+  \langle v, h|_{-\ell}, \Rightarrow\rangle & \text{otherwise, if $\ell\Rightarrow v\in h$ and $v\not\in\mathbb{Z}$}\\
+  \langle v, h|_{-\ell}, \leadsto\rangle & \text{otherwise, if $\ell\leadsto v\in h$.}\\
+  \end{cases}
+  \]
+\end{definition}
