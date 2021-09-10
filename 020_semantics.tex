@@ -145,7 +145,7 @@ replaces $13$ with $17$ inside the box in $x$.
   Given $L\subseteq\Locs$, we define $(\rho\star h)|_{-L}=\rho\star(h|_{-L})$.
 \end{definition}
 
-\begin{definition}[Dangling locations]
+\begin{definition}[Dangling locations]\label{def:dangling}
   Let $h\in\mathbb{H}$ and $\ell\in\Locs$. Then $\ell$ is \emph{dangling} in $h$ if
   and only if $h(\ell)$ is undefined.
 \end{definition}
@@ -223,7 +223,7 @@ cannot pass through a borrow or a mutable borrow. For instance, the code in Ex.~
 
 Ex.~\ref{ex:read_leftvalue2} shows that a semantics of Rust must determine
 if the computation of the location $\ell$ holding the value of a leftvalue, when reading that value,
-passes through a borrow or a mutable borrow. Therefeore, Def.~\ref{def:location_for_reading}
+passes through a borrow or a mutable borrow. Therefore, Def.~\ref{def:location_for_reading}
 yields both $\ell$ and a Boolean mark.
 
 \begin{definition}[Location for reading]\label{def:location_for_reading}
@@ -288,49 +288,75 @@ uses $\locread$ or $\loc$ and the latter is undefined, then the semantics will b
   \end{itemize}
 \end{example}
 
-Reading the value of an expression is called evaluation of the expression.
-The evaluation of an expression yields the value of the expression, a potentially updated heap
+\begin{definition}[Undefined leftvalues]\label{def:undefined_leftvalues}
+  Let $\mathsf{w}\in\Leftvalues$ and $s=\rho\star h\in\mathbb{S}$. Then
+  $\mathsf{w}$ is \emph{undefined} in $s$ if $\loc(\mathsf{w},s)$ is either undefined
+  or dangling in $s$.
+\end{definition}
+
+The notion of dangling location (Def.~\ref{def:dangling}) is lifted to leftvalues.
+
+\begin{definition}[Dangling leftvalues]\label{def:dangling_leftvalues}
+  Let $\mathsf{w}\in\Leftvalues$ and $s=\rho\star h\in\mathbb{S}$. Then
+  $\mathsf{w}$ is \emph{dangling} in $s$ if $\loc(\mathsf{w},s)$ is defined and is dangling in $h$.
+\end{definition}
+
+The notion of borrowed location (Def.~\ref{def:borrow}) is lifted to leftvalues.
+
+\begin{definition}[Borrowed leftvalues]\label{def:borrowed_leftvalues}
+  Let $\mathsf{w}\in\Leftvalues$ and $s=\rho\star h\in\mathbb{S}$. Then
+  $\mathsf{w}$ is \emph{borrowed as immutable} in $s$
+  if $\loc(\mathsf{w},s)$ is borrowed as
+  immutable in $h$. It is \emph{borrowed as mutable} in $s$ if
+  $\loc(\mathsf{w},s)$ is borrowed as
+  mutable in $h$. It is \emph{borrowed} in $s$
+  if it is borrowed as either immutable or mutable in $s$.
+\end{definition}
+
+Reading the value of an expression is called evaluation of the expression: it
+yields the value contained in the expression, a potentially updated heap
 and an arrow that expresses the nature of the value: an owned value, an immutable borrow
-or a mutable borrow. Let us start from the leftvalues, then consider the other kinds of expressions.
+or a mutable borrow. Def.~\ref{def:semantics_leftvalues} gives the semantics of reading from
+a leftvalue, while Def.~\ref{def:semantics_expressions} gives the semantics of reading from the other
+kinds of expressions.
 
 \begin{definition}[Semantics of leftvalues]\label{def:semantics_leftvalues}
-  Given $s=\rho\star h\in\mathbb{S}$ and $\mathsf{w}\in\Leftvalues$, let $\langle\ell,b\rangle=\locread(\mathsf{w},s)$.
-  We define
+  Let $s=\rho\star h\in\mathbb{S}$ and $\mathsf{w}\in\Leftvalues$. Then
   \[
   \den[\mathsf{w}]{s}=\begin{cases}
-  \text{undefined} & \text{if $\locread(\mathsf{w},s)$ is undefined}\\
-  \text{undefined} & \text{otherwise, if $\ell$ is borrowed as mutable in $h$}\\
-  \text{undefined} & \text{otherwise, if $\ell$ is dangling in $h$}\\
-  \langle v, h, \to\rangle & \text{otherwise, if $\ell\to v\in h$}\\
-  \langle v, h, \Rightarrow\rangle & \text{otherwise, if $\ell\Rightarrow v\in h$ and $v\in\mathbb{Z}$}\\
-  \langle v, h|_{-\ell}, \Rightarrow\rangle & \text{otherwise, if $\ell\Rightarrow v\in h$, $v\not\in\mathbb{Z}$ and $b$ is false}\\
-  \langle v, h|_{-\ell}, \leadsto\rangle & \text{otherwise, if $\ell\leadsto v\in h$ and $b$ is false}\\
+  \text{undefined} & \text{if $\mathsf{w}$ is undefined in $s$}\\
+  \text{undefined} & \text{otherwise, if $\mathsf{w}$ is borrowed as mutable in $s$}\\
+  \langle v, h, \to\rangle & \text{otherwise, if $\loc(\mathsf{w},s)\to v\in h$}\\
+  \langle v, h, \Rightarrow\rangle & \text{otherwise, if $\loc(\mathsf{w},s)\Rightarrow v\in h$ and $v\in\mathbb{Z}$}\\
+  \langle v, h|_{-\ell}, \Rightarrow\rangle & \text{otherwise, if $\locread(\mathsf{w},s)=\langle\ell,\mathit{false}\rangle$, $\ell\Rightarrow v\in h$ and $v\not\in\mathbb{Z}$}\\
+  \langle v, h|_{-\ell}, \leadsto\rangle & \text{otherwise, if $\locread(\mathsf{w},s)=\langle\ell,\mathit{false}\rangle$ and $\ell\leadsto v\in h$}\\
   \text{undefined} & \text{otherwise.}
   \end{cases}
   \]
 \end{definition}
 
 \noindent
-The second case above specifies that a leftvalue borrowed as mutable cannot be read.
-The third case specifies that a leftvalue, whose value has been moved out, cannot be read.
-The fourth and fifth case read a value with copy semantics.
-The sixth and seventh cases perform a move of a value out of $\mathsf{w}$, by transforming
+The first case above entails that a leftvalue, whose value has been moved out, cannot be read.
+The second case specifies that a leftvalue borrowed as mutable cannot be read,
+since it must be considered as frozen for the duration of the borrow.
+The third and fourth cases read a value with copy semantics.
+The fifth and sixth cases perform a move of a value out of $\mathsf{w}$, by transforming
 $\mathsf{w}$'s location into a dangling location. These two cases deal with
-values with move semantics (the sixth with boxes, the seventh with mutable borrows).
+values with move semantics (the fifth with boxes, the sixth with mutable borrows).
 As hinted in Ex.~\ref{ex:read_leftvalue2}, a value with move semantics can be read from a leftvalue
 only if the evaluation of the latter does not pass through a borrow or a mutable borrow, hence the
-requirement that $b$ is false.
+requirement that the second component of $\locread$ is $\mathit{false}$.
 
 \begin{definition}[Semantics of expressions]\label{def:semantics_expressions}
-  Given $s=\rho\star h\in\mathbb{S}$, we define
+  Let $s=\rho\star h\in\mathbb{S}$. Then
   \begin{align*}
     \den[i]{s}&=\langle i,h,\Rightarrow\rangle\\
     \den[\borrow\mathsf{w}]{s}&=\begin{cases}
-    \text{undefined} & \text{if $h(\loc(\mathsf{w},s))$ is undefined}\\
+    \text{undefined} & \text{if $\mathsf{w}$ is undefined in $s$}\\
     \langle\loc(\mathsf{w},s),h,\to\rangle & \text{otherwise}
     \end{cases}\\
     \den[\mutborrow\mathsf{w}]{s}&=\begin{cases}
-    \text{undefined} & \text{if $h(\loc(\mathsf{w},s))$ is undefined}\\
+    \text{undefined} & \text{if $\mathsf{w}$ is undefined in $s$}\\
     \langle\loc(\mathsf{w},s),h,\leadsto\rangle & \text{otherwise}
     \end{cases}\\
     \den[\mathtt{box}\ \mathsf{e}]{s}&=
@@ -342,6 +368,15 @@ requirement that $b$ is false.
     \end{cases}
   \end{align*}
 \end{definition}
+
+\noindent
+The third component of the semantics of expressions
+(Def.~\ref{def:semantics_expressions}) states that integers (first case) and
+boxes (fourth case) are owned values, while immutable borrows and mutable borrows
+are considered by the second and third case, respectively. The fourth case allocates memory
+in the heap, for a new box at a new fresh location $\ell$. The nature of the value of $\mathsf{e}$,
+that gets boxed, is reflected in the kind of arrow used to bind $\ell$ to that value.
+In any case, $\mathtt{box}\ \mathsf{e}$ is an owned value.
 
 Def.~\ref{def:owned_reachable_locations}
 defines the set of locations reachable from an initial set of locations $\psi$,
@@ -373,11 +408,13 @@ The execution of a term is modelled as a function that
 maps pre-states to post-states.
 
 \begin{definition}[Semantics of terms]\label{def:semantics_terms}
-  Given $s=\rho\star h\in\mathbb{S}$ and $m\in\Lifetimes$, we define
+  Let $s=\rho\star h\in\mathbb{S}$ and $m\in\Lifetimes$. Then
   \begin{align*}
     \denl[x=\mathsf{e}]{m}{s}&=
     \begin{cases}
-      \text{undefined} & \text{if $\ell$ is borrowed in $h'$}\\
+      \text{undefined} & \text{if $\den[\mathsf{e}]{s}$ is undefined}\\
+      \text{undefined} & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle\_,h',\_\rangle$}\\
+      & \quad\text{and $x$ is borrowed in $\rho\star h'$}\\
       \rho\star h''[\ell\Rightarrow v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\Rightarrow\rangle$}\\
       \rho\star h''[\ell\leadsto v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\leadsto\rangle$}\\
       & \quad\text{and $v$ is not borrowed in $h'$}\\
@@ -385,11 +422,12 @@ maps pre-states to post-states.
       & \quad\text{and $v$ is not borrowed as mutable in $h'$}\\
       \text{undefined} & \text{otherwise,}
     \end{cases}\\
-    &\text{where $\ell=\loc(x,\rho\star h')$ and $h''=\drop(\{\ell\},h')$}\\
+    &\text{where $\ell=\loc(x,\rho\star h')$ and $h''=\drop(\ell,h')$}\\
     \mbox{}\\
     \denl[*\mathsf{w}=\mathsf{e}]{m}{s}&=
     \begin{cases}
-      \text{undefined} & \text{if $\loc(\mathsf{w},\rho\star h')\leadsto\ell\not\in h$}\\
+      \text{undefined} & \text{if $\den[\mathsf{e}]{s}$ is undefined}\\
+      \text{undefined} & \text{otherwise, if $\loc(\mathsf{w},\rho\star h')\leadsto\ell\not\in h$}\\
       \rho\star h''[\ell\Rightarrow v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\Rightarrow\rangle$}\\
       \rho\star h''[\ell\leadsto v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\leadsto\rangle$}\\
       & \quad\text{and $v$ is not borrowed in $h'$}\\
@@ -401,7 +439,8 @@ maps pre-states to post-states.
     \mbox{}\\
     \denl[\mathtt{let\ mut}\ x=\mathsf{e}]{m}{s}&=
     \begin{cases}
-      \rho[x\to^m\ell]\star h'[\ell\Rightarrow v] & \text{if $\den[\mathsf{e}]{s}=\langle v,h',\Rightarrow\rangle$}\\
+      \text{undefined} & \text{if $\den[\mathsf{e}]{s}$ is undefined}\\
+      \rho[x\to^m\ell]\star h'[\ell\Rightarrow v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\Rightarrow\rangle$}\\
       \rho[x\to^m\ell]\star h'[\ell\leadsto v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\leadsto\rangle$}\\
       & \quad\text{and $v$ is not borrowed in $h'$}\\
       \rho[x\to^m\ell]\star h'[\ell\to v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\to\rangle$}\\
@@ -421,7 +460,7 @@ maps pre-states to post-states.
     \{
       \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
       \mathtt{let\ mut}\ y = x;\
-      \mathtt{let\ mut}\ z = \borrow x;
+      \mathtt{let\ mut}\ z = \borrow x
     \}^m
   \]
 \end{example}

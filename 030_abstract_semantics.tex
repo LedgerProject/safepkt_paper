@@ -484,25 +484,25 @@ to a coarser notion of \emph{abstract} borrowing for leftvalues (that is, for th
   Let $a\in\mathbb{AS}_\kappa$ and $\mathsf{w}\in\Leftvalues_\kappa$.
   Then $\mathsf{w}$ is
   \emph{borrowed as immutable} in $a$ if there exists $v\in\dom(\kappa)$ such that
-  $\beta^\to(a(v),\mathsf{w})$ holds, where
+  $\beta_\to(a(v),\mathsf{w})$ holds, where
   \begin{align*}
-    \beta^\to(\mathsf{int},\mathsf{w})&=\mathit{false}\\
-    \beta^\to(\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})&=\exists i.(\mathsf{root}(\mathsf{w}_i)=\mathsf{root}(\mathsf{w}))\\
-    \beta^\to(\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})&=\mathit{false}\\
-    \beta^\to(\mathtt{box}\ \mathsf{T},\mathsf{w})&=\beta^\to(\mathsf{T},\mathsf{w})\\
-    \beta^\to(\mathtt{dangling},\mathsf{w})&=\mathit{false}\\
-    \beta^\to(\mathtt{any},\mathsf{w})&=\mathit{true}.
+    \beta_\to(\mathsf{int},\mathsf{w})&=\mathit{false}\\
+    \beta_\to(\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},\mathsf{w})&=\exists i.(\mathsf{root}(\mathsf{w}_i)=\mathsf{root}(\mathsf{w}))\\
+    \beta_\to(\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},\mathsf{w})&=\mathit{false}\\
+    \beta_\to(\mathtt{box}\ \mathsf{T},\mathsf{w})&=\beta_\to(\mathsf{T},\mathsf{w})\\
+    \beta_\to(\mathtt{dangling},\mathsf{w})&=\mathit{false}\\
+    \beta_\to(\mathtt{any},\mathsf{w})&=\mathit{true}.
   \end{align*}
   Moreover, $\mathsf{w}$ is
   \emph{borrowed as mutable} in $a$ if there exists $v\in\dom(\kappa)$ such that
-  $\beta^\leadsto(a(v),\mathsf{w})$ holds, where
+  $\beta_\leadsto(a(v),\mathsf{w})$ holds, where
   \begin{align*}
-    \beta^\leadsto(\mathsf{int},\mathsf{w})&=\mathit{false}\\
-    \beta^\leadsto(\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})&=\mathit{false}\\
-    \beta^\leadsto(\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})&=\exists i.(\mathsf{root}(\mathsf{w}_i)=\mathsf{root}(\mathsf{w}))\\
-    \beta^\leadsto(\mathtt{box}\ \mathsf{T},\mathsf{w})&=\beta^\leadsto(\mathsf{T},\mathsf{w})\\
-    \beta^\leadsto(\mathtt{dangling},\mathsf{w})&=\mathit{false}\\
-    \beta^\leadsto(\mathtt{any},\mathsf{w})&=\mathit{true}.
+    \beta_\leadsto(\mathsf{int},\mathsf{w})&=\mathit{false}\\
+    \beta_\leadsto(\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},\mathsf{w})&=\mathit{false}\\
+    \beta_\leadsto(\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},\mathsf{w})&=\exists i.(\mathsf{root}(\mathsf{w}_i)=\mathsf{root}(\mathsf{w}))\\
+    \beta_\leadsto(\mathtt{box}\ \mathsf{T},\mathsf{w})&=\beta_\leadsto(\mathsf{T},\mathsf{w})\\
+    \beta_\leadsto(\mathtt{dangling},\mathsf{w})&=\mathit{false}\\
+    \beta_\leadsto(\mathtt{any},\mathsf{w})&=\mathit{true}.
   \end{align*}
   Finally, $\mathsf{w}$ is \emph{borrowed} in $a$ if it is borrowed either as immutable
   or as mutable in $a$.
