@@ -6,9 +6,8 @@
     \mathsf{T}_\kappa ::=&\ \mathsf{int} & \text{integer}\\
     | &\ \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{borrow}\\
     | &\ \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{mutable borrow}\\
-    | &\ \mathtt{box}\ \mathsf{T}_\kappa & \text{box}\\
-    | &\ \mathsf{dangling} & \text{dangling}\\
-    | &\ \mathsf{any} & \text{anything}
+    | &\ \boxtype{\mathsf{T}_\kappa} & \text{box}\\
+    | &\ \mathsf{dangling} & \text{dangling}
   \end{align*}
   where $n\ge 1$ and the $\mathsf{w}_i$, with $1\le i\le n$, are leftvalues
   using only variables in $\dom(\kappa)$. This set is ordered by $\sqsubseteq$, defined as
@@ -18,10 +17,16 @@
     \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} \quad\text{iff $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\subseteq\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}$}\\
     \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \sqsubseteq
     \mutborrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} \quad\text{iff $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\subseteq\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}$}\\
-    \mathtt{box}\ t_1&\sqsubseteq\mathtt{box}\ t_2 \quad\text{iff $t_1\sqsubseteq t_2$}\\
-    \mathsf{dangling}&\sqsubseteq\mathsf{dangling}\\
-    t &\sqsubseteq\mathsf{any}\quad\text{for all $t$.}
+    \boxtype{t_1}&\sqsubseteq\boxtype{t_2} \quad\text{iff $t_1\sqsubseteq t_2$}\\
+    \mathsf{dangling}&\sqsubseteq\mathsf{dangling.}
   \end{align*}
+\end{definition}
+
+\begin{definition}[Copy and move types]\label{def:copy_move}
+  Let $t\in\mathbb{T}$. Then $t$ \emph{has move semantics}, and we write
+  $\movetype(t)$, if and only if $t=\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$ or
+  $t=\boxtype{t'}$ for some $t'$. In all other cases, $t$ \emph{has copy semantics},
+  and we write $\copytype(t)$.
 \end{definition}
 
 \begin{lemma}
@@ -86,12 +91,10 @@
 \begin{definition}
   The $\sqcap$ operator over $\mathsf{T}_\kappa$ is defined as
   \begin{align*}
-    \mathsf{any}\sqcap t &= t\\
-    t\sqcap\mathsf{any}&=t\\
     \mathsf{int}\sqcap\mathsf{int} &= \mathsf{int}\\
     \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \borrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cap\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
     \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \mutborrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \mutborrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cap\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
-    (\mathtt{box}\ t_1) \sqcap (\mathtt{box}\ t_2) &=\mathtt{box}\ (t_1\sqcap t_2)\quad\text{if $t_1\sqcap t_2$ is defined}\\
+    (\boxtype{t_1}) \sqcap (\boxtype{t_2}) &=\boxtype{(t_1\sqcap t_2)}\quad\text{if $t_1\sqcap t_2$ is defined}\\
     \mathsf{dangling}\sqcap\mathsf{dangling} &= \mathsf{dangling}.
   \end{align*}
   In all other cases, $t_1\sqcap t_2$ is undefined.
@@ -164,7 +167,7 @@
 
 \begin{definition}[Abstract stores]
   \label{def:abstract-store}
-  Given a context $\kappa$, an \emph{abstract store} $a$ over $\kappa$ is either $\bot$
+  Given a context $\kappa$, an \emph{abstract store} $a$ over $\kappa$ is either $\bot$ or $\top$
   or a set of bindings from variables to types, decorated with a lifetime:
   \[
   a\subseteq\{x\to^m t\mid x\to^m\in\kappa\text{ and }t\in\mathsf{T_\kappa}\}
@@ -172,14 +175,15 @@
   with the constraint that exactly one binding exists for each given variable in $\dom(\kappa)$.
   The set of all abstract stores over $\kappa$ is $\mathbb{AS}_\kappa$.
   The latter is ordered by $\sqsubseteq$, defined as $a_1\sqsubseteq a_2$ iff
-  $a_1=\bot$ or
-  ($a_1\not=\bot$ and for every $x\to^mt_1\in a_1$ there is $x\to^mt_2\in a_2$
+  $a_1=\bot$ or $a_2=\top$ or
+  ($a_1,a_2\not=\bot,\top$ and for every $x\to^mt_1\in a_1$ there is $x\to^mt_2\in a_2$
   such that $t_1\sqsubseteq t_2$).
 \end{definition}
 
 \begin{definition}
   The greatest lower bound operator over $\mathbb{AS}_\kappa$ is defined as
-  $\bot\sqcap a=\bot$, $a\sqcap \bot=\bot$ and, when $a_1,a_2\not=\bot$,
+  $\bot\sqcap a=\bot$, $a\sqcap \bot=\bot$, $\top\sqcap a=a$, $a\sqcap\top=a$ and,
+  when $a_1,a_2\not=\bot,\top$:
   \[
   a_1\sqcap a_2=\begin{cases}
   \bot\qquad\text{if $\exists x\to^m t_1\in a_1$ and $x\to^m t_2\in a_2$ s.t.\ $t_1\sqcap t_2$ is undefined}\\
@@ -287,7 +291,8 @@
   An abstract store $a\in\mathbb{AS}_\kappa$ represents a set of concrete stores
   in $\mathbb{S}_\kappa$, according to the \emph{concretization map}
   $\gamma_\kappa:\mathbb{AS}_\kappa\to\wp(\mathbb{S}_\kappa)$, defined as
-  $\gamma_\kappa(\bot)=\varnothing$ and, for $a\not=\bot$:
+  $\gamma_\kappa(\bot)=\varnothing$, $\gamma_\kappa(\top)=\wp(\mathbb{S}_\kappa)$ and,
+  for $a\not=\bot,\top$:
   \[
   \gamma_\kappa(a)=\left\{\rho\star h\in\mathbb{S}_\kappa\left|\begin{array}{l}
   \text{for every }x\to^m\ell\in\rho\text{ there is }x\to^m t\in a\text{ s.t.\ }\ell\approx_{\rho\star h}t
@@ -301,9 +306,8 @@
     &&& \forall\mathsf{w}\in\Leftvalues.\left(\loc(\mathsf{w},\rho\star h)=\ell'\text{ implies }\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\right)\\
     \ell&\approx_{\rho\star h}\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $\exists\ell'.\ell\leadsto\ell'\in h$ and}\\
     &&& \forall\mathsf{w}\in\Leftvalues.\left(\loc(\mathsf{w},\rho\star h)=\ell'\text{ implies }\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\right)\\
-    \ell&\approx_{\rho\star h}\mathtt{box}\ t && \text{iff $\exists\ell'.\ell\Rightarrow\ell'\in h$ and $h(\ell')\approx_{\rho\star h}t$}\\
-    \ell&\approx_{\rho\star h}\mathsf{dangling} && \text{iff $h(\ell)$ is undefined}\\
-    \ell&\approx_{\rho\star h}\mathsf{any} && \text{always.}
+    \ell&\approx_{\rho\star h}\boxtype{t} && \text{iff $\exists\ell'.\ell\Rightarrow\ell'\in h$ and $h(\ell')\approx_{\rho\star h}t$}\\
+    \ell&\approx_{\rho\star h}\mathsf{dangling} && \text{iff $h(\ell)$ is undefined.}
   \end{align*}
 \end{definition}
 
@@ -459,17 +463,51 @@
   \qed
 \end{proof}
 
-\begin{proposition}[Abstract dangling is a correct approximation of concrete dangling]
-  \label{prop:abstract_dangling_correctness}
-  Let $\mathsf{w}\in\Leftvalues_\kappa$, $\rho\star h\in\mathbb{S}_\kappa$
+\begin{definition}[Abstract location for reading]\label{def:abstract_location_for_reading}
+  Let $\mathsf{w}\in\Leftvalues$ and $a\in\mathbb{AS}_\kappa$. The partial function
+  $\locreada(\mathsf{w},a)$ yields the type of the location that holds the value of $\mathsf{w}$
+  and a Boolean mark that informs if the evaluation of $\mathsf{w}$ passes through a borrow:
+  \begin{align*}
+    \locreada(x,a)&=\langle a(x),\mathit{false}\rangle\\
+    \locreada(*\mathsf{w},a)&=\begin{cases}
+    \text{undefined} & \text{if $\locreada(\mathsf{w},a)$ is undefined}\\
+    \text{undefined} & \text{if $\locreada(\mathsf{w},a)=\langle\mathsf{dangling},b\rangle$}\\
+    \text{undefined} & \text{if $\locreada(\mathsf{w},a)=\langle\mathsf{int},b\rangle$}\\
+    \langle t_1\sqcup\cdots\sqcup t_n,\mathit{true}\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},b\rangle$,}\\
+    &\quad\text{$\forall i\in\{1,\ldots,n\}.\locreada(\mathsf{w}_i,a)=\langle t_i,b_i\rangle$}\\
+    &\quad\text{and $t_1\sqcup\cdots\sqcup t_n$ exists}\\
+    \langle t_1\sqcup\cdots\sqcup t_n,\mathit{true}\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},b\rangle$,}\\
+    &\quad\text{$\forall i\in\{1,\ldots,n\}.\locreada(\mathsf{w}_i,a)=\langle t_i,b_i\rangle$}\\
+    &\quad\text{and $t_1\sqcup\cdots\sqcup t_n$ exists}\\
+    \langle t,b\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\boxtype{t},b\rangle$}\\
+    \text{undefined} & \text{otherwise.}
+    \end{cases}
+  \end{align*}
+\end{definition}
+
+\begin{definition}[Abstract location]\label{def:abstract_location}
+  Let $\mathsf{w}\in\Leftvalues$ and $a\in\mathbb{AS}_\kappa$. The partial function
+  $\loca(\mathsf{w},a)$ yields the type of the location holding the value of $\mathsf{w}$:
+  \[
+  \loca(\mathsf{w},a)=\begin{cases}
+  \text{undefined} & \text{if $\locreada(\mathsf{w},a)$ is undefined}\\
+  t & \text{if $\locreada(\mathsf{w},a)=\langle t,b\rangle$.}
+  \end{cases}
+  \]
+\end{definition}
+
+\begin{definition}[Abstract undefined leftvalues]\label{def:abstract_undefined_leftvalues}
+  Let $\mathsf{w}\in\Leftvalues$ and $a\in\mathbb{AS}_\kappa$. Then
+  $\mathsf{w}$ is \emph{undefined} in $a$ if $\loca(\mathsf{w},a)$ is undefined
+  or $\loca(\mathsf{w},a)=\mathsf{dangling}$.
+\end{definition}
+
+\begin{proposition}[Abstract undefined is correct]
+  \label{prop:abstract_undefined_correctness}
+  Let $\mathsf{w}\in\Leftvalues_\kappa$, $s\in\mathbb{S}_\kappa$
   and $a\in\mathbb{AS}_\kappa$ be
-  such that $\rho\star h\in\gamma_\kappa(a)$.
-  If $\loc(\mathsf{w},\rho\star h)$ is borrowed as immutable in $h$, then
-  $\mathsf{w}$ is borrowed as immutable in $a$.
-  If $\loc(\mathsf{w},\rho\star h)$ is borrowed as mutable in $h$, then
-  $\mathsf{w}$ is borrowed as mutable in $a$.
-  If $\loc(\mathsf{w},\rho\star h)$ is borrowed in $h$, then
-  $\mathsf{w}$ is borrowed in $a$.  
+  such that $s\in\gamma_\kappa(a)$.
+  If $\mathsf{w}$ is undefined in $s$ then $\mathsf{w}$ is undefined in $a$.
 \end{proposition}
 \begin{proof}
   TODO
@@ -489,9 +527,8 @@ to a coarser notion of \emph{abstract} borrowing for leftvalues (that is, for th
     \beta_\to(\mathsf{int},\mathsf{w})&=\mathit{false}\\
     \beta_\to(\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},\mathsf{w})&=\exists i.(\mathsf{root}(\mathsf{w}_i)=\mathsf{root}(\mathsf{w}))\\
     \beta_\to(\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},\mathsf{w})&=\mathit{false}\\
-    \beta_\to(\mathtt{box}\ \mathsf{T},\mathsf{w})&=\beta_\to(\mathsf{T},\mathsf{w})\\
-    \beta_\to(\mathtt{dangling},\mathsf{w})&=\mathit{false}\\
-    \beta_\to(\mathtt{any},\mathsf{w})&=\mathit{true}.
+    \beta_\to(\boxtype{t},\mathsf{w})&=\beta_\to(t,\mathsf{w})\\
+    \beta_\to(\mathtt{dangling},\mathsf{w})&=\mathit{false.}
   \end{align*}
   Moreover, $\mathsf{w}$ is
   \emph{borrowed as mutable} in $a$ if there exists $v\in\dom(\kappa)$ such that
@@ -500,48 +537,56 @@ to a coarser notion of \emph{abstract} borrowing for leftvalues (that is, for th
     \beta_\leadsto(\mathsf{int},\mathsf{w})&=\mathit{false}\\
     \beta_\leadsto(\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},\mathsf{w})&=\mathit{false}\\
     \beta_\leadsto(\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},\mathsf{w})&=\exists i.(\mathsf{root}(\mathsf{w}_i)=\mathsf{root}(\mathsf{w}))\\
-    \beta_\leadsto(\mathtt{box}\ \mathsf{T},\mathsf{w})&=\beta_\leadsto(\mathsf{T},\mathsf{w})\\
-    \beta_\leadsto(\mathtt{dangling},\mathsf{w})&=\mathit{false}\\
-    \beta_\leadsto(\mathtt{any},\mathsf{w})&=\mathit{true}.
+    \beta_\leadsto(\boxtype{t},\mathsf{w})&=\beta_\leadsto(t,\mathsf{w})\\
+    \beta_\leadsto(\mathtt{dangling},\mathsf{w})&=\mathit{false.}
   \end{align*}
   Finally, $\mathsf{w}$ is \emph{borrowed} in $a$ if it is borrowed either as immutable
   or as mutable in $a$.
 \end{definition}
 
-\begin{proposition}[Abstract borrowing is a correct approximation of concrete borrowing]
+\begin{proposition}[Abstract borrowing is correct]
   \label{prop:abstract_borrow_correctness}
-  Let $\mathsf{w}\in\Leftvalues_\kappa$, $\rho\star h\in\mathbb{S}_\kappa$
+  Let $\mathsf{w}\in\Leftvalues_\kappa$, $s\in\mathbb{S}_\kappa$
   and $a\in\mathbb{AS}_\kappa$ be
-  such that $\rho\star h\in\gamma_\kappa(a)$.
-  If $\loc(\mathsf{w},\rho\star h)$ is borrowed as immutable in $h$, then
+  such that $s\in\gamma_\kappa(a)$.
+  If $\mathsf{w}$ is borrowed as immutable in $s$, then
   $\mathsf{w}$ is borrowed as immutable in $a$.
-  If $\loc(\mathsf{w},\rho\star h)$ is borrowed as mutable in $h$, then
+  If $\mathsf{w}$ is borrowed as mutable in $s$, then
   $\mathsf{w}$ is borrowed as mutable in $a$.
-  If $\loc(\mathsf{w},\rho\star h)$ is borrowed in $h$, then
-  $\mathsf{w}$ is borrowed in $a$.  
+  If $\mathsf{w}$ is borrowed in $s$, then
+  $\mathsf{w}$ is borrowed in $a$.
 \end{proposition}
 \begin{proof}
   TODO
 \end{proof}
 
 The abstract evaluation of an expression yields the abstraction of the
-value of the leftvalue, a potentially updated abstract store
+value of the expression, a potentially updated abstract store
 and an arrow that expresses the nature of the value: an owned value, an immutable borrow
 or a mutable borrow. Let us start from the leftvalues, then consider the other kinds of
 expressions.
 
 \begin{definition}[Abstract semantics of leftvalues]\label{def:abstract_semantics_leftvalues}
-  Given $a\in\mathbb{AS}_\kappa$ and $\mathsf{w}\in\Leftvalues_\kappa$.
-  We define
+  Let $a\in\mathbb{AS}_\kappa$ and $\mathsf{w}\in\Leftvalues_\kappa$. Then
   \[
   \dena[\mathsf{w}]{a}=\begin{cases}
-  \text{undefined} & \text{if $\ell$ is undefined}\\
-  \text{undefined} & \text{otherwise, if $\ell$ is borrowed as mutable in $h$}\\
-  \text{undefined} & \text{otherwise, if $\ell$ is dangling in $h$}\\
-  \langle v, h, \to\rangle & \text{otherwise, if $\ell\to v\in h$}\\
-  \langle v, h, \Rightarrow\rangle & \text{otherwise, if $\ell\Rightarrow v\in h$ and $v\in\mathbb{Z}$}\\
-  \langle v, h|_{-\ell}, \Rightarrow\rangle & \text{otherwise, if $\ell\Rightarrow v\in h$ and $v\not\in\mathbb{Z}$}\\
-  \langle v, h|_{-\ell}, \leadsto\rangle & \text{otherwise, if $\ell\leadsto v\in h$.}\\
+  \text{undefined} & \text{if $\mathsf{w}$ is undefined in $a$}\\
+  \text{undefined} & \text{otherwise, if $\mathsf{w}$ is borrowed as mutable in $a$}\\
+  \langle t, a\rangle & \text{otherwise, if $t=\loca(\mathsf{w},a)$ and $\copytype(t)$}\\
+  \langle t, a[x\to^m\underbrace{\boxempty\cdots\boxempty}_{n\text{ times}}\mathsf{dangling}]\rangle & \text{otherwise, if $\langle t,\mathit{false}\rangle=\locreada(\mathsf{w},a)$ and $\movetype(t)$,}\\
+  & \quad\text{where $\mathsf{w}=\underbrace{*\ldots*}_{n\text{ times}}x$ and $x\to^mt'\in a$}\\
+  \text{undefined} & \text{otherwise.}
   \end{cases}
   \]
 \end{definition}
+
+\begin{proposition}[The abstract semantics of leftvalues is correct]
+  \label{prop:abstract_leftvalues_correctness}
+  Let $\mathsf{w}\in\Leftvalues_\kappa$, $s\in\mathbb{S}_\kappa$
+  and $a\in\mathbb{AS}_\kappa$ be
+  such that $s\in\gamma_\kappa(a)$.
+  Then $\den[\mathsf{w}]{s}\in\gamma_\kappa(\dena[\mathsf{w}]{a})$.
+\end{proposition}
+\begin{proof}
+  TODO
+\end{proof}

@@ -236,7 +236,8 @@ yields both $\ell$ and a Boolean mark.
     \locread(x,s) &= \langle\rho(x),\mathit{false}\rangle\\
     \locread(*\mathsf{w},s) &= \begin{cases}
       \text{undefined} & \text{if $\locread(\mathsf{w},s)$ is undefined}\\
-      \text{undefined} & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $h(\ell)\not\in\Locs$}\\
+      \text{undefined} & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $h(\ell)$ is undefined}\\
+      \text{undefined} & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $h(\ell)\in\mathbb{Z}$}\\
       \langle \ell',\mathit{true}\rangle & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $\ell\to\ell'\in h$}\\
       \langle \ell',\mathit{true}\rangle & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $\ell\leadsto\ell'\in h$}\\
       \langle \ell',b\rangle & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $\ell\Rightarrow\ell'\in h$.}
@@ -245,7 +246,7 @@ yields both $\ell$ and a Boolean mark.
 \end{definition}
 
 \noindent
-In many cases, the Boolean mark yield by $\locread$ is irrelevant. For instance,
+In many cases, the Boolean mark returned by $\locread$ is irrelevant. For instance,
 Ex.~\ref{ex:write_leftvalue} shows that writing into a leftvalue is possible also when
 the location of the leftvalue is determined by passing through a borrow or a mutable borrow.
 Hence, the Boolean mark is not needed in that case. In such cases, it is simpler
@@ -294,12 +295,12 @@ uses $\locread$ or $\loc$ and the latter is undefined, then the semantics will b
   or dangling in $s$.
 \end{definition}
 
-The notion of dangling location (Def.~\ref{def:dangling}) is lifted to leftvalues.
+%The notion of dangling location (Def.~\ref{def:dangling}) is lifted to leftvalues.
 
-\begin{definition}[Dangling leftvalues]\label{def:dangling_leftvalues}
-  Let $\mathsf{w}\in\Leftvalues$ and $s=\rho\star h\in\mathbb{S}$. Then
-  $\mathsf{w}$ is \emph{dangling} in $s$ if $\loc(\mathsf{w},s)$ is defined and is dangling in $h$.
-\end{definition}
+%\begin{definition}[Dangling leftvalues]\label{def:dangling_leftvalues}
+%  Let $\mathsf{w}\in\Leftvalues$ and $s=\rho\star h\in\mathbb{S}$. Then
+%  $\mathsf{w}$ is \emph{dangling} in $s$ if $\loc(\mathsf{w},s)$ is defined and is dangling in $h$.
+%\end{definition}
 
 The notion of borrowed location (Def.~\ref{def:borrow}) is lifted to leftvalues.
 
