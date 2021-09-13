@@ -3,7 +3,7 @@
 \begin{definition}
   We assume there is a set of variables $\Vars$
   and a finite set $\Lifetimes$ of \emph{lifetimes}.
-  The set of $\Leftvalues$ of \emph{leftvalues} is defined as:
+  The set $\Leftvalues$ of \emph{leftvalues} is defined as:
   \begin{align*}
     \mathsf{w} ::= &\ x & \text{variable, with $x\in\Vars$}\\
     | &\ \mathtt{*}\mathsf{w} & \text{dereference}
@@ -272,19 +272,20 @@ In the following, when the semantics
 uses $\locread$ or $\loc$ and the latter is undefined, then the semantics will be stuck.
 
 \begin{example}
-  \text{TODO}\\
   Let $\rho = \left\{x\to^m\ell_x\right\}$.
   \begin{itemize}
     \item Let $s = \rho\star h$ with
     $h = \left\{\ell_x\to\ell,\ \ell\Rightarrow 1\right\}$.
-    Then, $s(\loc(x,s)) = s(s(x)) = s(\rho(x)) = s(\ell_x) =
-    h(\ell_x) = \ell\in\Locs$, so
-    $\loc(\mathtt{*}x,s)= s(\loc(x,s)) = \ell$.
+    Then, $\locread(x,s)=\langle\rho(x),\mathit{false}\rangle=
+    \langle\ell_x,\mathit{false}\rangle$ with $\ell_x\to\ell\in h$.
+    So, $\locread(*x,s)=\langle \ell,\mathit{true}\rangle$
+    and $\loc(\mathtt{*}x,s)= \ell$.
     %
     \item Let $s' = \rho\star h'$ with
-    $h' = \left\{\ell_x\Rightarrow 1\right\}$. Then,
-    $s'(\loc(x,s')) = s'(s'(x)) = s'(\rho(x)) = s'(\ell_x) =
-    h'(\ell_x) = 1 \not\in\Locs$, so $\loc(\mathtt{*}x,s')$ is undefined.
+    $h' = \left\{\ell_x\Rightarrow 1\right\}$.
+    Then, $\locread(x,s')=\langle\rho(x),\mathit{false}\rangle=
+    \langle\ell_x,\mathit{false}\rangle$ with $h'(\ell_x)=1\in\mathbb{Z}$.
+    So, $\locread(*x,s')$ is undefined, hence $\loc(\mathtt{*}x,s')$ is undefined.
     \qed
   \end{itemize}
 \end{example}
