@@ -240,7 +240,7 @@ yields both $\ell$ and a Boolean mark.
       \text{undefined} & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $h(\ell)\in\mathbb{Z}$}\\
       \langle \ell',\mathit{true}\rangle & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $\ell\to\ell'\in h$}\\
       \langle \ell',\mathit{true}\rangle & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $\ell\leadsto\ell'\in h$}\\
-      \langle \ell',b\rangle & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $\ell\Rightarrow\ell'\in h$.}
+      \langle \ell',b\rangle & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $\ell\Rightarrow\ell'\in h$ with $\ell'\not\in\mathbb{Z}$.}
     \end{cases}
   \end{align*}
 \end{definition}
@@ -429,7 +429,8 @@ maps pre-states to post-states.
     \denl[*\mathsf{w}=\mathsf{e}]{m}{s}&=
     \begin{cases}
       \text{undefined} & \text{if $\den[\mathsf{e}]{s}$ is undefined}\\
-      \text{undefined} & \text{otherwise, if $\loc(\mathsf{w},\rho\star h')\leadsto\ell\not\in h$}\\
+      \text{undefined} & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle\_,h',\_\rangle$}\\
+      & \quad\text{and $\loc(\mathsf{w},\rho\star h')\leadsto\ell\not\in h$}\\
       \rho\star h''[\ell\Rightarrow v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\Rightarrow\rangle$}\\
       \rho\star h''[\ell\leadsto v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\leadsto\rangle$}\\
       & \quad\text{and $v$ is not borrowed in $h'$}\\
@@ -465,6 +466,46 @@ maps pre-states to post-states.
       \mathtt{let\ mut}\ z = \borrow x
     \}^m
   \]
+  \begin{itemize}
+    \item Let $s_0=\emptyset \star \emptyset$.
+    We have $\den[0]{s_0} = \langle 0,\emptyset,\Rightarrow\rangle$, hence
+    $\den[\mathtt{box}\ 0]{s_0} =
+    \langle\ell,\{\ell\Rightarrow 0\},\Rightarrow\rangle$ where $\ell$ is fresh.
+    %
+    Consequently, we have
+    $\denl[\mathtt{let\ mut}\ x = \mathtt{box}\ 0]{m}{s_0} = \rho_1 \star h_1$
+    where
+    \[\rho_1=\{x\to^m\ell_x\} \qquad
+    h_1 = \{\ell_x\Rightarrow \ell,\ \ell\Rightarrow 0\}\]
+    and $\ell_x$ is fresh.
+    %
+    \item Let $s_1 = \rho_1 \star h_1$.
+    Then, we have $\locread(x,s_1)=\langle\rho_1(x),\mathit{false}\rangle=
+    \langle\ell_x,\mathit{false}\rangle$, so $\loc(x,s_1) = \ell_x$.
+    Therefore, $x$ is not undefined in $s_1$ because $\loc(x,s_1)$ is defined
+    and not dangling in $s_1$ (we have $h_1(\ell_x)=\ell$); moreover, $x$ is
+    not borrowed as mutable in $s_1$ because there is no $\ell'\leadsto\ell_x$
+    in $h_1$.
+    So, as $\locread(x,s_1) = \langle\ell_x,\mathit{false}\rangle$ with
+    $\ell_x\Rightarrow \ell\in h_1$ and $\ell\not\in\mathbb{Z}$,
+    we have $\den[x]{s_1} = \langle \ell, h_1|_{-\ell_x}, \Rightarrow\rangle=
+    \langle \ell, \{\ell\Rightarrow 0\}, \Rightarrow\rangle$.
+    So, we have
+    $\denl[\mathtt{let\ mut}\ y = x]{m}{s_1} = \rho_2 \star h_2$ where
+    \begin{align*}
+      \rho_2 & = \rho_1[y\to^m\ell_y] = \{y\to^m\ell_y,\ x\to^m\ell_x\}\\
+      h_2 & = \{\ell\Rightarrow 0\}[\ell_y\Rightarrow \ell] =
+      \{\ell_y\Rightarrow \ell,\ \ell\Rightarrow 0\}
+    \end{align*}
+    and $\ell_y$ is fresh.
+    %
+    \item Let $s_2 = \rho_2 \star h_2$.
+    Then, we have $\locread(x,s_2)=\langle\rho_2(x),\mathit{false}\rangle=
+    \langle\ell_x,\mathit{false}\rangle$, so $\loc(x,s_2) = \ell_x$. Moreover,
+    $\ell_x$ is dangling in $s_2$ because $h_2(\ell_x)$ is undefined.
+    Consequently, $x$ is undefined in $s_2$, hence $\den[\borrow x]{s_2}$
+    is undefined.
+  \end{itemize}
 \end{example}
 
 \begin{example}
@@ -476,6 +517,54 @@ maps pre-states to post-states.
       \mathtt{*}y = 1
     \}^m
   \]
+  \begin{itemize}
+    \item Let $s_0=\emptyset \star \emptyset$.
+    We have $\den[0]{s_0} = \langle 0,\emptyset,\Rightarrow\rangle$, hence
+    $\den[\mathtt{box}\ 0]{s_0} =
+    \langle\ell,\{\ell\Rightarrow 0\},\Rightarrow\rangle$ where $\ell$ is fresh.
+    %
+    Consequently, we have
+    $\denl[\mathtt{let\ mut}\ x = \mathtt{box}\ 0]{m}{s_0} = \rho_1 \star h_1$
+    where
+    \[\rho_1=\{x\to^m\ell_x\} \qquad
+    h_1 = \{\ell_x\Rightarrow \ell,\ \ell\Rightarrow 0\}\]
+    and $\ell_x$ is fresh.
+    %
+    \item Let $s_1 = \rho_1 \star h_1$.
+    Then, we have $\locread(x,s_1)=\langle\rho_1(x),\mathit{false}\rangle=
+    \langle\ell_x,\mathit{false}\rangle$ with $\ell_x\Rightarrow \ell\in h_1$,
+    so $\locread(*x,s_1)=\langle\ell,\mathit{false}\rangle$. Therefore,
+    $\loc(*x,s_1)=\ell$ is not undefined in $s_1$ and, moreover,
+    it is not dangling in $s_1$ because $h_1(\ell)=0$. Consequently,
+    $*x$ is not undefined in $s_1$. Hence,
+    $\den[\mutborrow \mathtt{*}x]{s_1} =
+    \langle\loc(*x,s_1),h_1,\leadsto\rangle =
+    \langle\ell,h_1,\leadsto\rangle$ with $\ell$ not borrowed in $h_1$
+    (there is no $\ell'\to\ell$ nor $\ell'\leadsto\ell$ in $h_1$).
+    So, we have
+    $\denl[\mathtt{let\ mut}\ y = \mutborrow \mathtt{*}x]{m}{s_1} =
+    \rho_2 \star h_2$ where
+    \begin{align*}
+      \rho_2 & = \rho_1[y\to^m\ell_y] = \{y\to^m\ell_y,\ x\to^m\ell_x\}\\
+      h_2 & = h_1[\ell_y\leadsto \ell] =
+      \{\ell_y\leadsto \ell,\ \ell_x\Rightarrow \ell,\ \ell\Rightarrow 0\}
+    \end{align*}
+    and $\ell_y$ is fresh.
+    %
+    \item Let $s_2 = \rho_2 \star h_2$.
+    Then, we have $\den[1]{s_2} = \langle 1,h_2,\Rightarrow\rangle$.
+    Moreover, $\locread(y,s_2) = \langle\rho_2(y),\mathit{false}\rangle=
+    \langle\ell_y,\mathit{false}\rangle$ with $\ell_y\leadsto \ell \in h_2$,
+    hence $\locread(*y,s_2) = \langle\ell,\mathit{true}\rangle$, so
+    $\loc(*y,s_2) = \ell$. We have $\loc(y,s_2) = \ell_y$ and
+    $\ell_y \leadsto \ell \in h_2$. Moreover,
+    $\drop(\{\ell\},h_2) = h_2|_{-{\omega(\{\ell\},h_2)}} = h_2|_{-{\{\ell\}}}
+    = \{\ell_y\leadsto \ell,\ \ell_x\Rightarrow \ell\}$.
+    So, we have $\denl[\mathtt{*}y = 1]{m}{s_2} = \rho_3 \star h_3$ where
+    \[\rho_3 = \rho_2\qquad
+    h_3 = \{\ell_y\leadsto \ell,\ \ell_x\Rightarrow \ell\}[\ell\Rightarrow 1]
+    = \{\ell_y\leadsto \ell,\ \ell_x\Rightarrow \ell,\ \ell\Rightarrow 1\}\]
+  \end{itemize}
 \end{example}
 
 \begin{example}
@@ -487,6 +576,17 @@ maps pre-states to post-states.
       \mathtt{*}x = 1
     \}^m
   \]
+  This example is identical to the previous one, except on the last term
+  $*x=1$ of the block. So, let $s_0$, $s_1$ and $s_2$ be as before.
+  Let us consider the last term $*x=1$.
+  We have $\den[1]{s_2} = \langle 1,h_2,\Rightarrow\rangle$.
+  Moreover, $\locread(x,s_2) = \langle\rho_2(x),\mathit{false}\rangle=
+  \langle\ell_x,\mathit{false}\rangle$ with $\ell_x\Rightarrow \ell \in h_2$
+  and $\ell\not\in\mathbb{Z}$. Hence, $\locread(*x,s_2) =
+  \langle\ell,\mathit{false}\rangle$, so $\loc(*x,s_2) = \ell$.
+  As $\ell_x\leadsto\ell\not\in h_2$, we have
+  $\loc(x,s_2)\leadsto\ell\not\in h_2$, so
+  $\denl[\mathtt{*}x = 1]{m}{s_2}$ is undefined.
 \end{example}
 
 \begin{example}
