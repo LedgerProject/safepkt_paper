@@ -679,6 +679,57 @@ maps pre-states to post-states.
     *y = \mutborrow k
     \}^m
   \]
+  \begin{itemize}
+    \item Let $s_0=\emptyset \star \emptyset$.
+    We have $\den[0]{s_0} = \langle 0,\emptyset,\Rightarrow\rangle$.
+    %
+    So, $\denl[\mathtt{let\ mut}\ x = 0]{m}{s_0} = \rho_1 \star h_1$
+    where
+    \[\rho_1=\{x\to^m\ell_x\} \qquad h_1 = \{\ell_x\Rightarrow 0\}\]
+    and $\ell_x$ is fresh.
+    %
+    \item Let $s_1 = \rho_1 \star h_1$.
+    We have $\den[1]{s_1} = \langle 1,h_1,\Rightarrow\rangle$.
+    %
+    So, $\denl[\mathtt{let\ mut}\ k = 1]{m}{s_1} = \rho_2 \star h_2$
+    where
+    \[\rho_2=\{k\to^m\ell_k,\ x\to^m\ell_x\} \qquad h_2 = \{\ell_k\Rightarrow 1,\
+    \ell_x\Rightarrow 0\}\]
+    and $\ell_k$ is fresh.
+    %
+    \item Let $s_2 = \rho_2 \star h_2$.
+    We have $\locread(x,s_2)=\langle\rho_2(x),\mathit{false}\rangle=
+    \langle\ell_x,\mathit{false}\rangle$, so $\loc(x,s_2)=\ell_x$. Moreover,
+    $\ell_x$ is not dangling in $s_2$ because $h_2(\ell_x)=0$.
+    Consequently, $x$ is not undefined in $s_2$, so
+    $\den[\mutborrow x]{s_2} = \langle \ell_x,h_2,\leadsto\rangle$
+    and hence $\den[\mathtt{box}(\mutborrow x)]{s_2} =
+    \langle \ell',h_2\cup\{\ell'\leadsto\ell_x\},\Rightarrow\rangle =
+    \langle \ell',
+    \{\ell'\leadsto\ell_x,\ \ell_k\Rightarrow 1,\ \ell_x\Rightarrow 0\},
+    \Rightarrow\rangle$ where $\ell'$ is fresh.
+    So, $\denl[\mathtt{let\ mut}\ y = \mathtt{box}(\mutborrow x)]{m}{s_2} = \rho_3 \star h_3$
+    where
+    \begin{align*}
+      \rho_3 & = \{y\to^m\ell_y,\ k\to^m\ell_k,\ x\to^m\ell_x\}\\
+      h_3 & = \{\ell_y\Rightarrow \ell',\ \ell'\leadsto\ell_x,\
+      \ell_k\Rightarrow 1,\ \ell_x\Rightarrow 0\}
+    \end{align*}
+    and $\ell_y$ is fresh.
+    %
+    \item Let $s_3 = \rho_3 \star h_3$.
+    We have $\locread(k,s_3)=\langle\rho_3(k),\mathit{false}\rangle=
+    \langle\ell_k,\mathit{false}\rangle$, so $\loc(k,s_3)=\ell_k$.
+    Moreover, $\ell_k$ is not dangling in $s_3$ because $h_3(\ell_k)=1$.
+    Hence, $k$ is not undefined in $s_3$, so
+    $\den[\mutborrow k]{s_3} = \langle\ell_k,h_3,\leadsto\rangle$.
+    We also have $\locread(y,s_3)=\langle\rho_3(y),\mathit{false}\rangle=
+    \langle\ell_y,\mathit{false}\rangle$ with $\ell_y\Rightarrow \ell'\in h_3$
+    and $\ell'\not\in\mathbb{Z}$. So,
+    $\locread(*y,s_3)=\langle \ell',\mathit{false}\rangle$.
+    Therefore, $\denl[*y = \mutborrow k]{m}{s_3}$ is undefined because
+    $\loc(y,s_3)\leadsto\loc(*y,s_3) \not\in h_3$.
+  \end{itemize}
 \end{example}
 
 \begin{example}
