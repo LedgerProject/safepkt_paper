@@ -599,6 +599,74 @@ maps pre-states to post-states.
       **z = 1
     \}^m
   \]
+  \begin{itemize}
+    \item Let $s_0=\emptyset \star \emptyset$.
+    We have $\den[0]{s_0} = \langle 0,\emptyset,\Rightarrow\rangle$.
+    %
+    So, $\denl[\mathtt{let\ mut}\ x = 0]{m}{s_0} = \rho_1 \star h_1$
+    where
+    \[\rho_1=\{x\to^m\ell_x\} \qquad h_1 = \{\ell_x\Rightarrow 0\}\]
+    and $\ell_x$ is fresh.
+    %
+    \item Let $s_1 = \rho_1 \star h_1$.
+    Then, we have $\locread(x,s_1)=\langle\rho_1(x),\mathit{false}\rangle=
+    \langle\ell_x,\mathit{false}\rangle$, hence $\loc(x,s_1)=\ell_x$.
+    Therefore, as $\ell_x$ is not dangling in $s_1$ (because $h_1(\ell_x) = 0$),
+    $x$ is not undefined in $s_1$. Consequently,
+    $\den[\mutborrow x]{s_1} = \langle\ell_x,h_1,\leadsto\rangle$. So,
+    $\den[\mathtt{box}(\mutborrow x)]{s_1} =
+    \langle\ell,\{\ell\leadsto\ell_x,\ \ell_x\Rightarrow 0\},\Rightarrow\rangle$
+    where $\ell$ is fresh. So, we have
+    $\denl[\mathtt{let\ mut}\ y = \mathtt{box}(\mutborrow x)]{m}{s_1} =
+    \rho_2 \star h_2$ where
+    \begin{align*}
+      \rho_2 & = \rho_1[y\to^m\ell_y] = \{y\to^m\ell_y,\ x\to^m\ell_x\}\\
+      h_2 & = \{\ell\leadsto\ell_x,\ \ell_x\Rightarrow 0\}[\ell_y\Rightarrow \ell] =
+      \{\ell_y\Rightarrow \ell,\ \ell\leadsto\ell_x,\ \ell_x\Rightarrow 0\}
+    \end{align*}
+    and $\ell_y$ is fresh.
+    %
+    \item Let $s_2 = \rho_2 \star h_2$.
+    Then, we have $\locread(y,s_2)=\langle\rho_2(y),\mathit{false}\rangle=
+    \langle\ell_y,\mathit{false}\rangle$ with $\ell_y\Rightarrow \ell\in h_2$,
+    so $\locread(*y,s_2)=\langle\ell,\mathit{false}\rangle$. Therefore,
+    $\loc(*y,s_2)=\ell$ is not undefined in $s_2$ and, moreover,
+    it is not dangling in $s_2$ because $h_2(\ell)=\ell_x$. Consequently,
+    $*y$ is not undefined in $s_2$. Hence,
+    $\den[\mutborrow \mathtt{*}y]{s_2} =
+    \langle\loc(*y,s_2),h_2,\leadsto\rangle =
+    \langle\ell,h_2,\leadsto\rangle$ with $\ell$ not borrowed in $h_2$
+    (there is no $\ell'\to\ell$ nor $\ell'\leadsto\ell$ in $h_2$).
+    So, we have
+    $\denl[\mathtt{let\ mut}\ z = \mutborrow \mathtt{*}y]{m}{s_2} =
+    \rho_3 \star h_3$ where
+    \begin{align*}
+      \rho_3 & = \rho_2[z\to^m\ell_z] = \{z\to^m\ell_z,\ y\to^m\ell_y,\ x\to^m\ell_x\}\\
+      h_3 & = h_2[\ell_z\leadsto \ell] =
+      \{\ell_z\leadsto \ell,\
+      \ell_y\Rightarrow \ell,\ \ell\leadsto\ell_x,\ \ell_x\Rightarrow 0\}
+    \end{align*}
+    and $\ell_z$ is fresh.
+    %
+    \item Let $s_3 = \rho_3 \star h_3$.
+    We have $\den[1]{s_3} = \langle 1,h_3,\Rightarrow\rangle$.
+    Moreover, $\locread(z,s_3)=\langle\rho_3(z),\mathit{false}\rangle=
+    \langle\ell_z,\mathit{false}\rangle$ with $\ell_z\leadsto \ell\in h_3$,
+    so $\locread(*z,s_3)=\langle\ell,\mathit{true}\rangle$.
+    As $\ell\leadsto\ell_x\in h_3$, we have
+    $\locread(**z,s_3)=\langle\ell_x,\mathit{true}\rangle$, hence
+    $\loc(**z,s_3)=\ell_x$. We also have
+    $\drop(\{\ell_x\},h_3) = h_3|_{-{\omega(\{\ell_x\},h_3)}} = h_3|_{-{\{\ell_x\}}}
+    = \{\ell_z\leadsto \ell,\ \ell_y\Rightarrow \ell,\ \ell\leadsto\ell_x\}$.
+    So, we have $\denl[\mathtt{**}z = 1]{m}{s_3} = \rho_4 \star h_4$ where
+    \begin{align*}
+      \rho_4 & = \rho_3\\
+      h_4 & = \{\ell_z\leadsto \ell,\ \ell_y\Rightarrow \ell,\
+      \ell\leadsto\ell_x\}[\ell_x\Rightarrow 1] =
+      \{\ell_z\leadsto \ell,\ \ell_y\Rightarrow \ell,\ \ell\leadsto\ell_x,\
+      \ell_x\Rightarrow 1\}
+    \end{align*}
+  \end{itemize}
 \end{example}
 
 \begin{example}
