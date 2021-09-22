@@ -430,6 +430,7 @@ maps pre-states to post-states.
     \begin{cases}
       \text{undefined} & \text{if $\den[\mathsf{e}]{s}$ is undefined}\\
       \text{undefined} & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle\_,h',\_\rangle$}\\
+      & \quad\text{$*\mathsf{w}$ is borrowed in $\rho\star h'$}\\
       & \quad\text{and $\loc(\mathsf{w},\rho\star h')\leadsto\ell\not\in h$}\\
       \rho\star h''[\ell\Rightarrow v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\Rightarrow\rangle$}\\
       \rho\star h''[\ell\leadsto v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\leadsto\rangle$}\\
@@ -456,6 +457,20 @@ maps pre-states to post-states.
     &\text{where $\rho'\star h'=\denl[\mathsf{t_n}]{l}{\denl[\mathsf{t_{n-1}}]{l}{\cdots\denl[\mathsf{t_1}]{l}{s}}}$.}
   \end{align*}
 \end{definition}
+
+\noindent
+It is interesting to compare the semantics of $x=\mathsf{e}$ with that of
+$*\mathsf{w}=\mathsf{e}$, as given in Def.~\ref{def:semantics_terms}.
+In both cases, it is required that the value $\den[\mathsf{e}]{s}$ written into the
+leftvalue be defined. Then it is required that the leftvalue is not borrowed, since Rust
+forbids assignments to borrowed leftvalues. For $*\mathsf{w}=\mathsf{e}$,
+that condition is slightly relaxed, since assignments to $*\mathsf{w}$ are
+allowed even though $*\mathsf{w}$ is borrowed, but only if $\mathsf{w}$ is exactly that borrow.
+The subsequent three cases just bind the value $v$ of the rightvalue to the location $\ell$
+of the leftvalue, keeping the quality of the value unchanged (owned, mutable borrow
+or immutable borrow). For the declaration statement $\mathtt{let\ mut}\ x=\mathsf{e}$,
+there is no issue with borrowed leftvalues, since the value of $\mathsf{e}$ is bound to a fresh
+location, that cannot be already borrowed.
 
 \begin{example}
   Show that this is illegal:
