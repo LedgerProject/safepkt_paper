@@ -599,8 +599,8 @@ location, that cannot be already borrowed.
   \langle\ell_x,\mathit{false}\rangle$ with $\ell_x\Rightarrow \ell \in h_2$
   and $\ell\not\in\mathbb{Z}$. Hence, $\locread(*x,s_2) =
   \langle\ell,\mathit{false}\rangle$, so $\loc(*x,s_2) = \ell$.
-  As $\ell_x\leadsto\ell\not\in h_2$, we have
-  $\loc(x,s_2)\leadsto\ell\not\in h_2$, so
+  As $\ell_x\leadsto\ell\not\in h_2$ and $\mathtt{*}x$ is borrowed in $s_2$
+  (because $\ell_y\leadsto \ell\in h_2$),
   $\denl[\mathtt{*}x = 1]{m}{s_2}$ is undefined.
 \end{example}
 
@@ -742,8 +742,21 @@ location, that cannot be already borrowed.
     \langle\ell_y,\mathit{false}\rangle$ with $\ell_y\Rightarrow \ell'\in h_3$
     and $\ell'\not\in\mathbb{Z}$. So,
     $\locread(*y,s_3)=\langle \ell',\mathit{false}\rangle$.
-    Therefore, $\denl[*y = \mutborrow k]{m}{s_3}$ is undefined because
-    $\loc(y,s_3)\leadsto\loc(*y,s_3) \not\in h_3$.
+    Therefore, $\loc(y,s_3)\leadsto\loc(*y,s_3) \not\in h_3$, but
+    $*y$ is not borrowed in $s_3$ (because $\loc(*y,s_3)=\ell'$ is not in $h_3$).
+    We also have
+    $\drop(\{\ell'\},h_3) = h_3|_{-{\omega(\{\ell'\},h_3)}} = h_3|_{-{\{\ell'\}}}
+    = \{\ell_y\Rightarrow \ell',\ \ell_k\Rightarrow 1,\ \ell_x\Rightarrow 0\}$.
+    Moreover, $\ell_k$ is not borrowed in $h_3$.
+    Hence, $\denl[*y = \mutborrow k]{m}{s_3} = \rho_4 \star h_4$
+    where
+    \begin{align*}
+      \rho_4 & = \rho_3\\
+      h_4 & = \{\ell_y\Rightarrow \ell',\ \ell_k\Rightarrow 1,\
+      \ell_x\Rightarrow 0\}[\ell'\leadsto \ell_k] =
+      \{\ell_y\Rightarrow \ell',\ \ell'\leadsto\ell_k,\
+      \ell_k\Rightarrow 1,\ \ell_x\Rightarrow 0\}
+    \end{align*}
   \end{itemize}
 \end{example}
 
