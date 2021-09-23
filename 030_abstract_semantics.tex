@@ -521,14 +521,38 @@
 \end{proposition}
 \begin{proof}
   % TODO
-  Suppose that $\mathsf{w}$ is undefined in $s$. Then there are two possibilities.
+  Suppose that $\mathsf{w}$ is undefined in $s=\rho\star h$. Then, there are
+  two possibilities: either $\loc(\mathsf{w},s)$ is undefined in $s$ or
+  $\loc(\mathsf{w},s)$ is dangling in $s$.
+  We proceed by structural induction on $\mathsf{w}$.
   \begin{itemize}
-    \item Either $\loc(\mathsf{w},s)$ is undefined in $s$.
-    Then, if $\mathsf{w}\in\Vars$, we have $\mathsf{w}\not\in\dom(\kappa)$
-    and so $a(\mathsf{w})$ is undefined which implies that $\loca(\mathsf{w},a)$
-    is undefined \ie that $\mathsf{w}$ is undefined in $a$.
-    If $\mathsf{w}$ has the form $\mathtt{*}\mathsf{w}'$ for some leftvalue $\mathsf{w}'$,
-    \item Or $\loc(\mathsf{w},s)$ is dangling in $s$.
+    \item (Base: $\mathsf{w}\in\dom(\kappa)$)
+    There is exactly one binding in $\rho$ for each variable in
+    $\dom(\kappa)$, so there is $\mathsf{w}\to\ell\in\rho$.
+    By Def.~\ref{def:location_for_reading} and Def.~\ref{def:location},
+    we have $\loc(\mathsf{w},s)=\ell$. Hence, $\loc(\mathsf{w},s)$ is defined.
+    Consequently, as $\mathsf{w}$ is undefined in $s$, necessarily
+    $\loc(\mathsf{w},s)=\ell$ is dangling in $s$, so $h(\ell)$ is
+    undefined. Moreover, as $s\in\gamma_\kappa(a)$, there is
+    $\mathsf{w}\to^m t\in a$ s.t. $\ell\approx_{\rho\star h}t$.
+    As $h(\ell)$ is undefined, we have $t=\mathsf{dangling}$.
+    Finally, $\locreada(\mathsf{w},a)=\langle a(\mathsf{w}),\mathit{false}\rangle
+    =\langle \mathsf{dangling},\mathit{false}\rangle$, so
+    $\loca(\mathsf{w},a)=\mathsf{dangling}$. Therefore, $\mathsf{w}$ is
+    undefined in $a$.
+    %
+    \item (Induction step) Suppose that $\mathsf{w} = \mathtt{*}\mathsf{w}'$
+    and that $\mathsf{w}'$ undefined in $s$ implies $\mathsf{w}'$ undefined in
+    $a$. First, suppose that $\loc(\mathsf{w},s)$ is undefined in $s$. Then,
+    by Def.~\ref{def:location_for_reading} and Def.~\ref{def:location},
+    \begin{itemize}
+      \item either $\locread(\mathsf{w'},s)$ is undefined; this implies that
+      $\mathsf{w}'$ is undefined in $s$ so, by induction hypothesis,
+      $\mathsf{w}'$ is undefined in $a$;
+      \item
+      \item
+    \end{itemize}
+    \qed
   \end{itemize}
 \end{proof}
 
