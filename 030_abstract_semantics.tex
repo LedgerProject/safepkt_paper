@@ -23,7 +23,7 @@
 \end{definition}
 
 \begin{definition}[Copy and move types]\label{def:copy_move}
-  Let $t\in\mathbb{T}$. Then $t$ \emph{has move semantics}, and we write
+  Let $t\in\mathsf{T}_\kappa$. Then $t$ \emph{has move semantics}, and we write
   $\movetype(t)$, if and only if $t=\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$ or
   $t=\boxtype{t'}$ for some $t'$. In all other cases, $t$ \emph{has copy semantics},
   and we write $\copytype(t)$.
@@ -41,7 +41,7 @@
       \item (Base) For any type $t$ that is not a box we have
       $t\sqsubseteq t$.
       \item (Induction step) If $t\sqsubseteq t$ for a type $t$ then
-      $\mathtt{box}\ t\sqsubseteq \mathtt{box}\ t$.
+      $\boxtype{t}\sqsubseteq \boxtype{t}$.
     \end{itemize}
     %
     \item (Antisymmetry) Suppose that $t_1 \sqsubseteq t_2$ and
@@ -50,13 +50,13 @@
       \item (Base: $t_1$ or $t_2$ is not a box)
       If $t_1$ or $t_2$ is $\mathsf{int}$, then so is the other
       because $\mathsf{int}$ can only be greater than itself, and so $t_1 = t_2$.
-      Similarly if $t_1$ or $t_2$ is $\mathsf{nothing}$.
+      Similarly if $t_1$ or $t_2$ is $\mathsf{dangling}$.
       If $t_1$ or $t_2$ is a borrow, then so is the other because
       a borrow can only precede a borrow, and so we have $t_1 = t_2$
-      by antisymmetry of $\supseteq$.
-      Identically, if $t_1$ or $t_2$ is a mutable borrow, we have $t_1 = t_2$.
-      \item (Induction step) Suppose that $t_1=\mathtt{box}\ t'_1$ and
-      $t_2=\mathtt{box}\ t'_2$ for types $t'_1,t'_2$ such that
+      by antisymmetry of $\subseteq$.
+      Similarly if $t_1$ or $t_2$ is a mutable borrow.
+      \item (Induction step) Suppose that $t_1=\boxtype{t'_1}$ and
+      $t_2=\boxtype{t'_2}$ for types $t'_1,t'_2$ such that
       $(t'_1 \sqsubseteq t'_2 \land t'_2 \sqsubseteq t'_1) \Rightarrow t'_1 = t'_2$.
       As $t_1 \sqsubseteq t_2$ and $t_2 \sqsubseteq t_1$, we have
       $t'_1 \sqsubseteq t'_2$ and $t'_2 \sqsubseteq t'_1$, so
@@ -69,14 +69,13 @@
       If $t_1$, $t_2$ or $t_3$ is $\mathsf{int}$, we necessarily have
       $t_1=t_2=t_3=\mathsf{int}$ because $\mathsf{int}$ is only related to
       itself, and so $t_1\sqsubseteq t_3$. Similarly if
-      $t_1$, $t_2$ or $t_3$ is $\mathsf{nothing}$.
+      $t_1$, $t_2$ or $t_3$ is $\mathsf{dangling}$.
       If $t_1$, $t_2$ or $t_3$ is a borrow, then so are the others because
       a borrow is only related to a borrow, and so we have
-      $t_1\sqsubseteq t_3$ by transitivity of $\supseteq$.
-      Identically, if $t_1$, $t_2$ or $t_3$ is a mutable borrow, we have
-      $t_1\sqsubseteq t_3$.
-      \item (Induction step) Suppose that $t_1=\mathtt{box}\ t'_1$,
-      $t_2=\mathtt{box}\ t'_2$ and $t_3=\mathtt{box}\ t'_3$ for types
+      $t_1\sqsubseteq t_3$ by transitivity of $\subseteq$.
+      Similarly if $t_1$, $t_2$ or $t_3$ is a mutable borrow.
+      \item (Induction step) Suppose that $t_1=\boxtype{t'_1}$,
+      $t_2=\boxtype{t'_2}$ and $t_3=\boxtype{t'_3}$ for types
       $t'_1,t'_2,t'_3$ such that
       $(t'_1 \sqsubseteq t'_2 \land t'_2 \sqsubseteq t'_3) \Rightarrow
       t'_1 \sqsubseteq t'_3$.
@@ -109,31 +108,33 @@
   We proceed by structural induction.
   \begin{itemize}
     \item (Base: there is a $t_k$ which is not a box)
-    If $t_k=\mathsf{int}$ then $\mu_I=\mathsf{int}$
-    (this happens when each $t_i$ is $\mathsf{int}$), and so
-    $\mu_I$ is a lower bound of $\{t_i\}_{i\in I}$.
-    If $t_k$ is a borrow then each $t_i$ is a borrow, and so $\mu_I$ is
-    a borrow which results from the union of all the $t_i$'s; hence
-    $\mu_I$ is a lower bound of $\{t_i\}_{i\in I}$.
-    Identically, if $t_k$ is a mutable borrow then $\mu_I$ is a lower bound
-    of $\{t_i\}_{i\in I}$.
+    If $t_k=\mathsf{int}$ then, as $\mu_I$ is defined, for all $i\in I$
+    we have $t_i=\mathsf{int}$. Therefore, $\mu_I=\mathsf{int}$
+    and so $\mu_I$ is a lower bound of $\{t_i\}_{i\in I}$.
+    Similarly if $t_k=\mathsf{dangling}$.
+    If $t_k$ is a borrow then, for all $i\in I$, $t_i$ is a borrow, and so
+    $\mu_I$ is a borrow which results from the intersection of the sets of
+    leftvalues of all the $t_i$'s. Hence, $\mu_I$ is a lower bound of
+    $\{t_i\}_{i\in I}$.
+    Similarly if $t_k$ is a mutable borrow.
 
     Now, suppose that $\mu'_I$ is also a lower bound of $\{t_i\}_{i\in I}$.
     If $\mu'_I=\mathsf{int}$ then each $t_i$ is $\mathsf{int}$, so
     $\mu_I=\mathsf{int}$ and we have $\mu'_I\sqsubseteq\mu_I$.
+    Similarly if $\mu'_I=\mathsf{dangling}$.
     If $\mu'_I=\borrow b$, then for all $i\in I$ we have $t_i = \borrow b_i$
-    and $b \supseteq b_i$; hence, $b \supseteq \cup_{i\in I}b_i$ and so
-    $\borrow b \sqsubseteq \borrow\cup_{i\in I}b_i$; consequently, we have
-    $\mu'_I\sqsubseteq\mu_I$ because $\mu_I=\borrow\cup_{i\in I}b_i$ in this case.
-    Identically, if $\mu'_I$ is a mutable borrow then $\mu'_I\sqsubseteq\mu_I$.
+    and $b \subseteq b_i$. Hence, $b \subseteq \cap_{i\in I}b_i$ and so
+    $\borrow b \sqsubseteq \borrow\cap_{i\in I}b_i$. Consequently, we have
+    $\mu'_I\sqsubseteq\mu_I$ because $\mu_I=\borrow\cap_{i\in I}b_i$ in this case.
+    Similarly if $\mu'_I$ is a mutable borrow.
     %
     \item (Induction step) Suppose that for all $i\in I$ we have
-    $t_i = \mathtt{box}\ t'_i$. Since $\mu_I$ is defined, also
+    $t_i = \boxtype{t'_i}$. Since $\mu_I$ is defined, also
     $\sqcap_{i\in I}t'_i$ is defined and, by inductive hypothesis, it must be the greatest
     lower bound of $\{t'_i\}_{i\in I}$. Then,
-    $\mu_I = \mathtt{box}(\sqcap_{i\in I}t'_i)$ is a lower bound
+    $\mu_I = \boxtype{(\sqcap_{i\in I}t'_i)}$ is a lower bound
     of $\{t_i\}_{i\in I}$. Suppose that $\mu'_I$ is also a lower bound
-    of $\{t_i\}_{i\in I}$. Then, $\mu'_I=\mathtt{box}\ t$ with
+    of $\{t_i\}_{i\in I}$. Then, $\mu'_I=\boxtype{t}$ with
     $t\sqsubseteq t'_i$ for all $i\in I$, and so $t$ is a lower bound
     of $\{t'_i\}_{i\in I}$; hence, we have $t\sqsubseteq \sqcap_{i\in I}t'_i$
     because $\sqcap_{i\in I}t'_i$ is the greatest lower bound and,
@@ -151,16 +152,16 @@
   \begin{itemize}
     \item (Base: $t$ is not a box)
     Let $t_1,t_2\in\mathsf{T}_\kappa$ with $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$.
-    If $t$ is $\mathsf{int}$ (resp. a borrow, a mutable borrow or $\mathsf{nothing}$)
+    If $t$ is $\mathsf{int}$ (resp. a borrow, a mutable borrow or $\mathsf{dangling}$)
     then, necessarily, $t_1$ and $t_2$ are $\mathsf{int}$ (resp. a borrow,
-    a mutable borrow or $\mathsf{nothing}$), hence $t_1\sqcap t_2$ is defined.
+    a mutable borrow or $\mathsf{dangling}$), hence $t_1\sqcap t_2$ is defined.
     %
-    \item (Induction step) Suppose that $t = \mathtt{box}\ t'$.
+    \item (Induction step) Suppose that $t = \boxtype{t'}$.
     Let $t_1,t_2\in\mathsf{T}_\kappa$ with $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$.
-    Then, necessarily, $t_1 = \mathtt{box}\ t'_1$ and $t_2 = \mathtt{box}\ t'_2$
+    Then, necessarily, $t_1 = \boxtype{t'_1}$ and $t_2 = \boxtype{t'_2}$
     with $t'\sqsubseteq t'_1$ and $t'\sqsubseteq t'_2$. By induction
     hypothesis, $t'_1\sqcap t'_2$ is defined, so
-    $(\mathtt{box}\ t'_1) \sqcap (\mathtt{box}\ t'_2) = t_1 \sqcap t_2$ is defined.
+    $(\boxtype{t'_1}) \sqcap (\boxtype{t'_2}) = t_1 \sqcap t_2$ is defined.
     \qed
   \end{itemize}
 \end{proof}
@@ -328,10 +329,10 @@
     \begin{itemize}
       \item Suppose that $\sqcap_{i\in I}t_i$ is defined and
       $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$.
-      If $t_k$ is $\mathsf{int}$ (resp. $\mathsf{nothing}$) then,
+      If $t_k$ is $\mathsf{int}$ (resp. $\mathsf{dangling}$) then,
       as $\sqcap_{i\in I}t_i$ is defined, each $t_i$ is $\mathsf{int}$
-      (resp. $\mathsf{nothing}$) and we have $\sqcap_{i\in I}t_i=\mathsf{int}$
-      (resp. $\sqcap_{i\in I}t_i=\mathsf{nothing}$).
+      (resp. $\mathsf{dangling}$) and we have $\sqcap_{i\in I}t_i=\mathsf{int}$
+      (resp. $\sqcap_{i\in I}t_i=\mathsf{dangling}$).
       Moreover, as $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$, we have
       $h(\ell)\in\mathbb{Z}$ (resp. $h(\ell)$ is undefined). Consequently,
       for all $i\in I$ we have $\ell\approx_{\rho\star h}t_i$.
@@ -339,52 +340,61 @@
       is defined, each $t_i$ is a borrow (resp. mutable borrow) and
       $\sqcap_{i\in I}t_i=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
       (resp. $\sqcap_{i\in I}t_i=\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$)
-      is the union of all the $\mathsf{w}_i$'s. Moreover, as
-      $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$, for all $1\le i\le n$
-      we have $\ell\to\loc(\mathsf{w}_i,s)\in h$
-      (resp. $\ell\leadsto\loc(\mathsf{w}_i,s)\in h$). Consequently,
-      for all $i\in I$ we have $\ell\approx_{\rho\star h}t_i$.
+      is the intersection of the sets of leftvalues of all the $t_i$'s. Moreover, as
+      $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$, there is a location $\ell'$
+      s.t. $\ell\to\ell'\in h$ (resp. $\ell\leadsto\ell'\in h$) and
+      for all leftvalue $\mathsf{w}$, $\loc(\mathsf{w},\rho\star h)=\ell'$
+      implies $\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$. Consequently,
+      for all $i\in I$ we have $\ell\approx_{\rho\star h}t_i$ because the set
+      of leftvalues of $t_i$ includes $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$.
       \item Now, suppose that for all $i\in I$ we have $\ell\approx_{\rho\star h}t_i$.
-      If $t_k$ is $\mathsf{int}$ (resp. $\mathsf{nothing}$) then
+      If $t_k$ is $\mathsf{int}$ (resp. $\mathsf{dangling}$) then
       $h(\ell)\in\mathbb{Z}$ (resp. $h(\ell)$ is undefined). Consequently,
-      for all $i\in I$ we have $t_i = \mathsf{int}$ (resp. $t_i = \mathsf{nothing}$).
+      for all $i\in I$ we have $t_i = \mathsf{int}$ (resp. $t_i = \mathsf{dangling}$).
       So, $\sqcap_{i\in I}t_i = \mathsf{int}$
-      (resp. $\sqcap_{i\in I}t_i=\mathsf{nothing}$) is defined and
+      (resp. $\sqcap_{i\in I}t_i=\mathsf{dangling}$) is defined and
       $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$.
-      If $t_k=\borrow\{\mathsf{w}_{k,1},\ldots,\mathsf{w}_{k,n_k}\}$ then
-      for all $1\le j\le n_k$ we have $\ell\to\loc(\mathsf{w}_{k,j},s)\in h$.
-      By definition of a heap, there is at most a binding in $h$ for location
-      $\ell$, hence all the $\loc(\mathsf{w}_{k,j},s)$'s are equal to a same
-      location $\ell'$. Then, for all $i\in I$, $t_i$ has the form
-      $\borrow\{\mathsf{w}_{i,1},\ldots,\mathsf{w}_{i,n_i}\}$ necessarily
-      and $\loc(\mathsf{w}_{i,j},s)=\ell'$ for all $1\le j\le n_i$. So,
-      $\sqcap_{i\in I}t_i = \cup_{i\in I}\{\mathsf{w}_{i,1},\ldots,\mathsf{w}_{i,n_i}\}$
+      If $t_k=\borrow\{\mathsf{w}_{k,1},\ldots,\mathsf{w}_{k,n_k}\}$
+      then there is a location $\ell'$ s.t. $\ell\to\ell'\in h$
+      and for all leftvalue $\mathsf{w}$,
+      $\loc(\mathsf{w},\rho\star h)=\ell'$
+      implies $\mathsf{w}\in\{\mathsf{w}_{k,1},\ldots,\mathsf{w}_{k,n_k}\}$.
+      %
+      So, for all $i\in I$, $t_i$ has the form
+      $\borrow\{\mathsf{w}_{i,1},\ldots,\mathsf{w}_{i,n_i}\}$
+      and for all leftvalue $\mathsf{w}$, $\loc(\mathsf{w},\rho\star h)=\ell'$
+      implies $\mathsf{w}\in\{\mathsf{w}_{i,1},\ldots,\mathsf{w}_{i,n_i}\}$. So,
+      $\sqcap_{i\in I}t_i = \borrow(\cap_{i\in I}\{\mathsf{w}_{i,1},\ldots,\mathsf{w}_{i,n_i}\})$
       is defined and $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$.
+      Similarly if $t_k=\mutborrow\{\mathsf{w}_{k,1},\ldots,\mathsf{w}_{k,n_k}\}$.
     \end{itemize}
     %
-    \item (Induction step) Suppose that $t_i=\mathtt{box}\ t'_i$ for all
+    \item (Induction step) Suppose that $t_i=\boxtype{t'_i}$ for all
     $i\in I$. Let $\rho\star h\in\mathbb{S}_\kappa$ and $\ell\in\Locs$.
     \begin{itemize}
       \item If $\sqcap_{i\in I}t_i$ is defined and
       $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$ then
-      $\sqcap_{i\in I}t_i = \mathtt{box}\ (\sqcap_{i\in I}t'_i)$ and
-      $\sqcap_{i\in I}t'_i$ is defined. Moreover, $\ell\Rightarrow\ell'\in h$
-      and $\ell'\approx_{\rho\star h}\sqcap_{i\in I}t'_i$. Consequently,
+      $\sqcap_{i\in I}t_i = \boxtype{(\sqcap_{i\in I}t'_i)}$ and
+      $\sqcap_{i\in I}t'_i$ is defined. Moreover, there is a location $\ell'$
+      s.t. $\ell\Rightarrow\ell'\in h$ and
+      $h(\ell')\approx_{\rho\star h}\sqcap_{i\in I}t'_i$. Consequently,
       by induction hypothesis, for all $i\in I$ we have
-      $\ell'\approx_{\rho\star h}t'_i$. Therefore, for all $i\in I$ we have
-      $\ell\approx_{\rho\star h}\mathtt{box}\ t'_i$ \ie
+      $h(\ell')\approx_{\rho\star h}t'_i$. Therefore, for all $i\in I$ we have
+      $\ell\approx_{\rho\star h}\boxtype{t'_i}$ \ie
       $\ell\approx_{\rho\star h}t_i$.
       \item Now, suppose that for all $i\in I$ we have $\ell\approx_{\rho\star h}t_i$
-      \ie $\ell\approx_{\rho\star h}\mathtt{box}\ t'_i$. Then, for all $i\in I$,
-      $\ell\Rightarrow\ell'\in h$ and $\ell'\approx_{\rho\star h}t'_i$.
-      Note that the same location $\ell'$ is used for each $i\in I$ because,
-      by definition of a heap, there is at most a binding in $h$ for location $\ell$.
-      By induction hypothesis, $\sqcap_{i\in I}t'_i$ is defined and
-      $\ell'\approx_{\rho\star h}\sqcap_{i\in I}t'_i$.
-      Consequently, $\sqcap_{i\in I}t_i = \sqcap_{i\in I} \mathtt{box}\ t'_i =
-      \mathtt{box}\ (\sqcap_{i\in I}t'_i)$ is defined and
-      $\ell\approx_{\rho\star h}\mathtt{box}\ (\sqcap_{i\in I}t'_i)$ \ie
+      \ie $\ell\approx_{\rho\star h}\boxtype{t'_i}$. Then, for all $i\in I$,
+      there is a location $\ell'_i$ s.t. $\ell\Rightarrow\ell'_i\in h$ and
+      $h(\ell'_i)\approx_{\rho\star h}t'_i$.
+      Note that all the $\ell'_i$'s are equal to a same location $\ell'$ because,
+      by definition of a heap, there is at most a binding in $h$ for location
+      $\ell$. By induction hypothesis, $\sqcap_{i\in I}t'_i$ is defined and
+      $h(\ell')\approx_{\rho\star h}\sqcap_{i\in I}t'_i$.
+      Consequently, $\sqcap_{i\in I}t_i = \sqcap_{i\in I} (\boxtype{t'_i}) =
+      \boxtype{(\sqcap_{i\in I}t'_i)}$ is defined and
+      $\ell\approx_{\rho\star h}\boxtype{(\sqcap_{i\in I}t'_i)}$ \ie
       $\ell\approx_{\rho\star h}\sqcap_{i\in I}t_i$.
+      \qed
     \end{itemize}
   \end{itemize}
 \end{proof}
@@ -400,8 +410,8 @@
     \item If $\sqcap_{i\in I}a_i=\top$, then for all $i\in I$ we have $a_i=\top$.
     Hence, $\gamma_\kappa(\sqcap_{i\in I}a_i) =
     \gamma_\kappa(\top) =
-    \mathbb{S}_\kappa =
-    \cap_{i\in I}\mathbb{S}_\kappa =
+    \wp(\mathbb{S}_\kappa) =
+    \cap_{i\in I}\wp(\mathbb{S}_\kappa) =
     \cap_{i\in I}\gamma_\kappa(\top) =
     \cap_{i\in I}\gamma_\kappa(a_i)$.
     \item Suppose that $\sqcap_{i\in I}a_i=\bot$. Then, either there is $i\in I$ s.t.
