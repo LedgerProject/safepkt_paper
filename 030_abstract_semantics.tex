@@ -514,13 +514,22 @@
 
 \begin{proposition}[Abstract undefined is correct]
   \label{prop:abstract_undefined_correctness}
-  Let $\mathsf{w}\in\Leftvalues_\kappa$, $s\in\mathbb{S}_\kappa$
+  Let $\mathsf{w}\in\Leftvalues$, $s\in\mathbb{S}_\kappa$
   and $a\in\mathbb{AS}_\kappa$ be
   such that $s\in\gamma_\kappa(a)$.
   If $\mathsf{w}$ is undefined in $s$ then $\mathsf{w}$ is undefined in $a$.
 \end{proposition}
 \begin{proof}
-  TODO
+  % TODO
+  Suppose that $\mathsf{w}$ is undefined in $s$. Then there are two possibilities.
+  \begin{itemize}
+    \item Either $\loc(\mathsf{w},s)$ is undefined in $s$.
+    Then, if $\mathsf{w}\in\Vars$, we have $\mathsf{w}\not\in\dom(\kappa)$
+    and so $a(\mathsf{w})$ is undefined which implies that $\loca(\mathsf{w},a)$
+    is undefined \ie that $\mathsf{w}$ is undefined in $a$.
+    If $\mathsf{w}$ has the form $\mathtt{*}\mathsf{w}'$ for some leftvalue $\mathsf{w}'$,
+    \item Or $\loc(\mathsf{w},s)$ is dangling in $s$.
+  \end{itemize}
 \end{proof}
 
 The concrete semantics uses a precise notion of borrowed locations
@@ -529,7 +538,7 @@ and can only use types for determining when a value might be borrowed, which lea
 to a coarser notion of \emph{abstract} borrowing for leftvalues (that is, for their value).
 
 \begin{definition}\label{def:abstract_borrow}
-  Let $a\in\mathbb{AS}_\kappa$ and $\mathsf{w}\in\Leftvalues_\kappa$.
+  Let $a\in\mathbb{AS}_\kappa$ and $\mathsf{w}\in\Leftvalues$.
   Then $\mathsf{w}$ is
   \emph{borrowed as immutable} in $a$ if there exists $v\in\dom(\kappa)$ such that
   $\beta_\to(a(v),\mathsf{w})$ holds, where
