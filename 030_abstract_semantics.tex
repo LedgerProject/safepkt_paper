@@ -521,10 +521,10 @@
 \end{proposition}
 \begin{proof}
   % TODO
-  Suppose that $\mathsf{w}$ is undefined in $s=\rho\star h$. Then, there are
-  two possibilities: either $\loc(\mathsf{w},s)$ is undefined in $s$ or
-  $\loc(\mathsf{w},s)$ is dangling in $s$.
-  We proceed by structural induction on $\mathsf{w}$.
+  Suppose that $\mathsf{w}$ is undefined in $s=\rho\star h$. Then,
+  by Def.~\ref{def:undefined_leftvalues}, there are
+  two possibilities: either $\loc(\mathsf{w},s)$ is undefined or it is
+  dangling in $s$. We proceed by structural induction on $\mathsf{w}$.
   \begin{itemize}
     \item (Base: $\mathsf{w}\in\dom(\kappa)$)
     There is exactly one binding in $\rho$ for each variable in
@@ -541,17 +541,32 @@
     $\loca(\mathsf{w},a)=\mathsf{dangling}$. Therefore, $\mathsf{w}$ is
     undefined in $a$.
     %
-    \item (Induction step) Suppose that $\mathsf{w} = \mathtt{*}\mathsf{w}'$
-    and that $\mathsf{w}'$ undefined in $s$ implies $\mathsf{w}'$ undefined in
-    $a$. First, suppose that $\loc(\mathsf{w},s)$ is undefined in $s$. Then,
-    by Def.~\ref{def:location_for_reading} and Def.~\ref{def:location},
+    \item (Induction step) Suppose that $\mathsf{w} = \mathtt{*}\mathsf{w}'$.
+    First, assume that $\loc(\mathsf{w},s)$ is undefined. Then,
+    by Def.~\ref{def:location_for_reading} and Def.~\ref{def:location}, there
+    are three possibilities.
     \begin{itemize}
-      \item either $\locread(\mathsf{w'},s)$ is undefined; this implies that
-      $\mathsf{w}'$ is undefined in $s$ so, by induction hypothesis,
-      $\mathsf{w}'$ is undefined in $a$;
-      \item
-      \item
+      \item Either $\locread(\mathsf{w'},s)$ is undefined. This implies that
+      $\mathsf{w}'$ is undefined in $s$ so, by induction hypothesis, that
+      $\mathsf{w}'$ is undefined in $a$. Then, either $\loca(\mathsf{w'},a)$ is
+      undefined; this implies that $\locreada(\mathsf{w'},a)$ is undefined, and
+      so that $\locreada(\mathsf{w},a)$ is undefined; hence
+      $\loca(\mathsf{w},a)$ is undefined, hence $\mathsf{w}$ is undefined in $a$.
+      Or, $\loca(\mathsf{w'},a)=\mathsf{dangling}$; then,
+      $\locreada(\mathsf{w'},a)=\langle\mathsf{dangling},b\rangle$, hence
+      $\locreada(\mathsf{w},a)$ is undefined, so $\loca(\mathsf{w},a)$ is
+      undefined; consequently, $\mathsf{w}$ is undefined in $a$.
+      \item Or $\locread(\mathsf{w'},s)=\langle\ell,b\rangle$ and
+      $h(\ell)$ is undefined. Then, $\loc(\mathsf{w'},s)=\ell$ is dangling
+      in $s$, so $\mathsf{w'}$ is undefined in $s$. Consequently, by induction
+      hypothesis, $\mathsf{w}'$ is undefined in $a$. By proceeding as above,
+      one concludes that $\mathsf{w}$ is undefined in $a$.
+      \item Or $\locread(\mathsf{w'},s)=\langle\ell,b\rangle$ and
+      $h(\ell)\in\mathbb{Z}$. Then, $\ell \approx_s \mathsf{int}$
     \end{itemize}
+    Now, assume that $\loc(\mathsf{w},s)$ is dangling in $s$. Then,
+    $h(\loc(\mathsf{w},s))$ is undefined, so
+    $\loc(\mathsf{w},s) \approx_s \mathsf{dangling}$.
     \qed
   \end{itemize}
 \end{proof}
