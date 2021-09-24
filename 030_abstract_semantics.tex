@@ -300,7 +300,7 @@
     &&& \forall\mathsf{w}\in\Leftvalues.\left(\loc(\mathsf{w},\rho\star h)=v\text{ implies }\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\right)\\
     v&\sim_{\rho\star h}\boxtype{t} && \text{iff $v\in\Locs$ and $h(v)\sim_{\rho\star h}t$}\\
     v&\sim_{\rho\star h}\mathsf{dangling} && \text{never.}
-  \end{align*}  
+  \end{align*}
 \end{definition}
 
 \begin{definition}[Concretization map]\label{def:concretization}
@@ -522,12 +522,12 @@
 \begin{proposition}[Abstract locations are correct]
   \label{prop:abstract_location_correctness}
   Let $\mathsf{w}\in\Leftvalues$, $s\in\mathbb{S}_\kappa$ be such that
-  $\loc_+(\mathsf{w},s)$ is defined,
-  that is, $\loc_+(\mathsf{w},s)=\langle\ell,b\rangle$ for some $\ell\in\Locs$
+  $\locread(\mathsf{w},s)$ is defined,
+  that is, $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ for some $\ell\in\Locs$
   and some Boolean $b$.
   Let $a\in\mathbb{AS}_\kappa$ be such that $s\in\gamma_\kappa(a)$.
-  Then $\loca_+(\mathsf{w},a)$ is defined and, in particular,
-  $\loca_+(\mathsf{w},a)=\langle t,b'\rangle$ with
+  Then $\locreada(\mathsf{w},a)$ is defined and, in particular,
+  $\locreada(\mathsf{w},a)=\langle t,b'\rangle$ with
   \begin{enumerate}
   \item $\ell\approx_st$
   \item $b=\mathit{true}$ implies $b'=\mathit{true}$.
@@ -535,52 +535,45 @@
 \end{proposition}
 \begin{proof}
   % TODO
-  Suppose that $\mathsf{w}$ is undefined in $s=\rho\star h$. Then,
-  by Def.~\ref{def:undefined_leftvalues}, there are
-  two possibilities: either $\loc(\mathsf{w},s)$ is undefined or it is
-  dangling in $s$. We proceed by structural induction on $\mathsf{w}$.
+  Let $\rho\star h=s$. We proceed by structural induction on $\mathsf{w}$.
   \begin{itemize}
     \item (Base: $\mathsf{w}\in\dom(\kappa)$)
-    There is exactly one binding in $\rho$ for each variable in
-    $\dom(\kappa)$, so there is $\mathsf{w}\to\ell\in\rho$.
-    By Def.~\ref{def:location_for_reading} and Def.~\ref{def:location},
-    we have $\loc(\mathsf{w},s)=\ell$. Hence, $\loc(\mathsf{w},s)$ is defined.
-    Consequently, as $\mathsf{w}$ is undefined in $s$, necessarily
-    $\loc(\mathsf{w},s)=\ell$ is dangling in $s$, so $h(\ell)$ is
-    undefined. Moreover, as $s\in\gamma_\kappa(a)$, there is
-    $\mathsf{w}\to^m t\in a$ s.t. $\ell\approx_{\rho\star h}t$.
-    As $h(\ell)$ is undefined, we have $t=\mathsf{dangling}$.
-    Finally, $\locreada(\mathsf{w},a)=\langle a(\mathsf{w}),\mathit{false}\rangle
-    =\langle \mathsf{dangling},\mathit{false}\rangle$, so
-    $\loca(\mathsf{w},a)=\mathsf{dangling}$. Therefore, $\mathsf{w}$ is
-    undefined in $a$.
+    By Def.~\ref{def:location_for_reading},
+    $\locread(\mathsf{w},s) = \langle\rho(\mathsf{w}),\mathit{false}\rangle$,
+    hence $\ell=\rho(\mathsf{w})$ and $b=\mathit{false}$. So,
+    $\mathsf{w}\to\ell\in\rho$. As $s\in\gamma_\kappa(a)$, there is
+    $\mathsf{w}\to^m t\in a$ s.t. $\ell\approx_s t$.
+    Moreover, by Def.~\ref{def:abstract_location_for_reading},
+    $\locreada(\mathsf{w},a)=\langle a(\mathsf{w}),\mathit{false}\rangle
+    =\langle t,\mathit{false}\rangle$.
     %
     \item (Induction step) Suppose that $\mathsf{w} = \mathtt{*}\mathsf{w}'$.
-    First, assume that $\loc(\mathsf{w},s)$ is undefined. Then,
-    by Def.~\ref{def:location_for_reading} and Def.~\ref{def:location}, there
-    are three possibilities.
+    As $\locread(\mathsf{w},s)$ is defined,
+    by Def.~\ref{def:location_for_reading} there are three possibilities.
     \begin{itemize}
-      \item Either $\locread(\mathsf{w'},s)$ is undefined. This implies that
-      $\mathsf{w}'$ is undefined in $s$ so, by induction hypothesis, that
-      $\mathsf{w}'$ is undefined in $a$. Then, either $\loca(\mathsf{w'},a)$ is
-      undefined; this implies that $\locreada(\mathsf{w'},a)$ is undefined, and
-      so that $\locreada(\mathsf{w},a)$ is undefined; hence
-      $\loca(\mathsf{w},a)$ is undefined, hence $\mathsf{w}$ is undefined in $a$.
-      Or, $\loca(\mathsf{w'},a)=\mathsf{dangling}$; then,
-      $\locreada(\mathsf{w'},a)=\langle\mathsf{dangling},b\rangle$, hence
-      $\locreada(\mathsf{w},a)$ is undefined, so $\loca(\mathsf{w},a)$ is
-      undefined; consequently, $\mathsf{w}$ is undefined in $a$.
-      \item Or $\locread(\mathsf{w'},s)=\langle\ell,b\rangle$ and
-      $h(\ell)$ is undefined. Then, $\loc(\mathsf{w'},s)=\ell$ is dangling
-      in $s$, so $\mathsf{w'}$ is undefined in $s$. Consequently, by induction
-      hypothesis, $\mathsf{w}'$ is undefined in $a$. By proceeding as above,
-      one concludes that $\mathsf{w}$ is undefined in $a$.
-      \item Or $\locread(\mathsf{w'},s)=\langle\ell,b\rangle$ and
-      $h(\ell)\in\mathbb{Z}$. Then, $\ell \approx_s \mathsf{int}$
+      \item Either $b=\mathit{true}$,
+      $\locread(\mathsf{w'},s) = \langle \ell',b'\rangle$
+      and $\ell'\to\ell\in h$. By induction hypothesis,
+      $\locreada(\mathsf{w'},a)=\langle t,b''\rangle$ with $\ell'\approx_s t$
+      and $b'=\mathit{true}$ implies $b''=\mathit{true}$.
+      By Def.~\ref{def:concretization}, as $\ell'\to\ell\in h$,
+      necessarily $t$ has the form $\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$.
+      \item Or $b=\mathit{true}$,
+      $\locread(\mathsf{w'},s) = \langle \ell',b'\rangle$
+      and $\ell'\leadsto\ell\in h$. By induction hypothesis,
+      $\locreada(\mathsf{w'},a)=\langle t,b''\rangle$ with $\ell'\approx_s t$
+      and $b'=\mathit{true}$ implies $b''=\mathit{true}$.
+      By Def.~\ref{def:concretization}, as $\ell'\leadsto\ell\in h$,
+      necessarily $t$ has the form $\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$.
+      \item Or $\locread(\mathsf{w'},s) = \langle \ell',b\rangle$
+      and $\ell'\Rightarrow\ell\in h$ with $\ell\not\in\mathbb{Z}$.
+      By induction hypothesis,
+      $\locreada(\mathsf{w'},a)=\langle t',b'\rangle$ with $\ell'\approx_s t'$
+      and $b=\mathit{true}$ implies $b'=\mathit{true}$.
+      By Def.~\ref{def:concretization}, as $\ell'\Rightarrow\ell\in h$,
+      necessarily $t'$ has the form $\boxtype{t}$. Consequently,
+      $\locreada(\mathsf{w},a) = \langle t,b'\rangle$.
     \end{itemize}
-    Now, assume that $\loc(\mathsf{w},s)$ is dangling in $s$. Then,
-    $h(\loc(\mathsf{w},s))$ is undefined, so
-    $\loc(\mathsf{w},s) \approx_s \mathsf{dangling}$.
     \qed
   \end{itemize}
 \end{proof}
