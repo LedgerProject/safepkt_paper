@@ -288,7 +288,7 @@
   \qed
 \end{proof}
 
-\begin{definition}[Value compatibility]
+\begin{definition}[Value compatibility]\label{def:value_compatibility}
   Let $v\in\mathbb{V}$ be a value, $\rho\star h\in\mathbb{S}_\kappa$ and
   $t\in\mathsf{T}_\kappa$. Then $v$ is \emph{compatible} with $t$ in $\rho\star h$,
   that we write as $v\sim_{\rho\star h}t$, is defined as
@@ -523,41 +523,47 @@
   \label{prop:abstract_location_correctness}
   Let $\mathsf{w}\in\Leftvalues$, $s\in\mathbb{S}_\kappa$ be such that
   $\locread(\mathsf{w},s)$ is defined,
-  that is, $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ for some $\ell\in\Locs$
-  and some Boolean $b$.
+  that is, $\locread(\mathsf{w},s)=\langle\ell',p\rangle$ for some $\ell'\in\Locs$
+  and some Boolean $p$.
   Let $a\in\mathbb{AS}_\kappa$ be such that $s\in\gamma_\kappa(a)$.
   Then $\locreada(\mathsf{w},a)$ is defined and, in particular,
-  $\locreada(\mathsf{w},a)=\langle t,b'\rangle$ with
+  $\locreada(\mathsf{w},a)=\langle t,p'\rangle$ with
   \begin{enumerate}
-  \item $\ell\approx_st$
-  \item $b=\mathit{true}$ implies $b'=\mathit{true}$.
+  \item $\ell'\approx_st$
+  \item $p=\mathit{true}$ implies $p'=\mathit{true}$.
   \end{enumerate}
 \end{proposition}
 \begin{proof}
-  % TODO
   Let $\rho\star h=s$. We proceed by structural induction on $\mathsf{w}$.
   \begin{itemize}
     \item (Base: $\mathsf{w}\in\dom(\kappa)$)
     By Def.~\ref{def:location_for_reading},
     $\locread(\mathsf{w},s) = \langle\rho(\mathsf{w}),\mathit{false}\rangle$,
-    hence $\ell=\rho(\mathsf{w})$ and $b=\mathit{false}$. So,
-    $\mathsf{w}\to\ell\in\rho$. As $s\in\gamma_\kappa(a)$, there is
-    $\mathsf{w}\to^m t\in a$ s.t. $\ell\approx_s t$.
+    hence $\ell'=\rho(\mathsf{w})$ and $p=\mathit{false}$. So,
+    $\mathsf{w}\to\ell'\in\rho$. As $s\in\gamma_\kappa(a)$, there is
+    $\mathsf{w}\to^m t\in a$ s.t. $\ell'\approx_s t$.
     Moreover, by Def.~\ref{def:abstract_location_for_reading},
     $\locreada(\mathsf{w},a)=\langle a(\mathsf{w}),\mathit{false}\rangle
     =\langle t,\mathit{false}\rangle$.
     %
-    \item (Induction step) Suppose that $\mathsf{w} = \mathtt{*}\mathsf{w}'$.
-    As $\locread(\mathsf{w},s)$ is defined,
+  \item (Induction step) Suppose that the thesis holds for $\mathsf{w}$. Let us prove it
+    also for $\mathtt{*}\mathsf{w}$.
+    As $\locread(\mathtt{*}\mathsf{w},s)$ is defined,
     by Def.~\ref{def:location_for_reading} there are three possibilities.
     \begin{itemize}
-      \item Either $b=\mathit{true}$,
-      $\locread(\mathsf{w'},s) = \langle \ell',b'\rangle$
-      and $\ell'\to\ell\in h$. By induction hypothesis,
-      $\locreada(\mathsf{w'},a)=\langle t,b''\rangle$ with $\ell'\approx_s t$
-      and $b'=\mathit{true}$ implies $b''=\mathit{true}$.
-      By Def.~\ref{def:concretization}, as $\ell'\to\ell\in h$,
-      necessarily $t$ has the form $\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$.
+      \item Either $\locread(\mathtt{*}\mathsf{w},s)=\langle\ell',\mathit{true}\rangle$,
+      $\locread(\mathsf{w},s) = \langle \ell,b\rangle$
+      and $\ell\to\ell'\in h$. By induction hypothesis,
+      $\locreada(\mathsf{w},a)=\langle t,b'\rangle$ with $\ell\approx_s t$,
+      and $b=\mathit{true}$ implies $b'=\mathit{true}$.
+      By Def.~\ref{def:concretization}, as $\ell\to\ell'\in h$,
+      necessarily $t$ has the form $\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
+      and $\ell'\sim_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$.
+      By Def.~\ref{def:abstract_location_for_reading},
+      $\locreada(\mathtt{*}\mathsf{w},a)=\langle t_1\sqcup\cdots\sqcup t_n,\mathit{true}\rangle$
+      with $\locreada(\mathsf{w}_i,a)=\langle t_i,b_i\rangle$
+      and $t_1\sqcup\cdots\sqcup t_n$ exists. Hence the second point of the thesis holds.
+      We must prove that $\ell'\approx_{\rho\star h}t_1\sqcup\cdots\sqcup t_n$.
       \item Or $b=\mathit{true}$,
       $\locread(\mathsf{w'},s) = \langle \ell',b'\rangle$
       and $\ell'\leadsto\ell\in h$. By induction hypothesis,
