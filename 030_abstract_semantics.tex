@@ -288,6 +288,21 @@
   \qed
 \end{proof}
 
+\begin{definition}[Value compatibility]
+  Let $v\in\mathbb{V}$ be a value, $\rho\star h\in\mathbb{S}_\kappa$ and
+  $t\in\mathsf{T}_\kappa$. Then $v$ is \emph{compatible} with $t$ in $\rho\star h$,
+  that we write as $v\sim_{\rho\star h}t$, is defined as
+  \begin{align*}
+    v&\sim_{\rho\star h}\mathsf{int} && \text{iff $v\in\mathbb{Z}$}\\
+    v&\sim_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $v\in\Locs$ and}\\
+    &&& \forall\mathsf{w}\in\Leftvalues.\left(\loc(\mathsf{w},\rho\star h)=v\text{ implies }\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\right)\\
+    v&\sim_{\rho\star h}\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $v\in\Locs$ and}\\
+    &&& \forall\mathsf{w}\in\Leftvalues.\left(\loc(\mathsf{w},\rho\star h)=v\text{ implies }\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\right)\\
+    v&\sim_{\rho\star h}\boxtype{t} && \text{iff $v\in\Locs$ and $h(v)\sim_{\rho\star h}t$}\\
+    v&\sim_{\rho\star h}\mathsf{dangling} && \text{never.}
+  \end{align*}  
+\end{definition}
+
 \begin{definition}[Concretization map]\label{def:concretization}
   An abstract store $a\in\mathbb{AS}_\kappa$ represents a set of concrete stores
   in $\mathbb{S}_\kappa$, according to the \emph{concretization map}
@@ -300,14 +315,12 @@
   \end{array}
   \right.\right\}
   \]
-  where
+  where $\ell\approx_{\rho\star h}t$ is defined as
   \begin{align*}
-    \ell&\approx_{\rho\star h}\mathsf{int} && \text{iff $h(\ell)\in\mathbb{Z}$}\\
-    \ell&\approx_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $\exists\ell'.\ell\to\ell'\in h$ and}\\
-    &&& \forall\mathsf{w}\in\Leftvalues.\left(\loc(\mathsf{w},\rho\star h)=\ell'\text{ implies }\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\right)\\
-    \ell&\approx_{\rho\star h}\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $\exists\ell'.\ell\leadsto\ell'\in h$ and}\\
-    &&& \forall\mathsf{w}\in\Leftvalues.\left(\loc(\mathsf{w},\rho\star h)=\ell'\text{ implies }\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\right)\\
-    \ell&\approx_{\rho\star h}\boxtype{t} && \text{iff $\exists\ell'.\ell\Rightarrow\ell'\in h$ and $h(\ell')\approx_{\rho\star h}t$}\\
+    \ell&\approx_{\rho\star h}\mathsf{int} && \text{iff $h(\ell)\sim_{\rho\star h}\mathsf{int}$}\\
+    \ell&\approx_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $\exists\ell'.\ell\to\ell'\in h$ and $\ell'\sim_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
+    \ell&\approx_{\rho\star h}\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $\exists\ell'.\ell\leadsto\ell'\in h$ and $\ell'\sim_{\rho\star h}\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
+    \ell&\approx_{\rho\star h}\boxtype{t} && \text{iff $\exists\ell'.\ell\Rightarrow\ell'\in h$ and $\ell'\sim_{\rho\star h}\boxtype{t}$}\\
     \ell&\approx_{\rho\star h}\mathsf{dangling} && \text{iff $h(\ell)$ is undefined.}
   \end{align*}
 \end{definition}
@@ -506,18 +519,19 @@
   \]
 \end{definition}
 
-\begin{definition}[Abstract undefined leftvalues]\label{def:abstract_undefined_leftvalues}
-  Let $\mathsf{w}\in\Leftvalues$ and $a\in\mathbb{AS}_\kappa$. Then
-  $\mathsf{w}$ is \emph{undefined} in $a$ if $\loca(\mathsf{w},a)$ is undefined
-  or $\loca(\mathsf{w},a)=\mathsf{dangling}$.
-\end{definition}
-
-\begin{proposition}[Abstract undefined is correct]
-  \label{prop:abstract_undefined_correctness}
-  Let $\mathsf{w}\in\Leftvalues$, $s\in\mathbb{S}_\kappa$
-  and $a\in\mathbb{AS}_\kappa$ be
-  such that $s\in\gamma_\kappa(a)$.
-  If $\mathsf{w}$ is undefined in $s$ then $\mathsf{w}$ is undefined in $a$.
+\begin{proposition}[Abstract locations are correct]
+  \label{prop:abstract_location_correctness}
+  Let $\mathsf{w}\in\Leftvalues$, $s\in\mathbb{S}_\kappa$ be such that
+  $\loc_+(\mathsf{w},s)$ is defined,
+  that is, $\loc_+(\mathsf{w},s)=\langle\ell,b\rangle$ for some $\ell\in\Locs$
+  and some Boolean $b$.
+  Let $a\in\mathbb{AS}_\kappa$ be such that $s\in\gamma_\kappa(a)$.
+  Then $\loca_+(\mathsf{w},a)$ is defined and, in particular,
+  $\loca_+(\mathsf{w},a)=\langle t,b'\rangle$ with
+  \begin{enumerate}
+  \item $\ell\approx_st$
+  \item $b=\mathit{true}$ implies $b'=\mathit{true}$.
+  \end{enumerate}
 \end{proposition}
 \begin{proof}
   % TODO
@@ -628,22 +642,35 @@ expressions.
   Let $a\in\mathbb{AS}_\kappa$ and $\mathsf{w}\in\Leftvalues_\kappa$. Then
   \[
   \dena[\mathsf{w}]{a}=\begin{cases}
-  \text{undefined} & \text{if $\mathsf{w}$ is undefined in $a$}\\
-  \text{undefined} & \text{otherwise, if $\mathsf{w}$ is borrowed as mutable in $a$}\\
+  \langle\mathsf{dangling},\bot\rangle & \text{if $\loca(\mathsf{w},a)$ is undefined}\\
   \langle t, a\rangle & \text{otherwise, if $t=\loca(\mathsf{w},a)$ and $\copytype(t)$}\\
-  \langle t, a[x\to^m\underbrace{\boxempty\cdots\boxempty}_{n\text{ times}}\mathsf{dangling}]\rangle & \text{otherwise, if $\langle t,\mathit{false}\rangle=\locreada(\mathsf{w},a)$ and $\movetype(t)$,}\\
-  & \quad\text{where $\mathsf{w}=\underbrace{*\ldots*}_{n\text{ times}}x$ and $x\to^mt'\in a$}\\
-  \text{undefined} & \text{otherwise.}
+  \langle t, a[x\to^m\overbrace{\boxempty\cdots\boxempty}^{n\text{ times}}\mathsf{dangling}]\rangle & \text{otherwise, if $t=\loca(\mathsf{w},a)$ and $\movetype(t)$,}\\
+  & \quad\text{where $\mathsf{w}=\underbrace{*\ldots*}_{n\text{ times}}x$ and $x\to^mt'\in a$.}
   \end{cases}
   \]
 \end{definition}
 
 \begin{proposition}[The abstract semantics of leftvalues is correct]
   \label{prop:abstract_leftvalues_correctness}
-  Let $\mathsf{w}\in\Leftvalues_\kappa$, $s\in\mathbb{S}_\kappa$
+  Let $\mathsf{w}\in\Leftvalues_\kappa$, $s=\rho\star h\in\mathbb{S}_\kappa$
   and $a\in\mathbb{AS}_\kappa$ be
-  such that $s\in\gamma_\kappa(a)$.
-  Then $\den[\mathsf{w}]{s}\in\gamma_\kappa(\dena[\mathsf{w}]{a})$.
+  such that $s\in\gamma_\kappa(a)$ and
+  $\den[\mathsf{w}]{s}$ is defined. Let
+  $\dena[\mathsf{w}]{a}=\langle t,a'\rangle$. Then
+  \begin{enumerate}
+  \item if $\den[\mathsf{w}]{s}=\langle v,h',\to\rangle$
+    then $\rho\star h'\in\gamma_\kappa(a')$, $v\sim_{\rho\star h'}t$
+    and $t=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
+  \item if $\den[\mathsf{w}]{s}=\langle v,h',\Rightarrow\rangle$ with $v\in\mathbb{Z}$
+    then $\rho\star h'\in\gamma_\kappa(a')$, $v\sim_{\rho\star h'}t$
+    and $t=\mathsf{int}$
+  \item if $\den[\mathsf{w}]{s}=\langle v,h',\Rightarrow\rangle$ with $v\in\Locs$
+    then $\rho\star h'\in\gamma_\kappa(a')$, $v\sim_{\rho\star h'}t$
+    and $t=\boxtype{t'}$
+  \item if $\den[\mathsf{w}]{s}=\langle v,h',\leadsto\rangle$
+    then $\rho\star h'\in\gamma_\kappa(a')$, $v\sim_{\rho\star h'}t$
+    and $t=\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$.
+  \end{enumerate}
 \end{proposition}
 \begin{proof}
   TODO
