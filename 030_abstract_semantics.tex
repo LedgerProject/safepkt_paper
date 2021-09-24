@@ -173,7 +173,30 @@
   \[
   a\subseteq\{x\to^m t\mid x\to^m\in\kappa\text{ and }t\in\mathsf{T_\kappa}\}
   \]
-  with the constraint that exactly one binding exists for each given variable in $\dom(\kappa)$.
+  with the following constraints:
+  \begin{itemize}
+  \item exactly one binding exists in $a$ for each given variable in $\dom(\kappa)$ (exhaustivity);
+  \item for each binding $x\to^m t\in a$ if in $t$ occurs
+    $x\to^m\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
+    or $x\to^m\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
+    then there exists $t'$ such that
+    for all $1\le i\le n$ we have $\locreada(\mathsf{w}_i,a)=\langle t',\_\rangle$ (type consistency)
+  \end{itemize}
+  where, for $\mathsf{w}\in\Leftvalues$, the partial function
+  $\locreada(\mathsf{w},a)$ yields the type of the location that holds the value of $\mathsf{w}$
+  and a Boolean mark that informs if the evaluation of $\mathsf{w}$ passes through a borrow:
+  \begin{align*}
+    \locreada(x,a)&=\langle a(x),\mathit{false}\rangle\\
+    \locreada(*\mathsf{w},a)&=\begin{cases}
+    \text{undefined} & \text{if $\locreada(\mathsf{w},a)$ is undefined}\\
+    \text{undefined} & \text{if $\locreada(\mathsf{w},a)=\langle\mathsf{dangling},b\rangle$}\\
+    \text{undefined} & \text{if $\locreada(\mathsf{w},a)=\langle\mathsf{int},b\rangle$}\\
+    \langle\locreada(\mathsf{w}_1,a),\mathit{true}\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},b\rangle$}\\
+    \langle\locreada(\mathsf{w}_1,a),\mathit{true}\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},b\rangle$}\\
+    \langle t,b\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\boxtype{t},b\rangle$}\\
+    \text{undefined} & \text{otherwise.}
+    \end{cases}
+  \end{align*}
   The set of all abstract stores over $\kappa$ is $\mathbb{AS}_\kappa$.
   The latter is ordered by $\sqsubseteq$, defined as $a_1\sqsubseteq a_2$ iff
   $a_1=\bot$ or $a_2=\top$ or
@@ -486,39 +509,6 @@
   \qed
 \end{proof}
 
-\begin{definition}[Abstract location for reading]\label{def:abstract_location_for_reading}
-  Let $\mathsf{w}\in\Leftvalues$ and $a\in\mathbb{AS}_\kappa$. The partial function
-  $\locreada(\mathsf{w},a)$ yields the type of the location that holds the value of $\mathsf{w}$
-  and a Boolean mark that informs if the evaluation of $\mathsf{w}$ passes through a borrow:
-  \begin{align*}
-    \locreada(x,a)&=\langle a(x),\mathit{false}\rangle\\
-    \locreada(*\mathsf{w},a)&=\begin{cases}
-    \text{undefined} & \text{if $\locreada(\mathsf{w},a)$ is undefined}\\
-    \text{undefined} & \text{if $\locreada(\mathsf{w},a)=\langle\mathsf{dangling},b\rangle$}\\
-    \text{undefined} & \text{if $\locreada(\mathsf{w},a)=\langle\mathsf{int},b\rangle$}\\
-    \langle t_1\sqcup\cdots\sqcup t_n,\mathit{true}\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},b\rangle$,}\\
-    &\quad\text{$\forall i\in\{1,\ldots,n\}.\locreada(\mathsf{w}_i,a)=\langle t_i,b_i\rangle$}\\
-    &\quad\text{and $t_1\sqcup\cdots\sqcup t_n$ exists}\\
-    \langle t_1\sqcup\cdots\sqcup t_n,\mathit{true}\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},b\rangle$,}\\
-    &\quad\text{$\forall i\in\{1,\ldots,n\}.\locreada(\mathsf{w}_i,a)=\langle t_i,b_i\rangle$}\\
-    &\quad\text{and $t_1\sqcup\cdots\sqcup t_n$ exists}\\
-    \langle t,b\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\boxtype{t},b\rangle$}\\
-    \text{undefined} & \text{otherwise.}
-    \end{cases}
-  \end{align*}
-\end{definition}
-
-\begin{definition}[Abstract location]\label{def:abstract_location}
-  Let $\mathsf{w}\in\Leftvalues$ and $a\in\mathbb{AS}_\kappa$. The partial function
-  $\loca(\mathsf{w},a)$ yields the type of the location holding the value of $\mathsf{w}$:
-  \[
-  \loca(\mathsf{w},a)=\begin{cases}
-  \text{undefined} & \text{if $\locreada(\mathsf{w},a)$ is undefined}\\
-  t & \text{if $\locreada(\mathsf{w},a)=\langle t,b\rangle$.}
-  \end{cases}
-  \]
-\end{definition}
-
 \begin{proposition}[Abstract locations are correct]
   \label{prop:abstract_location_correctness}
   Let $\mathsf{w}\in\Leftvalues$, $s\in\mathbb{S}_\kappa$ be such that
@@ -542,7 +532,7 @@
     hence $\ell'=\rho(\mathsf{w})$ and $p=\mathit{false}$. So,
     $\mathsf{w}\to\ell'\in\rho$. As $s\in\gamma_\kappa(a)$, there is
     $\mathsf{w}\to^m t\in a$ s.t. $\ell'\approx_s t$.
-    Moreover, by Def.~\ref{def:abstract_location_for_reading},
+    Moreover, by Def.~\ref{def:abstract-store},
     $\locreada(\mathsf{w},a)=\langle a(\mathsf{w}),\mathit{false}\rangle
     =\langle t,\mathit{false}\rangle$.
     %
@@ -554,16 +544,17 @@
       \item Either $\locread(\mathtt{*}\mathsf{w},s)=\langle\ell',\mathit{true}\rangle$,
       $\locread(\mathsf{w},s) = \langle \ell,b\rangle$
       and $\ell\to\ell'\in h$. By induction hypothesis,
-      $\locreada(\mathsf{w},a)=\langle t,b'\rangle$ with $\ell\approx_s t$,
+      $\locreada(\mathsf{w},a)=\langle t',b'\rangle$ with $\ell\approx_s t'$,
       and $b=\mathit{true}$ implies $b'=\mathit{true}$.
       By Def.~\ref{def:concretization}, as $\ell\to\ell'\in h$,
-      necessarily $t$ has the form $\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
-      and $\ell'\sim_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$.
-      By Def.~\ref{def:abstract_location_for_reading},
-      $\locreada(\mathtt{*}\mathsf{w},a)=\langle t_1\sqcup\cdots\sqcup t_n,\mathit{true}\rangle$
-      with $\locreada(\mathsf{w}_i,a)=\langle t_i,b_i\rangle$
-      and $t_1\sqcup\cdots\sqcup t_n$ exists. Hence the second point of the thesis holds.
-      We must prove that $\ell'\approx_{\rho\star h}t_1\sqcup\cdots\sqcup t_n$.
+      necessarily $t'$ has the form $\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
+      and $\ell'\sim_s\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$.
+      By definition of $\locreada(\mathsf{w},a)$, we have that $t'$ occurs in a binding in $a$.
+      Hence, by Def.~\ref{def:concretization}, there exists $t$ such that
+      for all $1\le i\le n$ we have $\locreada(\mathsf{w}_i,a)=\langle t,\_\rangle$ and
+      $\locreada(\mathtt{*}\mathsf{w},a)=\langle t,\mathit{true}\rangle$.
+      It follows that the second point of the thesis holds.
+      We must prove that $\ell'\approx_st$.
       \item Or $b=\mathit{true}$,
       $\locread(\mathsf{w'},s) = \langle \ell',b'\rangle$
       and $\ell'\leadsto\ell\in h$. By induction hypothesis,
@@ -636,6 +627,17 @@ value of the expression, a potentially updated abstract store
 and an arrow that expresses the nature of the value: an owned value, an immutable borrow
 or a mutable borrow. Let us start from the leftvalues, then consider the other kinds of
 expressions.
+
+\begin{definition}[Abstract location]\label{def:abstract_location}
+  Let $\mathsf{w}\in\Leftvalues$ and $a\in\mathbb{AS}_\kappa$. The partial function
+  $\loca(\mathsf{w},a)$ yields the type of the location holding the value of $\mathsf{w}$:
+  \[
+  \loca(\mathsf{w},a)=\begin{cases}
+  \text{undefined} & \text{if $\locreada(\mathsf{w},a)$ is undefined}\\
+  t & \text{if $\locreada(\mathsf{w},a)=\langle t,b\rangle$.}
+  \end{cases}
+  \]
+\end{definition}
 
 \begin{definition}[Abstract semantics of leftvalues]\label{def:abstract_semantics_leftvalues}
   Let $a\in\mathbb{AS}_\kappa$ and $\mathsf{w}\in\Leftvalues_\kappa$. Then
