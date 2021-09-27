@@ -166,37 +166,72 @@
   \end{itemize}
 \end{proof}
 
-\begin{definition}[Abstract stores]
-  \label{def:abstract-store}
-  Given a context $\kappa$, an \emph{abstract store} $a$ over $\kappa$ is either $\bot$ or $\top$
-  or a set of bindings from variables to types, decorated with a lifetime:
+\begin{definition}[Typing]\label{def:typing}
+  Given a context $\kappa$, a \emph{typing} over $\kappa$ is
+  a set of bindings from variables to types, decorated with a lifetime:
   \[
-  a\subseteq\{x\to^m t\mid x\to^m\in\kappa\text{ and }t\in\mathsf{T_\kappa}\}
+  \{x\to^m t\mid x\to^m\in\kappa\text{ and }t\in\mathsf{T_\kappa}\}
   \]
-  with the following constraints:
-  \begin{itemize}
-  \item exactly one binding exists in $a$ for each given variable in $\dom(\kappa)$ (exhaustivity);
-  \item for each binding $x\to^m t\in a$ if in $t$ occurs
-    $x\to^m\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
-    or $x\to^m\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
-    then there exists $t'$ such that
-    for all $1\le i\le n$ we have $\locreada(\mathsf{w}_i,a)=\langle t',\_\rangle$ (type consistency)
-  \end{itemize}
-  where, for $\mathsf{w}\in\Leftvalues$, the partial function
-  $\locreada(\mathsf{w},a)$ yields the type of the location that holds the value of $\mathsf{w}$
-  and a Boolean mark that informs if the evaluation of $\mathsf{w}$ passes through a borrow:
+  such that exactly one binding exists in for each given variable in $\dom(\kappa)$.
+\end{definition}
+
+The dereference operator follows borrows or boxes, by unwinding pointers.
+For types, this means that the dereference \emph{unwinds} borrows and boxes.
+The following definition formalizes what a typing $a$ tells us about
+a leftvalue. This is trivial when the leftvalue is a variable,
+while it unwinds borrows and boxes for more complex leftvalues.
+
+\begin{definition}[Leftvalue unwinding]\label{def:type_dereference}
+  Given a context $\kappa$ and a typing $a$ over $\kappa$, the \emph{unwinding} of a leftvalue
+  in $a$ is a set of types and leftvalues defined as follows:
   \begin{align*}
-    \locreada(x,a)&=\langle a(x),\mathit{false}\rangle\\
-    \locreada(*\mathsf{w},a)&=\begin{cases}
-    \text{undefined} & \text{if $\locreada(\mathsf{w},a)$ is undefined}\\
-    \text{undefined} & \text{if $\locreada(\mathsf{w},a)=\langle\mathsf{dangling},b\rangle$}\\
-    \text{undefined} & \text{if $\locreada(\mathsf{w},a)=\langle\mathsf{int},b\rangle$}\\
-    \langle\locreada(\mathsf{w}_1,a),\mathit{true}\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},b\rangle$}\\
-    \langle\locreada(\mathsf{w}_1,a),\mathit{true}\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},b\rangle$}\\
-    \langle t,b\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\boxtype{t},b\rangle$}\\
-    \text{undefined} & \text{otherwise.}
-    \end{cases}
+  \unwind(x,a)&=\{a(x)\}\\
+  \unwind(\mathtt{*}\mathsf{w},a)&=
+  \{\mathsf{w}_1,\ldots,\mathsf{w}_n\mid(\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})\in\unwind(\mathsf{w},a)\}\\
+  &\qquad\cup\{\mathsf{w}_1,\ldots,\mathsf{w}_n\mid(\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})\in\unwind(\mathsf{w},a)\}\\
+  &\qquad\cup\{t\mid\boxtype{t}\in\unwind(\mathsf{w},a)\}\\
+  &\qquad\cup\{\mathtt{*}\mathsf{w}'\mid\mathsf{w}'\in\unwind(\mathsf{w},a)\cap\Leftvalues\}
   \end{align*}
+\end{definition}
+
+\noindent
+Intuitively, the type of $\mathsf{w}$ in $a$ must be consistent with every type
+in $\unwind(\mathsf{w},a)$ and with the type of every leftvalue in $\unwind(\mathsf{w},a)$.
+
+An abstract store is a special case of typing, where borrows have been completely unwound
+and can be typed.
+
+\begin{definition}[Abstract stores]\label{def:abstract-store}
+  Given a context $\kappa$, an \emph{abstract store} $a$ over $\kappa$ is either $\bot$ or $\top$
+  or a typing over $\kappa$ such that, for each $\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
+    or $\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$ that occurs in the right-hand side
+    of the bindings of $a$:
+  \begin{itemize}
+  \item \textbf{Closure:} for every $1\le i\le n$, it is
+    \[
+    \unwind(\mathsf{w}_i,a)\cap\Leftvalues\subseteq\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}.
+    \]
+  \item \textbf{Type consistency:} the type
+    \[
+    t(\mathsf{w}_1,\ldots,\mathsf{w}_n,a)=\sqcup\{t\mid\locreada(\mathsf{w}_i,a)=\langle t,\_\rangle
+    \text{ and }\unwind(\mathsf{w}_i,a)\cap\Leftvalues=\varnothing\}
+    \]
+    is defined, where, for $\mathsf{w}\in\Leftvalues$, the partial function
+    $\locreada(\mathsf{w},a)$ yields the type of the location that holds the value of $\mathsf{w}$
+    and a Boolean mark that informs if the evaluation of $\mathsf{w}$ passes through a borrow:
+    \begin{align*}
+      \locreada(x,a)&=\langle a(x),\mathit{false}\rangle\\
+      \locreada(*\mathsf{w},a)&=\begin{cases}
+      \text{undefined} & \text{if $\locreada(\mathsf{w},a)$ is undefined}\\
+      \text{undefined} & \text{if $\locreada(\mathsf{w},a)=\langle\mathsf{dangling},b\rangle$}\\
+      \text{undefined} & \text{if $\locreada(\mathsf{w},a)=\langle\mathsf{int},b\rangle$}\\
+      \langle t(\mathsf{w}_1,\ldots,\mathsf{w}_n,a),\mathit{true}\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},b\rangle$}\\
+      \langle t(\mathsf{w}_1,\ldots,\mathsf{w}_n,a),\mathit{true}\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},b\rangle$}\\
+      \langle t,b\rangle & \text{if $\locreada(\mathsf{w},a)=\langle\boxtype{t},b\rangle$}\\
+      \text{undefined} & \text{otherwise.}
+      \end{cases}
+    \end{align*}
+  \end{itemize}
   The set of all abstract stores over $\kappa$ is $\mathbb{AS}_\kappa$.
   The latter is ordered by $\sqsubseteq$, defined as $a_1\sqsubseteq a_2$ iff
   $a_1=\bot$ or $a_2=\top$ or
