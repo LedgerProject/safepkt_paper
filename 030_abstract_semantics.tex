@@ -178,7 +178,8 @@
 The dereference operator follows borrows or boxes, by unwinding pointers.
 For types, this means that the dereference \emph{unwinds} borrows and boxes.
 The following definition formalizes what a typing $a$ tells us about
-a leftvalue. This is trivial when the leftvalue is a variable,
+a leftvalue: which are its possible types and which leftvalues can be its aliases.
+This is trivial when the leftvalue is a variable,
 while it unwinds borrows and boxes for more complex leftvalues.
 
 \begin{definition}[Leftvalue unwinding]\label{def:unwind}
@@ -213,12 +214,7 @@ and can be typed.
     \]
   \item \textbf{Type consistency:} the type
     \[
-    t(\mathsf{w}_1,\ldots,\mathsf{w}_n,a)=\sqcup\left\{t'\left|
-    \begin{array}{l}
-      1\le i\le n,\ t'\in\unwind(\mathsf{w}_i,a)\cap\mathbb{T}_\kappa\\
-      \text{and }\unwind(\mathsf{w}_i,a)\cap\Leftvalues=\varnothing
-    \end{array}
-    \right.\right\}
+    t(\mathsf{w}_1,\ldots,\mathsf{w}_n,a)=\sqcup\{t'\mid 1\le i\le n\text{ and }t'\in\unwind(\mathsf{w}_i,a)\cap\mathbb{T}_\kappa\}
     \]
     is defined. Moreover, $t(\mathsf{w}_1,\ldots,\mathsf{w}_n)$ is type consistent itself.
   \end{itemize}
@@ -363,34 +359,26 @@ is included in the borrows.
   \qed
 \end{proof}
 
-\begin{lemma}\label{lem:unwind_no_leftvalues}
-  Given a context $\kappa$, an abstract store $a\not\in\{\top,\bot\}$ over $\kappa$ and
-  $\mathsf{w}\in\Leftvalues_\kappa$ such that
-  $\unwind(\mathsf{w},a)\cap\mathbb{T}_\kappa\not=\varnothing$ and $\unwind(\mathsf{w},a)\cap\Leftvalues=\varnothing$,
-  then $a(\mathsf{root}(\mathsf{w}))=\underbrace{\boxempty\cdots\boxempty}_\text{$n$ times}t$ for some $t$,
-  where $\mathsf{w}=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\text{$n$ times}}\mathsf{root}(\mathsf{w})$.
+\begin{lemma}\label{lem:unwind_types}
+  Given a context $\kappa$, an abstract store $a\not\in\{\top,\bot\}$ over $\kappa$,
+  $\mathsf{w}\in\Leftvalues_\kappa$
+  where $\mathsf{w}=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\text{$n$ times}}\mathsf{root}(\mathsf{w})$
+  and $t\in\unwind(\mathsf{w},a)\cap\mathsf{T}_\kappa$, then
+  $a(\mathsf{root}(\mathsf{w}))=\underbrace{\boxempty\cdots\boxempty}_\text{$n$ times}t$.
 \end{lemma}
 \begin{proof}
   Let $r=\mathsf{root}(\mathsf{w})$. We proceed by induction on $n$.
   \begin{itemize}
-  \item If $n=0$ then $a(r)\in\mathsf{T}_\kappa$ and the thesis follows.
+  \item If $n=0$ then $\unwind(\mathsf{w},a)=\{a(r)\}$ and therefore
+    $a(r)=t=\underbrace{\boxempty\cdots\boxempty}_\text{$0$ times}t$.
   \item Assume that the result holds for $n\ge 0$ and consider
     $\mathtt{*}\mathsf{w}=\mathtt{*}\overbrace{\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\text{$n$ times}} r}^\mathsf{w}$.
-    By Def.~\ref{def:abstract-store}, since $\locreada(\mathtt{*}\mathsf{w},a)$ is defined it follows that $\locread(\mathsf{w},a)$ is defined.
     By Def.~\ref{def:unwind},
-    since $\unwind(\mathtt{*}\mathsf{w},a)\cap\mathbb{T}_\kappa\not=\varnothing$ it follows that
-    $\unwind(\mathsf{w},a)\cap\mathbb{T}_\kappa\not=\varnothing$;
-    and since $\unwind(\mathtt{*}\mathsf{w},a)\cap\Leftvalues=\varnothing$ it follows that
-    $\unwind(\mathsf{w},a)\cap\Leftvalues=\varnothing$.
+    since $t\in\unwind(\mathtt{*}\mathsf{w},a)\cap\mathsf{T}_\kappa$, it follows that
+    $\boxtype{t}\in\unwind(\mathsf{w},a)\cap\mathsf{T}_\kappa$.
     By inductive hypothesis, it is
-    $a(r)=\underbrace{\boxempty\cdots\boxempty}_\text{$n$ times}t'$ for some $t'$.
-    By Def.~\ref{def:unwind}, it is $t'\in\unwind(\mathsf{w},a)$.
-    Since $\unwind(\mathsf{w},a)\cap\Leftvalues=\varnothing$ and
-    $\unwind(\mathtt{*}\mathsf{w},a)\cap\Leftvalues=\varnothing$, by Def.~\ref{def:unwind}
-    either $\unwind(\mathtt{*}\mathsf{w},a)=\varnothing$, which is impossible by hypothesis, or
-    $t\in\unwind(\mathtt{*}\mathsf{w},a)$ with $t'=\boxtype{t}$. In the latter case, it is
-    $a(r)=\underbrace{\boxempty\cdots\boxempty}_\text{$n$ times}\boxtype{t}
-    =\underbrace{\boxempty\cdots\boxempty}_\text{$n+1$ times}t$ and the thesis follows.
+    $a(\mathsf{root}(\mathtt{*}\mathsf{w}))=a(r)=\underbrace{\boxempty\cdots\boxempty}_\text{$n$ times}\boxtype{t}
+    =\underbrace{\boxempty\cdots\boxempty}_\text{$n+1$ times}t$.
   \end{itemize}
   \qed
 \end{proof}
@@ -414,12 +402,11 @@ is included in the borrows.
   By Def.~\ref{def:abstract-store}, also $t$ is type consistent.
   It remains to prove that $t$ is closed.
   Since $t$ is defined and is a borrow, it can only be the result of a least upper bound operation
-  between borrows $t_i$ where $t_i\in\unwind(\mathsf{w}_i',a)\cap\mathbb{T}_\kappa$
-  and $\unwind(\mathsf{w}_i',a)\cap\Leftvalues=\varnothing$.
-  By Lemma~\ref{lem:unwind_no_leftvalues},
-  $a(\mathsf{root}(\mathsf{w}_i'))=\underbrace{\boxempty\cdots\boxempty}_\text{$m_i$ times}t''_i$ for some $t''_i$,
+  between borrows $t_i$ where $t_i\in\unwind(\mathsf{w}_i',a)\cap\mathbb{T}_\kappa$.
+  By Lemma~\ref{lem:unwind_types},
+  $a(\mathsf{root}(\mathsf{w}_i'))=\underbrace{\boxempty\cdots\boxempty}_\text{$m_i$ times}t_i$,
   where $\mathsf{w}_i'=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\text{$m_i$ times}}\mathsf{root}(\mathsf{w}_i')$.
-  By Def.~\ref{def:unwind}, it is $t_i=t_i''$. This means that $t$ is the least upper bound
+  This means that $t$ is the least upper bound
   of borrows $t_i$ that occur in the right-hand side of $a$ and each of them is, consequently, closed.
   It follows that each $\mathsf{w}_i$ belongs to a borrow
   $\borrow(\{\mathsf{w}_i\}\cup X)$ occurring in the right-hand side of $a$,
@@ -667,13 +654,23 @@ is included in the borrows.
       By Def.~\ref{def:concretization}, as $\ell\to\ell'\in h$,
       necessarily $t'$ has the form $\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
       and $\ell'\sim_s\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$.
-      By Lemma~\ref{lem:consistency}, $t'$ is closed and type consistent.
-      By Def.~\ref{def:abstract-store},
+      By Def.~\ref{def:value_compatibility}, it exists $i\in\{1,\ldots,n\}$
+      such that $\loc(\mathsf{w}_i,s)=\ell'$.
+      By Lemma~\ref{lem:consistency}, $t'$ is type consistent so that,
+      by Def.~\ref{def:abstract-store},
       $t=t(\mathsf{w}_1,\ldots,\mathsf{w}_n,a)$ is defined and
       $\locreada(\mathtt{*}\mathsf{w},a)=\langle t,\mathit{true}\rangle$.
       Therefore, the second point of the thesis holds.
       It remains to prove that $\ell'\approx_st$.
-
+      Consider a $t''\in\unwind(\mathsf{w}_i,a)\cap\mathbb{T}_\kappa$.
+      By Lemma~\ref{lem:unwind_types}, it is
+      $a(\mathsf{root}(\mathsf{w}_i))=\underbrace{\boxempty\cdots\boxempty}_{\text{$m$ times}}t''$, with
+      $\mathsf{w}_i=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\text{$m$ times}}\mathsf{root}(\mathsf{w}_i)$.
+      Since $s\in\gamma_\kappa(a)$, it follows that
+      $s(\mathsf{root}(\mathsf{w}_i))\approx_s a(\mathsf{root}(\mathsf{w}_i))
+      =\underbrace{\boxempty\cdots\boxempty}_{\text{$m$ times}}t''$ and therefore
+      $\loc(\mathsf{w}_i,s)\approx_st''$. It follows that
+      $\ell'=\loc(\mathsf{w}_i,s)\approx_st(\mathsf{w}_1,\ldots,\mathsf{w}_n,a)=t$.
     \item Or $b=\mathit{true}$,
       $\locread(\mathsf{w'},s) = \langle \ell',b'\rangle$
       and $\ell'\leadsto\ell\in h$. By induction hypothesis,
