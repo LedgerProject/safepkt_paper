@@ -447,62 +447,6 @@ Def.~\ref{def:abstract-store} will require.
   \qed
 \end{proof}
 
-\begin{lemma}\label{lem:unwind_types}
-  Given a context $\kappa$, an abstract store $a\not\in\{\top,\bot\}$ over $\kappa$,
-  $\mathsf{w}\in\Leftvalues_\kappa$
-  where $\mathsf{w}=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\text{$n$}}\mathsf{root}(\mathsf{w})$
-  and $t\in\unwind(\mathsf{w},a)\cap\mathsf{T}_\kappa$, then
-  $a(\mathsf{root}(\mathsf{w}))=\underbrace{\boxempty\cdots\boxempty}_\text{$n$}t$.
-\end{lemma}
-\begin{proof}
-  Let $r=\mathsf{root}(\mathsf{w})$. We proceed by induction on $n$.
-  \begin{itemize}
-  \item If $n=0$ then $\unwind(\mathsf{w},a)=\{a(r)\}$ and therefore
-    $a(r)=t=\underbrace{\boxempty\cdots\boxempty}_\text{$0$}t$.
-  \item Assume that the result holds for $n\ge 0$ and consider
-    $\mathtt{*}\mathsf{w}=\mathtt{*}\overbrace{\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\text{$n$}} r}^\mathsf{w}$.
-    By Def.~\ref{def:unwind},
-    since $t\in\unwind(\mathtt{*}\mathsf{w},a)\cap\mathsf{T}_\kappa$, it follows that
-    $\boxtype{t}\in\unwind(\mathsf{w},a)\cap\mathsf{T}_\kappa$.
-    By inductive hypothesis, it is
-    $a(\mathsf{root}(\mathtt{*}\mathsf{w}))=a(r)=\underbrace{\boxempty\cdots\boxempty}_\text{$n$}\boxtype{t}
-    =\underbrace{\boxempty\cdots\boxempty}_\text{$n+1$}t$.
-  \end{itemize}
-  \qed
-\end{proof}
-
-\begin{lemma}\label{lem:consistency}
-  Given a context $\kappa$, an abstract store $a\not\in\{\bot,\top\}$ over $\kappa$ and
-  $\mathsf{w}\in\Leftvalues_\kappa$, if
-  $\locreada(\mathsf{w},a)=\langle\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},\_\rangle$
-  then $\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$ is closed and type consistent.
-  The same occurs for mutable borrows.
-\end{lemma}
-\begin{proof}
-  By Def.~\ref{def:abstract-store}, either
-  $t=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
-  occurs in the right-hand side of $a$ (base case and recursive case
-  for $\boxempty$ in Def.~\ref{def:abstract-store}), in which case the
-  thesis follows from the hypotheses on $a$ in Def.~\ref{def:abstract-store},
-  or $t=t(\mathsf{w}_1',\ldots,\mathsf{w}_{n'}',a)$ (recursive case for
-  borrow in Def.~\ref{def:abstract-store}) where, by induction,
-  $\borrow\{\mathsf{w}_1',\ldots,\mathsf{w}'_{n'}\}$ is closed and type consistent.
-  By Def.~\ref{def:abstract-store}, also $t$ is type consistent.
-  It remains to prove that $t$ is closed.
-  Since $t$ is defined and is a borrow, it can only be the result of a least upper bound operation
-  between borrows $t_i$ where $t_i\in\unwind(\mathsf{w}_i',a)\cap\mathbb{T}_\kappa$.
-  By Lemma~\ref{lem:unwind_types},
-  $a(\mathsf{root}(\mathsf{w}_i'))=\underbrace{\boxempty\cdots\boxempty}_\text{$m_i$}t_i$,
-  where $\mathsf{w}_i'=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\text{$m_i$}}\mathsf{root}(\mathsf{w}_i')$.
-  This means that $t$ is the least upper bound
-  of borrows $t_i$ that occur in the right-hand side of $a$ and each of them is, consequently, closed.
-  It follows that each $\mathsf{w}_i$ belongs to a borrow
-  $\borrow(\{\mathsf{w}_i\}\cup X)$ occurring in the right-hand side of $a$,
-  that is closed, so that $\unwind(\mathsf{w}_i,a)\subseteq\{\mathsf{w}_i\}\cup X\subseteq\{\mathsf{w}_1,\dots,\mathsf{w}_n\}$.
-  The proof is identical for mutable borrows.
-  \qed
-\end{proof}
-
 \begin{definition}[Value compatibility]\label{def:value_compatibility}
   Let $v\in\mathbb{V}$ be a value, $\rho\star h\in\mathbb{S}_\kappa$ and
   $t\in\mathsf{T}_\kappa$ not a box. Then $v$ is \emph{compatible} with $t$ in $\rho\star h$,
