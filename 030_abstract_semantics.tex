@@ -674,38 +674,48 @@ Def.~\ref{def:value_compatibility}.
   Then $\locreada(\mathsf{w},a)$ is defined and, in particular,
   $\locreada(\mathsf{w},a)=\langle t,p'\rangle$ with
   \begin{enumerate}
-  \item $\ell'\approx_st$
+  \item $\ell'\approx_s^\mathsf{w}t$
   \item $p=\mathit{true}$ implies $p'=\mathit{true}$.
   \end{enumerate}
 \end{proposition}
 \begin{proof}
-  Let $\rho\star h=s$. We proceed by structural induction on $\mathsf{w}$.
+  Let $\rho\star h=s$. We proceed by induction on $\mathsf{w}$ wrt.\ the $\gg$ relation.
   \begin{itemize}
-    \item (Base: $\mathsf{w}\in\dom(\kappa)$)
+  \item (Base: there is no $\mathsf{w}'$ such that $\mathsf{w}\gg\mathsf{w}'$)
+    By Def.~\ref{def:dependencies}, $\mathsf{w}$ is a variable.
     By Def.~\ref{def:location_for_reading},
     $\locread(\mathsf{w},s) = \langle\rho(\mathsf{w}),\mathit{false}\rangle$,
     hence $\ell'=\rho(\mathsf{w})$ and $p=\mathit{false}$. So,
     $\mathsf{w}\to\ell'\in\rho$. As $s\in\gamma_\kappa(a)$, there is
-    $\mathsf{w}\to^m t\in a$ s.t. $\ell'\approx_s t$.
-    Moreover, by Def.~\ref{def:abstract-store},
+    $\mathsf{w}\to^m t\in a$ s.t. $\ell'\approx_s^\mathsf{w} t$.
+    Moreover, by Def.~\ref{def:locreada},
     $\locreada(\mathsf{w},a)=\langle a(\mathsf{w}),\mathit{false}\rangle
     =\langle t,\mathit{false}\rangle$.
     %
-  \item (Induction step) Suppose that the thesis holds for $\mathsf{w}$. Let us prove it
-    for $\mathtt{*}\mathsf{w}$.
-    As $\locread(\mathtt{*}\mathsf{w},s)$ is defined,
+  \item (Induction step: there are $\mathsf{w}'$ such that $\mathsf{w}\gg\mathsf{w}'$ and the result
+    holds for them; we prove it for $\mathsf{w}$)
+    By Def.~\ref{def:dependencies}, $\mathsf{w}=\mathtt{*}\mathsf{w''}$ for some $\mathsf{w}''$.
+    As $\locread(\mathsf{w},s)$ is defined,
     by Def.~\ref{def:location_for_reading} there are three possibilities.
     \begin{itemize}
-      \item Either $\locread(\mathtt{*}\mathsf{w},s)=\langle\ell',\mathit{true}\rangle$,
-      $\locread(\mathsf{w},s) = \langle \ell,b\rangle$
-      and $\ell\to\ell'\in h$. By induction hypothesis,
-      $\locreada(\mathsf{w},a)=\langle t',b'\rangle$ with $\ell\approx_s t'$,
+      \item Either $\locread(\mathsf{w},s)=\langle\ell',\mathit{true}\rangle$,
+      $\locread(\mathsf{w}'',s) = \langle \ell,b\rangle$ and $\ell\to\ell'\in h$.
+      Condition (2) holds in this case.
+      By Prop.~\ref{prop:acyclicity} we can use the induction hypothesis on $\mathsf{w}''$
+      and $\locreada(\mathsf{w}'',a)=\langle t',b'\rangle$ with $\ell\approx_s^{\mathsf{w}''}t'$,
       and $b=\mathit{true}$ implies $b'=\mathit{true}$.
       By Def.~\ref{def:concretization}, as $\ell\to\ell'\in h$,
       necessarily $t'$ has the form $\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
-      and $\ell'\sim_s\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$.
+      and $\ell'\sim_s^{\mathtt{*}\mathsf{w}''}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$, that is,
+      $\ell'\sim_s^{\mathsf{w}}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$.
       By Def.~\ref{def:value_compatibility}, it exists $i\in\{1,\ldots,n\}$
-      such that $\loc(\mathsf{w}_i,s)=\ell'$.
+      such that $\loc(\mathsf{w}_i,s)=\langle\ell',b_i\rangle$.
+      By Prop.~\ref{prop:acyclicity}, we can apply the inductive hypothesis to $\mathsf{w}_i$
+      and conclude that $\locreada(\mathsf{w}_i,a)=\langle t'',b_i'\rangle$ with
+      $\ell'\approx_s^{\mathsf{w}_i}t''$ and $b_i$ true implies $b_i'$ true.
+      By Def.~\ref{def:locreada}, we have $t''\sqsubseteq t$. Hence
+      $\ell'\approx_s^{\mathsf{w}_i}t$.
+
       By Lemma~\ref{lem:consistency}, $t'$ is type consistent so that,
       by Def.~\ref{def:abstract-store},
       $t=t(\mathsf{w}_1,\ldots,\mathsf{w}_n,a)$ is defined and
