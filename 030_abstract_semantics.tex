@@ -448,18 +448,18 @@ Def.~\ref{def:abstract-store} will require.
 \end{proof}
 
 \begin{definition}[Value compatibility]\label{def:value_compatibility}
-  Let $v\in\mathbb{V}$ be a value, $\rho\star h\in\mathbb{S}_\kappa$ and
-  $t\in\mathsf{T}_\kappa$ not a box. Then $v$ is \emph{compatible} with $t$ in $\rho\star h$,
-  that we write as $v\sim_{\rho\star h}t$, is defined as
+  Let $v\in\mathbb{V}$ be a value, $\rho\star h\in\mathbb{S}_\kappa$, $\mathsf{w}\in\Leftvalues_\kappa$
+  and $t\in\mathsf{T}_\kappa$ not a box. Then $v$ is \emph{compatible} with $t$ in $\rho\star h$,
+  written $v\sim_{\rho\star h}^\mathsf{w}t$, is defined as
   \begin{align*}
-    v&\sim_{\rho\star h}\mathsf{int} && \text{iff $v\in\mathbb{Z}$}\\
-    v&\sim_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $v\in\Locs$ and}\\
+    v&\sim_{\rho\star h}^\mathsf{w}\mathsf{int} && \text{iff $v\in\mathbb{Z}$}\\
+    v&\sim_{\rho\star h}^\mathsf{w}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $v\in\Locs$ and}\\
     &&& \exists i\in\{1,\ldots,n\}.\loc(\mathsf{w}_i,\rho\star h)=v\text{ and}\\
-    &&& \forall\mathsf{w}\in\Leftvalues.\left(\loc(\mathsf{w},\rho\star h)=v\text{ implies }\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\right)\\
-    v&\sim_{\rho\star h}\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $v\in\Locs$ and}\\
+    &&& \forall\mathsf{w'}\in\Leftvalues.\left(\mathsf{w}\not=\mathsf{w}'\text{ and }\loc(\mathsf{w}',\rho\star h)=v\text{ implies }\mathsf{w}'\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\right)\\
+    v&\sim_{\rho\star h}^\mathsf{w}\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $v\in\Locs$ and}\\
     &&& \exists i\in\{1,\ldots,n\}.\loc(\mathsf{w}_i,\rho\star h)=v\text{ and}\\
-    &&& \forall\mathsf{w}\in\Leftvalues.\left(\loc(\mathsf{w},\rho\star h)=v\text{ implies }\mathsf{w}\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\right)\\
-    v&\sim_{\rho\star h}\mathsf{dangling} && \text{never.}
+    &&& \forall\mathsf{w}\in\Leftvalues.\left(\mathsf{w}\not=\mathsf{w}'\text{ and }\loc(\mathsf{w}',\rho\star h)=v\text{ implies }\mathsf{w}'\in\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\right)\\
+    v&\sim_{\rho\star h}^\mathsf{w}\mathsf{dangling} && \text{never.}
   \end{align*}
 \end{definition}
 
@@ -471,20 +471,38 @@ Def.~\ref{def:abstract-store} will require.
   for $a\not=\bot,\top$:
   \[
   \gamma_\kappa(a)=\left\{\rho\star h\in\mathbb{S}_\kappa\left|\begin{array}{l}
-  \text{for every }x\to^m\ell\in\rho\text{ there is }x\to^m t\in a\text{ s.t.\ }\ell\approx_{\rho\star h}t
+  \text{for every }x\to^m\ell\in\rho\text{ there is }x\to^m t\in a\text{ s.t.\ }\ell\approx_{\rho\star h}^x t
   \end{array}
   \right.\right\}
   \]
-  where $\ell\approx_{\rho\star h}t$ is defined as
+  where $\ell\approx_{\rho\star h}^\mathsf{w}t$ is defined as
   \begin{align*}
-    \ell&\approx_{\rho\star h}\mathsf{int} && \text{iff $h(\ell)\sim_{\rho\star h}\mathsf{int}$}\\
-    \ell&\approx_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $\exists\ell'.\ell\to\ell'\in h$ and $\ell'\sim_{\rho\star h}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
-    \ell&\approx_{\rho\star h}\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $\exists\ell'.\ell\leadsto\ell'\in h$ and $\ell'\sim_{\rho\star h}\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
-    \ell&\approx_{\rho\star h}\boxtype{t} && \text{iff $\exists\ell'.\ell\Rightarrow\ell'\in h$ and $\ell'\approx_{\rho\star h}t$}\\
-    \ell&\approx_{\rho\star h}\mathsf{dangling} && \text{iff $h(\ell)$ is undefined.}
+    \ell&\approx_{\rho\star h}^\mathsf{w}\mathsf{int} && \text{iff $h(\ell)\sim_{\rho\star h}\mathsf{int}$}\\
+    \ell&\approx_{\rho\star h}^\mathsf{w}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $\exists\ell'.\ell\to\ell'\in h$ and $\ell'\sim_{\rho\star h}^{\mathtt{*}\mathsf{w}}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
+    \ell&\approx_{\rho\star h}^\mathsf{w}\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} && \text{iff $\exists\ell'.\ell\leadsto\ell'\in h$ and $\ell'\sim_{\rho\star h}^{\mathtt{*}\mathsf{w}}\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
+    \ell&\approx_{\rho\star h}^\mathsf{w}\boxtype{t} && \text{iff $\exists\ell'.\ell\Rightarrow\ell'\in h$ and $\ell'\approx_{\rho\star h}^{\mathtt{*}\mathsf{w}}t$}\\
+    \ell&\approx_{\rho\star h}^\mathsf{w}\mathsf{dangling} && \text{iff $h(\ell)$ is undefined.}
   \end{align*}
 \end{definition}
 
+The role of the parameter $\mathsf{w}$ in Def.~\ref{def:value_compatibility}
+and~\ref{def:concretization}
+is to avoid the use of identities in borrows. Without that $\mathsf{w}$
+and its consequent use to define the compatibility of a value with a borrow,
+the abstract domain element
+\[
+  \{x\to^m\borrow\{y\}, y\to^m\mathsf{int}\}
+\]
+would have an empty concretization, since the location of $\mathtt{*}x$ coincides
+with the value of $x$, always. Hence we would be forced to add $\mathtt{*}x$ to the borrow:
+\[
+  \{x\to^m\borrow\{\mathtt{*}x, y\}, y\to^m\mathsf{int}\}.
+\]
+But that $\mathtt{*}x$ is tautological information. Moreover, it makes the dependencies
+of the typing cyclical (Def.~\ref{def:dependencies}) since it entails that
+$\mathtt{*}x\gg\mathtt{*}x$. In order to avoid this problem, we do not require the
+presence of such tautological information, by restricting the quantifications in
+Def.~\ref{def:value_compatibility}.
 
 \begin{lemma}\label{lem:co-additive-type}
   Let $I\subseteq\mathbb{N}$ and $\{t_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$.
