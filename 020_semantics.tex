@@ -258,7 +258,7 @@ replaces $13$ with $17$ inside the box in $x$.
 \end{definition}
 
 A typing provides types to variables and can be extended in order to type
-leftvalues, as shown below. Def.~\ref{def:type} is a translation of
+leftvalues as well, as shown below. Def.~\ref{def:type} is a translation of
 Def.~3.11 from~\cite{Pearce21}.
 
 \begin{definition}[Type of leftvalues]\label{def:type}
@@ -282,6 +282,9 @@ Def.~3.11 from~\cite{Pearce21}.
 \noindent
 Note that $\type$ recurs in a way that, in general,
 is not well-founded, for the cases of $\borrow$ and $\borrow\mathtt{mut}$.
+Moreover, the $\sqcup$, in those two cases, might not be defined.
+As hinted in~\cite{Pearce21}, that corresponds to a situation when the program
+is not well typed, in the traditional sense of type checking.
 
 \begin{example}\label{ex:type_divergence}
   Consider the following typing:
@@ -325,8 +328,8 @@ For that, we start by defining a concept of dependencies between leftvalues.
 \noindent
 Note that the closure in Def.~\ref{def:dependencies} makes $\gg$ transitive.
 
-It turns out that the dependencies between leftvalues model the pattern of the recursion
-in Def.~\ref{def:type}, as proved in Prop.~\ref{prop:acyclicity}.
+Prop.~\ref{prop:acyclicity} proves that the dependencies between leftvalues
+model the pattern of the recursion in Def.~\ref{def:type}.
 
 \begin{proposition}\label{prop:acyclicity}
   Given a context $\kappa$ and a typing $\tau$ over $\kappa$
