@@ -185,6 +185,18 @@ replaces $13$ with $17$ inside the box in $x$.
   In all other cases, $t_1\sqcap t_2$ is undefined.
 \end{definition}
 
+\begin{definition}
+  The $\sqcup$ operator over $\mathsf{T}_\kappa$ is defined as
+  \begin{align*}
+    \mathsf{int}\sqcup\mathsf{int} &= \mathsf{int}\\
+    \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcup \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \borrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cup\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
+    \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcup \mutborrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \mutborrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cup\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
+    (\boxtype{t_1}) \sqcup (\boxtype{t_2}) &=\boxtype{(t_1\sqcup t_2)}\quad\text{if $t_1\sqcup t_2$ is defined}\\
+    \mathsf{dangling}\sqcup\mathsf{dangling} &= \mathsf{dangling}.
+  \end{align*}
+  In all other cases, $t_1\sqcup t_2$ is undefined.
+\end{definition}
+
 \begin{lemma}\label{lemma:glb-type}
   Let $I\subseteq\mathbb{N}$ and $\{t_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$.
   Then, if $\sqcap_{i\in I}t_i$ is defined, it is the greatest lower bound of $\{t_i\}_{i\in I}$.
@@ -254,7 +266,8 @@ replaces $13$ with $17$ inside the box in $x$.
 
 \begin{definition}[Typing]\label{def:typing}
   Given a context $\kappa$, a \emph{typing} $\tau$ over $\kappa$ is
-  a map from the variables in $\tau$ to types.
+  a map from the variables in $\kappa$ % $\tau$
+  to types.
 \end{definition}
 
 A typing provides types to variables and can be extended in order to type
@@ -291,7 +304,7 @@ is not well typed, in the traditional sense of type checking.
   \[
   \{x\to\borrow\{\mathtt{*}x\}\}.
   \]
-  Then the definition of $\type(x,\tau)$ ends in an infinite loop.
+  Then the definition of $\type(\mathtt{*}x,\tau)$ ends in an infinite loop.
 \end{example}
 
 \noindent
@@ -424,4 +437,3 @@ model the pattern of the recursion in Def.~\ref{def:type}.
     \end{itemize}
   \end{itemize}
 \end{proof}
-
