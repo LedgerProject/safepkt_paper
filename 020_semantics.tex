@@ -1,12 +1,12 @@
 \section{Semantics}\label{sec:semantics}
 
 \begin{definition}
-  We assume there is a set of variables $\Vars$
-  and a finite set $\Lifetimes$ of \emph{lifetimes}.
-  The set $\Leftvalues$ of \emph{leftvalues} is defined as:
+  We assume there is a set of variables $\Vars$.
+  A context $\kappa\subseteq\Vars$ is a finite set of variables in scope.
+  The set $\Leftvalues_\kappa$ of \emph{leftvalues} over $\kappa$ is defined as:
   \begin{align*}
-    \mathsf{w} ::= &\ x & \text{variable, with $x\in\Vars$}\\
-    | &\ \mathtt{*}\mathsf{w} & \text{dereference}
+    \mathsf{w} ::= &\ x & \text{variable, with $x\in\kappa$}\\
+    | &\ \mathtt{*}\mathsf{w} & \text{dereference.}
   \end{align*}
   The set of \emph{expressions} \textsf{e} is defined as
   \begin{align*}
@@ -14,14 +14,14 @@
     | &\ \mathsf{w} & \text{leftvalue}\\
     | &\ \borrow\mathsf{w} & \text{borrow}\\
     | &\ \mutborrow\mathsf{w} & \text{mutable borrow}\\
-    | &\ \mathtt{box}\ \mathsf{e} & \text{heap allocation}
+    | &\ \mathtt{box}\ \mathsf{e} & \text{heap allocation.}
   \end{align*}
   The sets of \emph{terms} \textsf{t} and \emph{blocks} \textsf{b}
   is defined as:
   \begin{align*}
     \mathsf{t} ::= &\ \mathsf{w}=\mathsf{e} & \text{assignment}\\
     | &\ \mathtt{let\ mut}\ x=\mathsf{e} & \text{declaration, with $x\in\Vars$}\\
-    | &\ \{\mathsf{t_1};\ldots;\mathsf{t_n}\}^l & \text{block, with $n\ge 0$ and $l\in\Lifetimes$}
+    | &\ \{\mathsf{t_1};\ldots;\mathsf{t_n}\}^l & \text{block, with $n\ge 0$ and $l$ is a \emph{lifetime}.}
   \end{align*}
 \end{definition}
 
@@ -93,1147 +93,332 @@ replaces $13$ with $17$ inside the box in $x$.
   \end{align*}
 \end{definition}
 
-\begin{definition}[Context]\label{def:context}
-  A context $\kappa$ is a finite set of tags $\{x_1\to^{m_1},\ldots,x_n\to^{m_n}\}$,
-  for distinct variables $x_1,\ldots,x_n$,
-  meaning that the variables in scope are exactly
-  $\dom(\kappa)=\{x_1,\ldots,x_n\}$, with the given lifetimes,
-  with the constraint that there is at most a tag for each
-  given variable.
-\end{definition}
-
-\begin{definition}[Values]\label{def:values}
-  The set of \emph{values} is defined as $\mathbb{V}=\mathbb{Z}\cup\Locs$,
-  where $\mathbb{Z}$ is the set of integers and
-  $\Locs$ is an infinite set of \emph{locations}.
-\end{definition}
-
-\begin{definition}[Domains]\label{def:domains}
-  Given a context $\kappa$, an \emph{environment} $\rho$ over $\kappa$
-  is a set of bindings from variables to locations, decorated with a \emph{lifetime}:
-  \[
-  \rho\subseteq\{x\to^m\ell\mid x\to^m\in\kappa\text{ and }\ell\in\Locs\}
-  \]
-  with the constraint that exactly one binding exists for each given variable in $\dom(\kappa)$.
-  The set of all environments over $\kappa$ is $\mathbb{E}_\kappa$.
-  Often, to simplify the notation, we will write $\mathbb{E}$ for $\mathbb{E}_\kappa$.
-  We write $\rho(x)=\ell$ when $x\to^m\ell\in\rho$, for some $m$.
-
-  A \emph{heap} $h$ is a set of bindings from locations to values,
-  existing in three versions: owned, immutable borrows and mutable borrows:
-  \[
-  h\subseteq
-  \underbrace{\{\ell\Rightarrow v\mid\ell\in\Locs\text{ and }v\in\mathbb{V}\}}_{\text{owned bindings}}
-  \cup
-  \underbrace{\{\ell\to\ell'\mid\ell,\ell'\in\Locs\}}_{\text{immutable borrows}}
-  \cup
-  \underbrace{\{\ell\leadsto\ell'\mid\ell,\ell'\in\Locs\}}_{\text{mutable borrows}}
-  \]
-  with the constraint that there is at most a binding for each
-  location $\ell$ (owned, immutable borrow or mutable borrow). We write $h(\ell)=v$ meaning that
-  either $\ell\Rightarrow v\in h$ or $\ell\to v\in h$ or $\ell\leadsto v\in h$.
-  Given $L\subseteq\Locs$,
-  we write $h|_{-L}$ meaning $h$ where the bindings for the locations in $L$
-  have been removed (if any).
-  The set of all heaps is $\mathbb{H}$.
-
-  The set of \emph{stores} is $\mathbb{S}_\kappa=\mathbb{E}_\kappa\times\mathbb{H}$,
-  whose elements are pairs written as $\rho\star h$.
-  Often, to simplify the notation, we will write $\mathbb{S}$ for $\mathbb{S}_\kappa$.
-  Given $s=\rho\star h\in\mathbb{S}_\kappa$, we define $s(x)=\rho(x)$ for all
-  $x\in\dom(\kappa)$, and $s(\ell)=h(\ell)$ for all $\ell\in\Locs$.
-  Given $L\subseteq\Locs$, we define $(\rho\star h)|_{-L}=\rho\star(h|_{-L})$.
-\end{definition}
-
-\begin{definition}[Dangling locations]\label{def:dangling}
-  Let $h\in\mathbb{H}$ and $\ell\in\Locs$. Then $\ell$ is \emph{dangling} in $h$ if
-  and only if $h(\ell)$ is undefined.
-\end{definition}
-
-\begin{definition}[Borrowed locations]\label{def:borrow}
-  Let $h\in\mathbb{H}$ and $\ell\in\Locs$.
-  Then $\ell$ is \emph{borrowed as immutable} in $h$
-  if there exists $\ell'\in\Locs$ such that $\ell'\to\ell$;
-  it is \emph{borrowed as mutable} in $h$
-  if there exists $\ell'\in\Locs$ such that $\ell'\leadsto\ell$;
-  it is \emph{borrowed} in $h$
-  if it is borrowed either as immutable or as mutable in $h$.
-\end{definition}
-
-Leftvalues are special expressions, since they are allocated at a location,
-bound to the value of the leftvalue. Intuitively, the location holding the value of
-\[
-\underbrace{*\cdots*}_{n\text{ times}}x
-\]
-is determined by starting from the location of $x$ and following the arrows
-($\Rightarrow$, $\to$ or $\leadsto$) from there, $n$ times. This is what happens
-in Ex.~\ref{ex:write_leftvalue}, where we \emph{write} into a leftvalue.
-
-\begin{example}\label{ex:write_leftvalue}
-  Consider the following legal code:
-  \[
-  \{
-  \mathtt{let\ mut}\ x = \mathtt{box}\ \mathtt{box}\ 13;\
-  \mathtt{let\ mut}\ z = \mutborrow *x;\
-  *z = \mathtt{box}\ 17
-  \}^l
-  \]
-  In this code, the assignment to the leftvalue $*z$
-  replaces the inner box, containing $13$, with another box containing $17$.
-\end{example}
-
-\noindent
-The same happens in Ex.~\ref{ex:read_leftvalue}, where we \emph{read} an integer from a leftvalue.
-
-\begin{example}\label{ex:read_leftvalue}
-  Consider the following legal code:
-  \[
-  \{
-  \mathtt{let\ mut}\ x = \mathtt{box}\ 13;\
-  \mathtt{let\ mut}\ z = \borrow *x;\
-  \mathtt{let\ mut}\ y = *z
-  \}^l
-  \]
-  This code stores in $z$ the location of the box containing $13$.
-  As a consequence when, at its end,
-  the leftvalue $*z$ is read, its value is $13$, variable $y$ gets bound to $13$
-  and $x$ remains bound to a box containing $13$.
-\end{example}
-
-\noindent
-But Rust has a peculiarity: when one reads a value from a leftvalue $\mathsf{w}$, and that value has move semantics
-(hence it is a box or a mutable borrow) then the computation of the location holding the value of $\mathsf{w}$
-cannot pass through a borrow or a mutable borrow. For instance, the code in Ex.~\ref{ex:read_leftvalue2} is illegal.
-
-\begin{example}\label{ex:read_leftvalue2}
-  Consider the following illegal code:
-  \[
-    \{
-      \mathtt{let\ mut}\ x = \mathtt{box}\ \mathtt{box}\ 13;\
-      \mathtt{let\ mut}\ z = \mutborrow *x;\
-      \mathtt{let\ mut}\ y = *z
-    \}^l
-    \]
-    This code stores in $z$ the location $\ell$ of the inner box containing $13$.
-    Then it attempts to read the value of $*z$, that is, it tries to dereference $\ell$, that would
-    yield the value $\mathtt{box}\ 13$. That dereference passes through a mutable borrow and
-    $\mathtt{box}\ 13$ has move semantics. As a consequence, the code is illegal and will be rejected
-    by the Rust compiler.
-\end{example}
-
-Ex.~\ref{ex:read_leftvalue2} shows that a semantics of Rust must determine
-if the computation of the location $\ell$ holding the value of a leftvalue, when reading that value,
-passes through a borrow or a mutable borrow. Therefore, Def.~\ref{def:location_for_reading}
-yields both $\ell$ and a Boolean mark.
-
-\begin{definition}[Location for reading]\label{def:location_for_reading}
-  Given $\mathsf{w}\in\Leftvalues$ and $s=\rho\star h\in\mathbb{S}$, the
-  partial function $\locread(\mathsf{w},s)$ yields the location that holds
-  the value of $\mathsf{w}$ and a Boolean mark that informs if the evaluation
-  of $\mathsf{w}$ passes through a borrow:
-
+\begin{definition}[Types]
+  The set of \emph{types} over a context $\kappa$ is
   \begin{align*}
-    \locread(x,s) &= \langle\rho(x),\mathit{false}\rangle\\
-    \locread(*\mathsf{w},s) &= \begin{cases}
-      \text{undefined} & \text{if $\locread(\mathsf{w},s)$ is undefined}\\
-      \text{undefined} & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $h(\ell)$ is undefined}\\
-      \text{undefined} & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $h(\ell)\in\mathbb{Z}$}\\
-      \langle \ell',\mathit{true}\rangle & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $\ell\to\ell'\in h$}\\
-      \langle \ell',\mathit{true}\rangle & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $\ell\leadsto\ell'\in h$}\\
-      \langle \ell',b\rangle & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$ and $\ell\Rightarrow\ell'\in h$ with $\ell'\not\in\mathbb{Z}$.}
-    \end{cases}
+    \mathsf{T}_\kappa ::=&\ \mathsf{int} & \text{integer}\\
+    | &\ \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{borrow}\\
+    | &\ \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \text{mutable borrow}\\
+    | &\ \boxtype{\mathsf{T}_\kappa} & \text{box}\\
+    | &\ \mathsf{dangling} & \text{dangling}
+  \end{align*}
+  where $n\ge 1$ and the $\mathsf{w}_i$, with $1\le i\le n$, are leftvalues
+  using only variables in $\dom(\kappa)$. This set is ordered by $\sqsubseteq$, defined as
+  \begin{align*}
+    \mathsf{int}&\sqsubseteq\mathsf{int}\\
+    \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \sqsubseteq
+    \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} \quad\text{iff $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\subseteq\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}$}\\
+    \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \sqsubseteq
+    \mutborrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} \quad\text{iff $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\subseteq\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}$}\\
+    \boxtype{t_1}&\sqsubseteq\boxtype{t_2} \quad\text{iff $t_1\sqsubseteq t_2$}\\
+    \mathsf{dangling}&\sqsubseteq\mathsf{dangling.}
   \end{align*}
 \end{definition}
 
-\noindent
-In many cases, the Boolean mark returned by $\locread$ is irrelevant. For instance,
-Ex.~\ref{ex:write_leftvalue} shows that writing into a leftvalue is possible also when
-the location of the leftvalue is determined by passing through a borrow or a mutable borrow.
-Hence, the Boolean mark is not needed in that case. In such cases, it is simpler
-to use a function $\loc$, that projects $\locread$ on its first component.
+\begin{lemma}
+  \label{lemma:partial-order-types}
+  $(\mathsf{T}_\kappa,\sqsubseteq)$ is a partially ordered set.
+\end{lemma}
+\begin{proof}
+  We proceed by structural induction.
+  \begin{itemize}
+    \item (Reflexivity)
+    \begin{itemize}
+      \item (Base) For any type $t$ that is not a box we have
+      $t\sqsubseteq t$.
+      \item (Induction step) If $t\sqsubseteq t$ for a type $t$ then
+      $\boxtype{t}\sqsubseteq \boxtype{t}$.
+    \end{itemize}
+    %
+    \item (Antisymmetry) Suppose that $t_1 \sqsubseteq t_2$ and
+    $t_2 \sqsubseteq t_1$.
+    \begin{itemize}
+      \item (Base: $t_1$ or $t_2$ is not a box)
+      If $t_1$ or $t_2$ is $\mathsf{int}$, then so is the other
+      because $\mathsf{int}$ can only be greater than itself, and so $t_1 = t_2$.
+      Similarly if $t_1$ or $t_2$ is $\mathsf{dangling}$.
+      If $t_1$ or $t_2$ is a borrow, then so is the other because
+      a borrow can only precede a borrow, and so we have $t_1 = t_2$
+      by antisymmetry of $\subseteq$.
+      Similarly if $t_1$ or $t_2$ is a mutable borrow.
+      \item (Induction step) Suppose that $t_1=\boxtype{t'_1}$ and
+      $t_2=\boxtype{t'_2}$ for types $t'_1,t'_2$ such that
+      $(t'_1 \sqsubseteq t'_2 \land t'_2 \sqsubseteq t'_1) \Rightarrow t'_1 = t'_2$.
+      As $t_1 \sqsubseteq t_2$ and $t_2 \sqsubseteq t_1$, we have
+      $t'_1 \sqsubseteq t'_2$ and $t'_2 \sqsubseteq t'_1$, so
+      $t'_1 = t'_2$, hence $t_1 = t_2$.
+    \end{itemize}
+    %
+    \item (Transitivity) Suppose that $t_1 \sqsubseteq t_2$ and $t_2 \sqsubseteq t_3$.
+    \begin{itemize}
+      \item (Base: $t_1$, $t_2$ or $t_3$ is not a box)
+      If $t_1$, $t_2$ or $t_3$ is $\mathsf{int}$, we necessarily have
+      $t_1=t_2=t_3=\mathsf{int}$ because $\mathsf{int}$ is only related to
+      itself, and so $t_1\sqsubseteq t_3$. Similarly if
+      $t_1$, $t_2$ or $t_3$ is $\mathsf{dangling}$.
+      If $t_1$, $t_2$ or $t_3$ is a borrow, then so are the others because
+      a borrow is only related to a borrow, and so we have
+      $t_1\sqsubseteq t_3$ by transitivity of $\subseteq$.
+      Similarly if $t_1$, $t_2$ or $t_3$ is a mutable borrow.
+      \item (Induction step) Suppose that $t_1=\boxtype{t'_1}$,
+      $t_2=\boxtype{t'_2}$ and $t_3=\boxtype{t'_3}$ for types
+      $t'_1,t'_2,t'_3$ such that
+      $(t'_1 \sqsubseteq t'_2 \land t'_2 \sqsubseteq t'_3) \Rightarrow
+      t'_1 \sqsubseteq t'_3$.
+      As $t_1 \sqsubseteq t_2$ and $t_2 \sqsubseteq t_3$, we have
+      $t'_1 \sqsubseteq t'_2$ and $t'_2 \sqsubseteq t'_3$, so
+      $t'_1 \sqsubseteq t'_3$, hence $t_1 \sqsubseteq t_3$.
+    \end{itemize}
+  \end{itemize}
+  \qed
+\end{proof}
 
-\begin{definition}[Location]\label{def:location}
-  Given $\mathsf{w}\in\Leftvalues$ and $s=\rho\star h\in\mathbb{S}$, the
-  partial function $\loc(\mathsf{w},s)$ yields the location holding the value of $\mathsf{w}$:
-  \[
-    \loc(\mathsf{w},s) = \begin{cases}
-      \text{undefined} & \text{if $\locread(\mathsf{w},s)$ is undefined}\\
-      \ell & \text{if $\locread(\mathsf{w},s)=\langle\ell,b\rangle$.}
-    \end{cases}
-  \]
+\begin{definition}
+  The $\sqcap$ operator over $\mathsf{T}_\kappa$ is defined as
+  \begin{align*}
+    \mathsf{int}\sqcap\mathsf{int} &= \mathsf{int}\\
+    \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \borrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cap\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
+    \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \mutborrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \mutborrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cap\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
+    (\boxtype{t_1}) \sqcap (\boxtype{t_2}) &=\boxtype{(t_1\sqcap t_2)}\quad\text{if $t_1\sqcap t_2$ is defined}\\
+    \mathsf{dangling}\sqcap\mathsf{dangling} &= \mathsf{dangling}.
+  \end{align*}
+  In all other cases, $t_1\sqcap t_2$ is undefined.
 \end{definition}
 
-\noindent
-Note that the second case of Def.~\ref{def:location_for_reading}
-makes functions $\locread$ and $\loc$
-undefined when the evaluation of $\mathsf{w}$ passes through something that is not
-a location, that consequently cannot be dereferenced.
-In the following, when the semantics
-uses $\locread$ or $\loc$ and the latter is undefined, then the semantics will be stuck.
-
-\begin{example}
-  Let $\rho = \left\{x\to^m\ell_x\right\}$.
+\begin{lemma}\label{lemma:glb-type}
+  Let $I\subseteq\mathbb{N}$ and $\{t_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$.
+  Then, if $\sqcap_{i\in I}t_i$ is defined, it is the greatest lower bound of $\{t_i\}_{i\in I}$.
+\end{lemma}
+\begin{proof}
+  Assume that $\mu_I = \sqcap_{i\in I}t_i$ is defined.
+  We proceed by structural induction.
   \begin{itemize}
-    \item Let $s = \rho\star h$ with
-    $h = \left\{\ell_x\to\ell,\ \ell\Rightarrow 1\right\}$.
-    Then, $\locread(x,s)=\langle\rho(x),\mathit{false}\rangle=
-    \langle\ell_x,\mathit{false}\rangle$ with $\ell_x\to\ell\in h$.
-    So, $\locread(*x,s)=\langle \ell,\mathit{true}\rangle$
-    and $\loc(\mathtt{*}x,s)= \ell$.
+    \item (Base: there is a $t_k$ which is not a box)
+    If $t_k=\mathsf{int}$ then, as $\mu_I$ is defined, for all $i\in I$
+    we have $t_i=\mathsf{int}$. Therefore, $\mu_I=\mathsf{int}$
+    and so $\mu_I$ is a lower bound of $\{t_i\}_{i\in I}$.
+    Similarly if $t_k=\mathsf{dangling}$.
+    If $t_k$ is a borrow then, for all $i\in I$, $t_i$ is a borrow, and so
+    $\mu_I$ is a borrow which results from the intersection of the sets of
+    leftvalues of all the $t_i$'s. Hence, $\mu_I$ is a lower bound of
+    $\{t_i\}_{i\in I}$.
+    Similarly if $t_k$ is a mutable borrow.
+
+    Now, suppose that $\mu'_I$ is also a lower bound of $\{t_i\}_{i\in I}$.
+    If $\mu'_I=\mathsf{int}$ then each $t_i$ is $\mathsf{int}$, so
+    $\mu_I=\mathsf{int}$ and we have $\mu'_I\sqsubseteq\mu_I$.
+    Similarly if $\mu'_I=\mathsf{dangling}$.
+    If $\mu'_I=\borrow b$, then for all $i\in I$ we have $t_i = \borrow b_i$
+    and $b \subseteq b_i$. Hence, $b \subseteq \cap_{i\in I}b_i$ and so
+    $\borrow b \sqsubseteq \borrow\cap_{i\in I}b_i$. Consequently, we have
+    $\mu'_I\sqsubseteq\mu_I$ because $\mu_I=\borrow\cap_{i\in I}b_i$ in this case.
+    Similarly if $\mu'_I$ is a mutable borrow.
     %
-    \item Let $s' = \rho\star h'$ with
-    $h' = \left\{\ell_x\Rightarrow 1\right\}$.
-    Then, $\locread(x,s')=\langle\rho(x),\mathit{false}\rangle=
-    \langle\ell_x,\mathit{false}\rangle$ with $h'(\ell_x)=1\in\mathbb{Z}$.
-    So, $\locread(*x,s')$ is undefined, hence $\loc(\mathtt{*}x,s')$ is undefined.
+    \item (Induction step) Suppose that for all $i\in I$ we have
+    $t_i = \boxtype{t'_i}$. Since $\mu_I$ is defined, also
+    $\sqcap_{i\in I}t'_i$ is defined and, by inductive hypothesis, it must be the greatest
+    lower bound of $\{t'_i\}_{i\in I}$. Then,
+    $\mu_I = \boxtype{(\sqcap_{i\in I}t'_i)}$ is a lower bound
+    of $\{t_i\}_{i\in I}$. Suppose that $\mu'_I$ is also a lower bound
+    of $\{t_i\}_{i\in I}$. Then, $\mu'_I=\boxtype{t}$ with
+    $t\sqsubseteq t'_i$ for all $i\in I$, and so $t$ is a lower bound
+    of $\{t'_i\}_{i\in I}$; hence, we have $t\sqsubseteq \sqcap_{i\in I}t'_i$
+    because $\sqcap_{i\in I}t'_i$ is the greatest lower bound and,
+    consequently, $\mu'_I\sqsubseteq\mu_I$.
+  \end{itemize}
+  \qed
+\end{proof}
+
+\begin{lemma}\label{lemma:technical-type}
+  Let $t\in\mathsf{T}_\kappa$. For any $t_1,t_2\in\mathsf{T}_\kappa$,
+  if $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$ then $t_1\sqcap t_2$ is defined.
+\end{lemma}
+\begin{proof}
+  We proceed by structural induction on $t$.
+  \begin{itemize}
+    \item (Base: $t$ is not a box)
+    Let $t_1,t_2\in\mathsf{T}_\kappa$ with $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$.
+    If $t$ is $\mathsf{int}$ (resp. a borrow, a mutable borrow or $\mathsf{dangling}$)
+    then, necessarily, $t_1$ and $t_2$ are $\mathsf{int}$ (resp. a borrow,
+    a mutable borrow or $\mathsf{dangling}$), hence $t_1\sqcap t_2$ is defined.
+    %
+    \item (Induction step) Suppose that $t = \boxtype{t'}$.
+    Let $t_1,t_2\in\mathsf{T}_\kappa$ with $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$.
+    Then, necessarily, $t_1 = \boxtype{t'_1}$ and $t_2 = \boxtype{t'_2}$
+    with $t'\sqsubseteq t'_1$ and $t'\sqsubseteq t'_2$. By induction
+    hypothesis, $t'_1\sqcap t'_2$ is defined, so
+    $(\boxtype{t'_1}) \sqcap (\boxtype{t'_2}) = t_1 \sqcap t_2$ is defined.
     \qed
   \end{itemize}
-\end{example}
+\end{proof}
 
-\begin{definition}[Undefined leftvalues]\label{def:undefined_leftvalues}
-  Let $\mathsf{w}\in\Leftvalues$ and $s=\rho\star h\in\mathbb{S}$. Then
-  $\mathsf{w}$ is \emph{undefined} in $s$ if $\loc(\mathsf{w},s)$ is either undefined
-  or dangling in $s$.
+\begin{definition}[Typing]\label{def:typing}
+  Given a context $\kappa$, a \emph{typing} $\tau$ over $\kappa$ is
+  a map from the variables in $\tau$ to types.
 \end{definition}
 
-%The notion of dangling location (Def.~\ref{def:dangling}) is lifted to leftvalues.
+A typing provides types to variables and can be extended in order to type
+leftvalues, as shown below. Def.~\ref{def:type} is a translation of
+Def.~3.11 from~\cite{Pearce21}.
 
-%\begin{definition}[Dangling leftvalues]\label{def:dangling_leftvalues}
-%  Let $\mathsf{w}\in\Leftvalues$ and $s=\rho\star h\in\mathbb{S}$. Then
-%  $\mathsf{w}$ is \emph{dangling} in $s$ if $\loc(\mathsf{w},s)$ is defined and is dangling in $h$.
-%\end{definition}
-
-The notion of borrowed location (Def.~\ref{def:borrow}) is lifted to leftvalues.
-
-\begin{definition}[Borrowed leftvalues]\label{def:borrowed_leftvalues}
-  Let $\mathsf{w}\in\Leftvalues$ and $s=\rho\star h\in\mathbb{S}$. Then
-  $\mathsf{w}$ is \emph{borrowed as immutable} in $s$
-  if $\loc(\mathsf{w},s)$ is borrowed as
-  immutable in $h$. It is \emph{borrowed as mutable} in $s$ if
-  $\loc(\mathsf{w},s)$ is borrowed as
-  mutable in $h$. It is \emph{borrowed} in $s$
-  if it is borrowed as either immutable or mutable in $s$.
-\end{definition}
-
-Reading the value of an expression is called evaluation of the expression: it
-yields the value contained in the expression, a potentially updated heap
-and an arrow that expresses the nature of the value: an owned value, an immutable borrow
-or a mutable borrow. Def.~\ref{def:semantics_leftvalues} gives the semantics of reading from
-a leftvalue, while Def.~\ref{def:semantics_expressions} gives the semantics of reading from the other
-kinds of expressions.
-
-\begin{definition}[Semantics of leftvalues]\label{def:semantics_leftvalues}
-  Let $s=\rho\star h\in\mathbb{S}$ and $\mathsf{w}\in\Leftvalues$. Then
-  \[
-  \den[\mathsf{w}]{s}=\begin{cases}
-  \text{undefined} & \text{if $\mathsf{w}$ is undefined in $s$}\\
-  \text{undefined} & \text{otherwise, if $\mathsf{w}$ is borrowed as mutable in $s$}\\
-  \langle v, h, \to\rangle & \text{otherwise, if $\loc(\mathsf{w},s)\to v\in h$}\\
-  \langle v, h, \Rightarrow\rangle & \text{otherwise, if $\loc(\mathsf{w},s)\Rightarrow v\in h$ and $v\in\mathbb{Z}$}\\
-  \langle v, h|_{-\ell}, \Rightarrow\rangle & \text{otherwise, if $\locread(\mathsf{w},s)=\langle\ell,\mathit{false}\rangle$, $\ell\Rightarrow v\in h$ and $v\not\in\mathbb{Z}$}\\
-  \langle v, h|_{-\ell}, \leadsto\rangle & \text{otherwise, if $\locread(\mathsf{w},s)=\langle\ell,\mathit{false}\rangle$ and $\ell\leadsto v\in h$}\\
-  \text{undefined} & \text{otherwise.}
-  \end{cases}
-  \]
-\end{definition}
-
-\noindent
-The first case above entails that a leftvalue, whose value has been moved out, cannot be read.
-The second case specifies that a leftvalue borrowed as mutable cannot be read,
-since it must be considered as frozen for the duration of the borrow.
-The third and fourth cases read a value with copy semantics.
-The fifth and sixth cases perform a move of a value out of $\mathsf{w}$, by transforming
-$\mathsf{w}$'s location into a dangling location. These two cases deal with
-values with move semantics (the fifth with boxes, the sixth with mutable borrows).
-As hinted in Ex.~\ref{ex:read_leftvalue2}, a value with move semantics can be read from a leftvalue
-only if the evaluation of the latter does not pass through a borrow or a mutable borrow, hence the
-requirement that the second component of $\locread$ is $\mathit{false}$.
-
-\begin{definition}[Semantics of expressions]\label{def:semantics_expressions}
-  Let $s=\rho\star h\in\mathbb{S}$. Then
+\begin{definition}[Type of leftvalues]\label{def:type}
+  Given a context $\kappa$, a typing $\tau$ over $\kappa$
+  and $\mathsf{w}\in\Leftvalues_\kappa$, the partial function
+  $\type(\mathsf{w},\tau)$ yields the type of $\mathsf{w}$ in $\tau$:
   \begin{align*}
-    \den[i]{s}&=\langle i,h,\Rightarrow\rangle\\
-    \den[\borrow\mathsf{w}]{s}&=\begin{cases}
-    \text{undefined} & \text{if $\mathsf{w}$ is undefined in $s$}\\
-    \langle\loc(\mathsf{w},s),h,\to\rangle & \text{otherwise}
-    \end{cases}\\
-    \den[\mutborrow\mathsf{w}]{s}&=\begin{cases}
-    \text{undefined} & \text{if $\mathsf{w}$ is undefined in $s$}\\
-    \langle\loc(\mathsf{w},s),h,\leadsto\rangle & \text{otherwise}
-    \end{cases}\\
-    \den[\mathtt{box}\ \mathsf{e}]{s}&=
-    \begin{cases}
-      \text{undefined} & \text{if $\den[\mathsf{e}]{s}$ is undefined}\\
-      \langle\ell,h'\cup\{\ell\Rightarrow v\},\Rightarrow\rangle & \text{if $\den[\mathsf{e}]{s}=\langle v, h',\Rightarrow\rangle$, with $\ell$ fresh}\\
-      \langle\ell,h'\cup\{\ell\to v\},\Rightarrow\rangle & \text{if $\den[\mathsf{e}]{s}=\langle v, h',\to\rangle$, with $\ell$ fresh}\\
-      \langle\ell,h'\cup\{\ell\leadsto v\},\Rightarrow\rangle & \text{if $\den[\mathsf{e}]{s}=\langle v, h',\leadsto\rangle$, with $\ell$ fresh.}
+    \type(x,\tau)&=\tau(x)\\
+    \type(*\mathsf{w},\tau)&=\begin{cases}
+    \text{undefined} & \text{if $\type(\mathsf{w},\tau)$ is undefined}\\
+    \text{undefined} & \text{if $\type(\mathsf{w},\tau)=\mathsf{dangling}$}\\
+    \text{undefined} & \text{if $\type(\mathsf{w},\tau)=\mathsf{int}$}\\
+    \sqcup_{1\le i\le n}\type(\mathsf{w}_i,\tau) & \text{if $\type(\mathsf{w},\tau)=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
+    \sqcup_{1\le i\le n}\type(\mathsf{w}_i,\tau) & \text{if $\type(\mathsf{w},\tau)=\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
+    t & \text{if $\type(\mathsf{w},\tau)=\boxtype{t}$}\\
+    \text{undefined} & \text{otherwise.}
     \end{cases}
   \end{align*}
 \end{definition}
 
 \noindent
-The third component of the semantics of expressions
-(Def.~\ref{def:semantics_expressions}) states that integers (first case) and
-boxes (fourth case) are owned values, while immutable borrows and mutable borrows
-are considered by the second and third case, respectively. The fourth case allocates memory
-in the heap, for a new box at a new fresh location $\ell$. The nature of the value of $\mathsf{e}$,
-that gets boxed, is reflected in the kind of arrow used to bind $\ell$ to that value.
-In any case, $\mathtt{box}\ \mathsf{e}$ is an owned value.
+Note that $\type$ recurs in a way that, in general,
+is not well-founded, for the cases of $\borrow$ and $\borrow\mathtt{mut}$.
 
-Def.~\ref{def:owned_reachable_locations}
-defines the set of locations reachable from an initial set of locations $\psi$,
-by following owned bindings only.
-%
-\begin{definition}[Owned reachable locations]\label{def:owned_reachable_locations}
-  Given $\psi\in\wp(\Locs)$ and $h\in\mathbb{H}$, we define
+\begin{example}\label{ex:type_divergence}
+  Consider the following typing:
+  \[
+  \{x\to\borrow\{\mathtt{*}x\}\}.
+  \]
+  Then the definition of $\type(x,\tau)$ ends in an infinite loop.
+\end{example}
+
+\noindent
+Ex.~\ref{ex:type_divergence} can be arbitrarily complicated, through the
+use of more involved cycles that pass through more variables. As a consequence,
+the natural question is to understand when Def.~\ref{def:type} is well-founded.
+For that, we start by defining a concept of dependencies between leftvalues.
+
+\begin{definition}[Dependencies between leftvalues]\label{def:dependencies}
+  Given a context $\kappa$ and a typing $\tau$ over $\kappa$, the \emph{dependencies between leftvalues}
+  induced by $\tau$ are the relation $\gg$ defined as
+  \[
+  \mathsf{closure}\left(\{\mathtt{*}\mathsf{w}\gg\mathsf{w}\mid\mathsf{w}\in\Leftvalues_\kappa\}
+  \cup\bigcup\limits_{x\in\kappa}\mathsf{dependencies}(x,\tau(x))\right)
+  \]
+  where
   \begin{align*}
-  \omega^0(\psi,h)&=\psi\\ %\{\ell'\in\Locs\mid\ell\in\psi\text{ and }\ell\Rightarrow\ell'\in h\}\\
-  \omega^{i+1}(\psi,h)&=\{\ell'\in\Locs\mid\ell\in\omega^i(\psi,h)\text{ and }\ell\Rightarrow\ell'\in h\}
+    \mathsf{dependencies}(\mathsf{w},\mathsf{int})&=\varnothing\\
+    \mathsf{dependencies}(\mathsf{w},\mathsf{dangling})&=\varnothing\\
+    \mathsf{dependencies}(\mathsf{w},\boxtype{t})&=\mathsf{dependencies}(\mathtt{*}\mathsf{w},t)\\
+    \mathsf{dependencies}(\mathsf{w},\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})&=\{\mathtt{*}\mathsf{w}\gg\mathsf{w}_i\mid 1\le i\le n\}\\
+    \mathsf{dependencies}(\mathsf{w},\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})&=\{\mathtt{*}\mathsf{w}\gg\mathsf{w}_i\mid 1\le i\le n\}
   \end{align*}
   and
   \[
-  \omega(\psi,h)=\bigcup\limits_{i\ge 0}\omega^i(\psi,h)~.
+  \mathsf{closure}(R)=R\cup\left\{\underbrace{\mathtt{*}\cdots\mathtt{*}}_{n}\mathsf{w}_1\gg\mathsf{w}_3\left|
+  \begin{array}{l}
+    \mathsf{w}_1\gg\mathsf{w}_2\in R,\ \underbrace{\mathtt{*}\cdots\mathtt{*}}_{n\ge 0}\mathsf{w}_2\gg\mathsf{w}_3\in R\\
+    \text{and $\mathsf{w_3}$ is a borrow that occurs in $\tau$}
+  \end{array}\right.\right\}.
   \]
 \end{definition}
 
 \noindent
-The function $\drop$ removes from the heap the owned locations reachable from a set of locations.
-%
-\begin{definition}[Drop]\label{def:drop}
-  The function $\drop:\wp(\Locs)\times\mathbb{H}\to\mathbb{H}$ is defined as
-  \[
-  \drop(\psi,h)=h|_{-{\omega(\psi,h)}}~.
-  \]
-\end{definition}
+Note that the closure in Def.~\ref{def:dependencies} makes $\gg$ transitive.
 
-The execution of a term is modelled as a function that
-maps pre-states to post-states.
+It turns out that the dependencies between leftvalues model the pattern of the recursion
+in Def.~\ref{def:type}, as proved in Prop.~\ref{prop:acyclicity}.
 
-\begin{definition}[Semantics of terms]\label{def:semantics_terms}
-  Let $s=\rho\star h\in\mathbb{S}$ and $m\in\Lifetimes$. Then
-  \begin{align*}
-    \denl[x=\mathsf{e}]{m}{s}&=
-    \begin{cases}
-      \text{undefined} & \text{if $\den[\mathsf{e}]{s}$ is undefined}\\
-      \text{undefined} & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle\_,h',\_\rangle$}\\
-      & \quad\text{and $x$ is borrowed in $\rho\star h'$}\\
-      \rho\star h''[\ell\Rightarrow v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\Rightarrow\rangle$}\\
-      \rho\star h''[\ell\leadsto v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\leadsto\rangle$}\\
-      & \quad\text{and $v$ is not borrowed in $h'$}\\
-      \rho\star h''[\ell\to v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\to\rangle$}\\
-      & \quad\text{and $v$ is not borrowed as mutable in $h'$}\\
-      \text{undefined} & \text{otherwise,}
-    \end{cases}\\
-    &\text{where $\ell=\loc(x,\rho\star h')$ and $h''=\drop(\ell,h')$}\\
-    \mbox{}\\
-    \denl[*\mathsf{w}=\mathsf{e}]{m}{s}&=
-    \begin{cases}
-      \text{undefined} & \text{if $\den[\mathsf{e}]{s}$ is undefined}\\
-      \text{undefined} & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle\_,h',\_\rangle$}\\
-      & \quad\text{$*\mathsf{w}$ is borrowed in $\rho\star h'$}\\
-      & \quad\text{and $\loc(\mathsf{w},\rho\star h')\leadsto\ell\not\in h$}\\
-      \rho\star h''[\ell\Rightarrow v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\Rightarrow\rangle$}\\
-      \rho\star h''[\ell\leadsto v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\leadsto\rangle$}\\
-      & \quad\text{and $v$ is not borrowed in $h'$}\\
-      \rho\star h''[\ell\to v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\to\rangle$}\\
-      &\quad\text{and $v$ is not borrowed as mutable in $h'$}\\
-      \text{undefined} & \text{otherwise,}
-    \end{cases}\\
-    &\text{where $\ell=\loc(*\mathsf{w},\rho\star h')$ and $h''=\drop(\{\ell\},h')$}\\
-    \mbox{}\\
-    \denl[\mathtt{let\ mut}\ x=\mathsf{e}]{m}{s}&=
-    \begin{cases}
-      \text{undefined} & \text{if $\den[\mathsf{e}]{s}$ is undefined}\\
-      \rho[x\to^m\ell]\star h'[\ell\Rightarrow v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\Rightarrow\rangle$}\\
-      \rho[x\to^m\ell]\star h'[\ell\leadsto v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\leadsto\rangle$}\\
-      & \quad\text{and $v$ is not borrowed in $h'$}\\
-      \rho[x\to^m\ell]\star h'[\ell\to v] & \text{otherwise, if $\den[\mathsf{e}]{s}=\langle v,h',\to\rangle$}\\
-      &\quad\text{and $v$ is not borrowed as mutable in $h'$}\\
-      \text{undefined} & \text{otherwise,}
-    \end{cases}\\
-    &\text{where $\ell$ is fresh}\\
-    \mbox{}\\
-    \denl[\{\mathsf{t_1};\ldots;\mathsf{t_n}\}^l]{m}{s}&=\rho\star\drop(\{\ell\mid x\to^l\ell\in\rho'\},h')\\
-    &\text{where $\rho'\star h'=\denl[\mathsf{t_n}]{l}{\denl[\mathsf{t_{n-1}}]{l}{\cdots\denl[\mathsf{t_1}]{l}{s}}}$.}
-  \end{align*}
-\end{definition}
+\begin{proposition}\label{prop:acyclicity}
+  Given a context $\kappa$ and a typing $\tau$ over $\kappa$
+  such that the dependencies between leftvalues induced by $\tau$ are acyclical,
+  the recursion used in the definition of function $\type$ is well-founded and consistent with $\gg$.
+\end{proposition}
+\begin{proof}
+  First we prove that $\gg$ is a well-founded relation. Assume the contrary. Then
+  there is an infinite sequence of leftvalues
+  $\mathsf{w}_1\gg\mathsf{w}_2\gg\cdots\gg\mathsf{w}_n\gg\cdots$.
+  Since $\mathsf{w}\gg\mathsf{w}'\in\mathsf{dependencies}(x,t)$ entails that
+  $\mathsf{w}'$ is one of the leftvalues that occur in the borrows of $\tau$ and
+  since there is only a finite number of such $\mathsf{w}'$, the acyclicity of $\gg$ entails that
+  there must be a $\mathsf{w}_k=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\text{$n$}}x$
+  such that the subsequent $\mathsf{w}_i$, $i>k$,
+  are not leftvalues that occur in the borrows in $\tau$. By Def.~\ref{def:dependencies},
+  it can only be $\mathsf{w}_{k+i}=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\text{$\le n-i$}}x$
+  and consequently the length of the sequence is $k+n$ at most, impossible since we assumed that
+  it was infinite.
 
-\noindent
-It is interesting to compare the semantics of $x=\mathsf{e}$ with that of
-$*\mathsf{w}=\mathsf{e}$, as given in Def.~\ref{def:semantics_terms}.
-In both cases, it is required that the value $\den[\mathsf{e}]{s}$ written into the
-leftvalue be defined. Then it is required that the leftvalue is not borrowed, since Rust
-forbids assignments to borrowed leftvalues. For $*\mathsf{w}=\mathsf{e}$,
-that condition is slightly relaxed, since assignments to $*\mathsf{w}$ are
-allowed even though $*\mathsf{w}$ is borrowed, but only if $\mathsf{w}$ is exactly that borrow.
-The subsequent three cases just bind the value $v$ of the rightvalue to the location $\ell$
-of the leftvalue, keeping the quality of the value unchanged (owned, mutable borrow
-or immutable borrow). For the declaration statement $\mathtt{let\ mut}\ x=\mathsf{e}$,
-there is no issue with borrowed leftvalues, since the value of $\mathsf{e}$ is bound to a fresh
-location, that cannot be already borrowed.
+  We now prove that
+  \begin{enumerate}
+  \item for every $\mathsf{w}\in\Leftvalues_\kappa$, the
+    recursive uses $\type(\mathsf{w}',\tau)$ that occur for the definition
+    of $\type(\mathsf{w},\tau)$ are such that $\mathsf{w}\gg\mathsf{w}'$;
+  \item when $\type(\mathsf{w},\tau)=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
+    or $\type(\mathsf{w},\tau)=\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
+    then $\mathtt{*}\mathsf{w}\gg\mathsf{w}_i$ for every $1\le i\le n$.
+  \end{enumerate}
+  Note that (1) by itself means that
+  the recursion used in the
+  definition of function $\type$ is well-founded and consistent with $\gg$, but we will also
+  need (2) in order to prove (1).
+  We prove (1) and (2) by induction on $\mathsf{w}$ with respect to $\gg$.
 
-\begin{example}
-  Show that this is illegal:
-  \[
-    \{
-      \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
-      \mathtt{let\ mut}\ y = x;\
-      \mathtt{let\ mut}\ z = \borrow x
-    \}^m
-  \]
   \begin{itemize}
-    \item Let $s_0=\emptyset \star \emptyset$.
-    We have $\den[0]{s_0} = \langle 0,\emptyset,\Rightarrow\rangle$, hence
-    $\den[\mathtt{box}\ 0]{s_0} =
-    \langle\ell,\{\ell\Rightarrow 0\},\Rightarrow\rangle$ where $\ell$ is fresh.
-    %
-    Consequently, we have
-    $\denl[\mathtt{let\ mut}\ x = \mathtt{box}\ 0]{m}{s_0} = \rho_1 \star h_1$
-    where
-    \[\rho_1=\{x\to^m\ell_x\} \qquad
-    h_1 = \{\ell_x\Rightarrow \ell,\ \ell\Rightarrow 0\}\]
-    and $\ell_x$ is fresh.
-    %
-    \item Let $s_1 = \rho_1 \star h_1$.
-    Then, we have $\locread(x,s_1)=\langle\rho_1(x),\mathit{false}\rangle=
-    \langle\ell_x,\mathit{false}\rangle$, so $\loc(x,s_1) = \ell_x$.
-    Therefore, $x$ is not undefined in $s_1$ because $\loc(x,s_1)$ is defined
-    and not dangling in $s_1$ (we have $h_1(\ell_x)=\ell$); moreover, $x$ is
-    not borrowed as mutable in $s_1$ because there is no $\ell'\leadsto\ell_x$
-    in $h_1$.
-    So, as $\locread(x,s_1) = \langle\ell_x,\mathit{false}\rangle$ with
-    $\ell_x\Rightarrow \ell\in h_1$ and $\ell\not\in\mathbb{Z}$,
-    we have $\den[x]{s_1} = \langle \ell, h_1|_{-\ell_x}, \Rightarrow\rangle=
-    \langle \ell, \{\ell\Rightarrow 0\}, \Rightarrow\rangle$.
-    So, we have
-    $\denl[\mathtt{let\ mut}\ y = x]{m}{s_1} = \rho_2 \star h_2$ where
-    \begin{align*}
-      \rho_2 & = \rho_1[y\to^m\ell_y] = \{y\to^m\ell_y,\ x\to^m\ell_x\}\\
-      h_2 & = \{\ell\Rightarrow 0\}[\ell_y\Rightarrow \ell] =
-      \{\ell_y\Rightarrow \ell,\ \ell\Rightarrow 0\}
-    \end{align*}
-    and $\ell_y$ is fresh.
-    %
-    \item Let $s_2 = \rho_2 \star h_2$.
-    Then, we have $\locread(x,s_2)=\langle\rho_2(x),\mathit{false}\rangle=
-    \langle\ell_x,\mathit{false}\rangle$, so $\loc(x,s_2) = \ell_x$. Moreover,
-    $\ell_x$ is dangling in $s_2$ because $h_2(\ell_x)$ is undefined.
-    Consequently, $x$ is undefined in $s_2$, hence $\den[\borrow x]{s_2}$
-    is undefined.
+  \item (Base case)
+    If $\mathsf{w}$
+    has no $\mathsf{w}'$ such that $\mathsf{w}\gg\mathsf{w}'$, then it must be $\mathsf{w}\in\Vars$.
+    Hence there are no recursive uses of $\type$ in the definition of
+    $\type(\mathsf{w},\tau)$ and (1) holds. Moreover, in this case
+    $\type(\mathsf{w},\tau)=\tau(\mathsf{w})$ and if
+    $\tau(\mathsf{w})=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$ by Def.~\ref{def:dependencies}
+    we conclude that $\mathtt{*}\mathsf{w}\gg\mathsf{w}_i$ for every $1\le i\le n$, hence (2) holds.
+    Similarly when $\tau(\mathsf{w})=\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$.
+  \item (Inductice case)
+    Assume now that (1) and (2) hold for $\mathsf{w}$. Consider
+    the recursive uses $\type(\mathsf{w}',\tau)$ in the definition of
+    $\type(\mathtt{*}\mathsf{w},\tau)$. One such recursive use is
+    $\type(\mathsf{w},\tau)$ and $\mathtt{*}\mathsf{w}\gg\mathsf{w}$.
+    Others are inside the computation of $\type(\mathsf{w},\tau)$ and by inductive hypothesis
+    (1) holds, that is, they occur on $\mathsf{w}'$ such that $\mathsf{w}\gg\mathsf{w}'$.
+    Hence $\mathtt{*}\mathsf{w}\gg\mathsf{w}\gg\mathsf{w}'$ and by transitivity
+    $\mathtt{*}\mathsf{w}\gg\mathsf{w}'$. Finally, there are recursive uses
+    when $\type(\mathsf{w},\tau)=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
+    or when $\type(\mathsf{w},\tau)=\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
+    namely, uses of
+    $\type(\mathsf{w}_i,\tau)$ with $1\le i\le n$. By inductive hypothesis, we know that
+    (2) holds for $\mathsf{w}$, that is, $\mathtt{*}\mathsf{w}\gg\mathsf{w}_i$ for every
+    $1\le i\le n$. This concludes the inductive case for the proof of (1).
+    Let us prove (2) for $\mathtt{*}\mathsf{w}$ now. Assume then that
+    $\type(\mathtt{*}\mathsf{w},\tau)=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$ (the case
+    $\type(\mathtt{*}\mathsf{w},\tau)=\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$ is similar).
+    By Def.~\ref{def:type}, there are two possibilities:
+    \begin{itemize}
+    \item $\mathtt{*}\mathsf{w}=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\text{$m+1$}}x$
+      and $\tau(x)=\underbrace{\boxempty\cdots\boxempty}_{\text{$m+1$}}
+      \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$
+      for some $m\ge 0$, where $x=\mathsf{root}(\mathsf{w})$.
+      By Def.~\ref{def:dependencies}, the relation $\gg$ includes
+      \begin{align*}
+        \mathsf{dependencies}(x,\tau(x))&=\mathsf{dependencies}(x,\underbrace{\boxempty\cdots\boxempty}_{\text{$m+1$}}\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})\\
+        &=\mathsf{dependencies}(\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\text{$m+1$}}x,
+        \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})\\
+        &=\mathsf{dependencies}(\mathtt{*}\mathsf{w},\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\})\\
+        &=\{\mathtt{**}\mathsf{w}\gg\mathsf{w}_i\mid 1\le i\le n\}
+      \end{align*}
+      and (2) holds for $\mathtt{*}\mathsf{w}$.
+    \item $\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}=\sqcup_{1\le i\le n'}\type(\mathsf{w}_i',\tau)$
+      with $\type(\mathsf{w},\tau)=\borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}$.
+      The only possibility is that $\type(\mathsf{w}_j',\tau)=\borrow W_j$ for every $1\le j\le n'$,
+      with $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}=\cup_{1\le j\le n'}W_i$.
+      By inductive hypothesis of (2), we know that
+      $\mathtt{*}\mathsf{w}\gg\mathsf{w}_j'$ for every $1\le j\le n'$ and that
+      $\mathtt{*}\mathsf{w}_j'\gg\mathsf{w}''$ for every $\mathsf{w}''\in W_j$ and
+      every $1\le j\le n'$. Note that $\mathsf{w}''$ is one of the leftvalues that occur
+      in the borrows of $\tau$, by Def.~\ref{def:type}.
+      By closure (Def.~\ref{def:dependencies}), we conclude that
+      $\mathtt{**}\mathsf{w}\gg\mathsf{w}''$ for every $\mathsf{w}''\in W_j$ and
+      every $1\le j\le n'$. Since each $\mathsf{w}_i$ belongs to some $W_j$, we conclude that
+      $\mathtt{**}\mathsf{w}\gg\mathsf{w}_i$ for every $1\le i\le n$ and (2) holds for $\mathtt{*}\mathsf{w}$.
+    \end{itemize}
   \end{itemize}
-\end{example}
+\end{proof}
 
-\begin{example}
-  Show that this is legal:
-  \[
-    \{
-      \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
-      \mathtt{let\ mut}\ y = \mutborrow \mathtt{*}x;\
-      \mathtt{*}y = 1
-    \}^m
-  \]
-  \begin{itemize}
-    \item Let $s_0=\emptyset \star \emptyset$.
-    We have $\den[0]{s_0} = \langle 0,\emptyset,\Rightarrow\rangle$, hence
-    $\den[\mathtt{box}\ 0]{s_0} =
-    \langle\ell,\{\ell\Rightarrow 0\},\Rightarrow\rangle$ where $\ell$ is fresh.
-    %
-    Consequently, we have
-    $\denl[\mathtt{let\ mut}\ x = \mathtt{box}\ 0]{m}{s_0} = \rho_1 \star h_1$
-    where
-    \[\rho_1=\{x\to^m\ell_x\} \qquad
-    h_1 = \{\ell_x\Rightarrow \ell,\ \ell\Rightarrow 0\}\]
-    and $\ell_x$ is fresh.
-    %
-    \item Let $s_1 = \rho_1 \star h_1$.
-    Then, we have $\locread(x,s_1)=\langle\rho_1(x),\mathit{false}\rangle=
-    \langle\ell_x,\mathit{false}\rangle$ with $\ell_x\Rightarrow \ell\in h_1$,
-    so $\locread(*x,s_1)=\langle\ell,\mathit{false}\rangle$. Therefore,
-    $\loc(*x,s_1)=\ell$ is not undefined in $s_1$ and, moreover,
-    it is not dangling in $s_1$ because $h_1(\ell)=0$. Consequently,
-    $*x$ is not undefined in $s_1$. Hence,
-    $\den[\mutborrow \mathtt{*}x]{s_1} =
-    \langle\loc(*x,s_1),h_1,\leadsto\rangle =
-    \langle\ell,h_1,\leadsto\rangle$ with $\ell$ not borrowed in $h_1$
-    (there is no $\ell'\to\ell$ nor $\ell'\leadsto\ell$ in $h_1$).
-    So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mutborrow \mathtt{*}x]{m}{s_1} =
-    \rho_2 \star h_2$ where
-    \begin{align*}
-      \rho_2 & = \rho_1[y\to^m\ell_y] = \{y\to^m\ell_y,\ x\to^m\ell_x\}\\
-      h_2 & = h_1[\ell_y\leadsto \ell] =
-      \{\ell_y\leadsto \ell,\ \ell_x\Rightarrow \ell,\ \ell\Rightarrow 0\}
-    \end{align*}
-    and $\ell_y$ is fresh.
-    %
-    \item Let $s_2 = \rho_2 \star h_2$.
-    Then, we have $\den[1]{s_2} = \langle 1,h_2,\Rightarrow\rangle$.
-    Moreover, $\locread(y,s_2) = \langle\rho_2(y),\mathit{false}\rangle=
-    \langle\ell_y,\mathit{false}\rangle$ with $\ell_y\leadsto \ell \in h_2$,
-    hence $\locread(*y,s_2) = \langle\ell,\mathit{true}\rangle$, so
-    $\loc(*y,s_2) = \ell$. We have $\loc(y,s_2) = \ell_y$ and
-    $\ell_y \leadsto \ell \in h_2$. Moreover,
-    $\drop(\{\ell\},h_2) = h_2|_{-{\omega(\{\ell\},h_2)}} = h_2|_{-{\{\ell\}}}
-    = \{\ell_y\leadsto \ell,\ \ell_x\Rightarrow \ell\}$.
-    So, we have $\denl[\mathtt{*}y = 1]{m}{s_2} = \rho_3 \star h_3$ where
-    \[\rho_3 = \rho_2\qquad
-    h_3 = \{\ell_y\leadsto \ell,\ \ell_x\Rightarrow \ell\}[\ell\Rightarrow 1]
-    = \{\ell_y\leadsto \ell,\ \ell_x\Rightarrow \ell,\ \ell\Rightarrow 1\}\]
-  \end{itemize}
-\end{example}
-
-\begin{example}
-  Show that this is illegal:
-  \[
-    \{
-      \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
-      \mathtt{let\ mut}\ y = \mutborrow \mathtt{*}x;\
-      \mathtt{*}x = 1
-    \}^m
-  \]
-  This example is identical to the previous one, except on the last term
-  $*x=1$ of the block. So, let $s_0$, $s_1$ and $s_2$ be as before.
-  Let us consider the last term $*x=1$.
-  We have $\den[1]{s_2} = \langle 1,h_2,\Rightarrow\rangle$.
-  Moreover, $\locread(x,s_2) = \langle\rho_2(x),\mathit{false}\rangle=
-  \langle\ell_x,\mathit{false}\rangle$ with $\ell_x\Rightarrow \ell \in h_2$
-  and $\ell\not\in\mathbb{Z}$. Hence, $\locread(*x,s_2) =
-  \langle\ell,\mathit{false}\rangle$, so $\loc(*x,s_2) = \ell$.
-  As $\ell_x\leadsto\ell\not\in h_2$ and $\mathtt{*}x$ is borrowed in $s_2$
-  (because $\ell_y\leadsto \ell\in h_2$),
-  $\denl[\mathtt{*}x = 1]{m}{s_2}$ is undefined.
-\end{example}
-
-\begin{example}
-  Show that this is legal, at the end $x$ holds $1$:
-  \[
-    \{
-      \mathtt{let\ mut}\ x = 0;\
-      \mathtt{let\ mut}\ y = \mathtt{box}(\mutborrow x);\
-      \mathtt{let\ mut}\ z = \mutborrow *y;\
-      **z = 1
-    \}^m
-  \]
-  \begin{itemize}
-    \item Let $s_0=\emptyset \star \emptyset$.
-    We have $\den[0]{s_0} = \langle 0,\emptyset,\Rightarrow\rangle$.
-    %
-    So, $\denl[\mathtt{let\ mut}\ x = 0]{m}{s_0} = \rho_1 \star h_1$
-    where
-    \[\rho_1=\{x\to^m\ell_x\} \qquad h_1 = \{\ell_x\Rightarrow 0\}\]
-    and $\ell_x$ is fresh.
-    %
-    \item Let $s_1 = \rho_1 \star h_1$.
-    Then, we have $\locread(x,s_1)=\langle\rho_1(x),\mathit{false}\rangle=
-    \langle\ell_x,\mathit{false}\rangle$, hence $\loc(x,s_1)=\ell_x$.
-    Therefore, as $\ell_x$ is not dangling in $s_1$ (because $h_1(\ell_x) = 0$),
-    $x$ is not undefined in $s_1$. Consequently,
-    $\den[\mutborrow x]{s_1} = \langle\ell_x,h_1,\leadsto\rangle$. So,
-    $\den[\mathtt{box}(\mutborrow x)]{s_1} =
-    \langle\ell,\{\ell\leadsto\ell_x,\ \ell_x\Rightarrow 0\},\Rightarrow\rangle$
-    where $\ell$ is fresh. So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mathtt{box}(\mutborrow x)]{m}{s_1} =
-    \rho_2 \star h_2$ where
-    \begin{align*}
-      \rho_2 & = \rho_1[y\to^m\ell_y] = \{y\to^m\ell_y,\ x\to^m\ell_x\}\\
-      h_2 & = \{\ell\leadsto\ell_x,\ \ell_x\Rightarrow 0\}[\ell_y\Rightarrow \ell] =
-      \{\ell_y\Rightarrow \ell,\ \ell\leadsto\ell_x,\ \ell_x\Rightarrow 0\}
-    \end{align*}
-    and $\ell_y$ is fresh.
-    %
-    \item Let $s_2 = \rho_2 \star h_2$.
-    Then, we have $\locread(y,s_2)=\langle\rho_2(y),\mathit{false}\rangle=
-    \langle\ell_y,\mathit{false}\rangle$ with $\ell_y\Rightarrow \ell\in h_2$,
-    so $\locread(*y,s_2)=\langle\ell,\mathit{false}\rangle$. Therefore,
-    $\loc(*y,s_2)=\ell$ is not undefined in $s_2$ and, moreover,
-    it is not dangling in $s_2$ because $h_2(\ell)=\ell_x$. Consequently,
-    $*y$ is not undefined in $s_2$. Hence,
-    $\den[\mutborrow \mathtt{*}y]{s_2} =
-    \langle\loc(*y,s_2),h_2,\leadsto\rangle =
-    \langle\ell,h_2,\leadsto\rangle$ with $\ell$ not borrowed in $h_2$
-    (there is no $\ell'\to\ell$ nor $\ell'\leadsto\ell$ in $h_2$).
-    So, we have
-    $\denl[\mathtt{let\ mut}\ z = \mutborrow \mathtt{*}y]{m}{s_2} =
-    \rho_3 \star h_3$ where
-    \begin{align*}
-      \rho_3 & = \rho_2[z\to^m\ell_z] = \{z\to^m\ell_z,\ y\to^m\ell_y,\ x\to^m\ell_x\}\\
-      h_3 & = h_2[\ell_z\leadsto \ell] =
-      \{\ell_z\leadsto \ell,\
-      \ell_y\Rightarrow \ell,\ \ell\leadsto\ell_x,\ \ell_x\Rightarrow 0\}
-    \end{align*}
-    and $\ell_z$ is fresh.
-    %
-    \item Let $s_3 = \rho_3 \star h_3$.
-    We have $\den[1]{s_3} = \langle 1,h_3,\Rightarrow\rangle$.
-    Moreover, $\locread(z,s_3)=\langle\rho_3(z),\mathit{false}\rangle=
-    \langle\ell_z,\mathit{false}\rangle$ with $\ell_z\leadsto \ell\in h_3$,
-    so $\locread(*z,s_3)=\langle\ell,\mathit{true}\rangle$.
-    As $\ell\leadsto\ell_x\in h_3$, we have
-    $\locread(**z,s_3)=\langle\ell_x,\mathit{true}\rangle$, hence
-    $\loc(**z,s_3)=\ell_x$. We also have
-    $\drop(\{\ell_x\},h_3) = h_3|_{-{\omega(\{\ell_x\},h_3)}} = h_3|_{-{\{\ell_x\}}}
-    = \{\ell_z\leadsto \ell,\ \ell_y\Rightarrow \ell,\ \ell\leadsto\ell_x\}$.
-    So, we have $\denl[\mathtt{**}z = 1]{m}{s_3} = \rho_4 \star h_4$ where
-    \begin{align*}
-      \rho_4 & = \rho_3\\
-      h_4 & = \{\ell_z\leadsto \ell,\ \ell_y\Rightarrow \ell,\
-      \ell\leadsto\ell_x\}[\ell_x\Rightarrow 1] =
-      \{\ell_z\leadsto \ell,\ \ell_y\Rightarrow \ell,\ \ell\leadsto\ell_x,\
-      \ell_x\Rightarrow 1\}
-    \end{align*}
-  \end{itemize}
-\end{example}
-
-\begin{example}
-  Show that this is legal, at the end $x$ holds $0$:
-  \[
-    \{
-    \mathtt{let\ mut}\ x = 0;\
-    \mathtt{let\ mut}\ k = 1;\
-    \mathtt{let\ mut}\ y = \mathtt{box}(\mutborrow x);\
-    *y = \mutborrow k
-    \}^m
-  \]
-  \begin{itemize}
-    \item Let $s_0=\emptyset \star \emptyset$.
-    We have $\den[0]{s_0} = \langle 0,\emptyset,\Rightarrow\rangle$.
-    %
-    So, $\denl[\mathtt{let\ mut}\ x = 0]{m}{s_0} = \rho_1 \star h_1$
-    where
-    \[\rho_1=\{x\to^m\ell_x\} \qquad h_1 = \{\ell_x\Rightarrow 0\}\]
-    and $\ell_x$ is fresh.
-    %
-    \item Let $s_1 = \rho_1 \star h_1$.
-    We have $\den[1]{s_1} = \langle 1,h_1,\Rightarrow\rangle$.
-    %
-    So, $\denl[\mathtt{let\ mut}\ k = 1]{m}{s_1} = \rho_2 \star h_2$
-    where
-    \[\rho_2=\{k\to^m\ell_k,\ x\to^m\ell_x\} \qquad h_2 = \{\ell_k\Rightarrow 1,\
-    \ell_x\Rightarrow 0\}\]
-    and $\ell_k$ is fresh.
-    %
-    \item Let $s_2 = \rho_2 \star h_2$.
-    We have $\locread(x,s_2)=\langle\rho_2(x),\mathit{false}\rangle=
-    \langle\ell_x,\mathit{false}\rangle$, so $\loc(x,s_2)=\ell_x$. Moreover,
-    $\ell_x$ is not dangling in $s_2$ because $h_2(\ell_x)=0$.
-    Consequently, $x$ is not undefined in $s_2$, so
-    $\den[\mutborrow x]{s_2} = \langle \ell_x,h_2,\leadsto\rangle$
-    and hence $\den[\mathtt{box}(\mutborrow x)]{s_2} =
-    \langle \ell',h_2\cup\{\ell'\leadsto\ell_x\},\Rightarrow\rangle =
-    \langle \ell',
-    \{\ell'\leadsto\ell_x,\ \ell_k\Rightarrow 1,\ \ell_x\Rightarrow 0\},
-    \Rightarrow\rangle$ where $\ell'$ is fresh.
-    So, $\denl[\mathtt{let\ mut}\ y = \mathtt{box}(\mutborrow x)]{m}{s_2} = \rho_3 \star h_3$
-    where
-    \begin{align*}
-      \rho_3 & = \{y\to^m\ell_y,\ k\to^m\ell_k,\ x\to^m\ell_x\}\\
-      h_3 & = \{\ell_y\Rightarrow \ell',\ \ell'\leadsto\ell_x,\
-      \ell_k\Rightarrow 1,\ \ell_x\Rightarrow 0\}
-    \end{align*}
-    and $\ell_y$ is fresh.
-    %
-    \item Let $s_3 = \rho_3 \star h_3$.
-    We have $\locread(k,s_3)=\langle\rho_3(k),\mathit{false}\rangle=
-    \langle\ell_k,\mathit{false}\rangle$, so $\loc(k,s_3)=\ell_k$.
-    Moreover, $\ell_k$ is not dangling in $s_3$ because $h_3(\ell_k)=1$.
-    Hence, $k$ is not undefined in $s_3$, so
-    $\den[\mutborrow k]{s_3} = \langle\ell_k,h_3,\leadsto\rangle$.
-    We also have $\locread(y,s_3)=\langle\rho_3(y),\mathit{false}\rangle=
-    \langle\ell_y,\mathit{false}\rangle$ with $\ell_y\Rightarrow \ell'\in h_3$
-    and $\ell'\not\in\mathbb{Z}$. So,
-    $\locread(*y,s_3)=\langle \ell',\mathit{false}\rangle$.
-    Therefore, $\loc(y,s_3)\leadsto\loc(*y,s_3) \not\in h_3$, but
-    $*y$ is not borrowed in $s_3$ (because $\loc(*y,s_3)=\ell'$ is not in $h_3$).
-    We also have
-    $\drop(\{\ell'\},h_3) = h_3|_{-{\omega(\{\ell'\},h_3)}} = h_3|_{-{\{\ell'\}}}
-    = \{\ell_y\Rightarrow \ell',\ \ell_k\Rightarrow 1,\ \ell_x\Rightarrow 0\}$.
-    Moreover, $\ell_k$ is not borrowed in $h_3$.
-    Hence, $\denl[*y = \mutborrow k]{m}{s_3} = \rho_4 \star h_4$
-    where
-    \begin{align*}
-      \rho_4 & = \rho_3\\
-      h_4 & = \{\ell_y\Rightarrow \ell',\ \ell_k\Rightarrow 1,\
-      \ell_x\Rightarrow 0\}[\ell'\leadsto \ell_k] =
-      \{\ell_y\Rightarrow \ell',\ \ell'\leadsto\ell_k,\
-      \ell_k\Rightarrow 1,\ \ell_x\Rightarrow 0\}
-    \end{align*}
-  \end{itemize}
-\end{example}
-
-\begin{example}
-  Consider again the program $P_1$ of Ex.~\ref{ex:program}:
-  \[
-    \{
-      \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
-      \{\mathtt{let\ mut}\ y = \mutborrow x;\
-      \mathtt{*}y = \mathtt{box}\ 1\}^l;\
-      \mathtt{let\ mut}\ z = x
-    \}^m
-  \]
-  \begin{itemize}
-    \item Let $s_0=\emptyset \star \emptyset$.
-    We have $\den[0]{s_0} = \langle 0,\emptyset\rangle$, hence
-    $\den[\mathtt{box}\ 0]{s_0} =
-    \langle\ell,\{\ell\to 0\}\rangle$ where $\ell$ is fresh.
-    %
-    Consequently, we have
-    $\denl[\mathtt{let\ mut}\ x = \mathtt{box}\ 0]{m}{s_0} =
-    \langle \rho_1,\ h_1\rangle$ where
-    \[\rho_1=\{x\to^m\ell_x\} \qquad
-    h_1 = \{\ell_x\Rightarrow \ell,\ \ell\to 0\}\]
-    and $\ell_x$ is fresh.
-    %
-    \item Let $s_1 = \rho_1 \star h_1$.
-    Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mutborrow x]{s_1} = \langle\ell_x, h_1\rangle$
-    with $\ell_x$ not borrowed as mutable in $h_1$.
-    So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mutborrow x]{l}{s_1} =
-    \langle \rho_2,\ h_2\rangle$
-    where
-    \begin{align*}
-      \rho_2 & = \rho_1[y\to^l\ell_y] = \{y\to^l\ell_y,\ x\to^m\ell_x\}\\
-      h_2 & = h_1[\ell_y\leadsto \ell_x] =
-      \{\ell_y\leadsto \ell_x,\ \ell_x\Rightarrow \ell,\ \ell\to 0\}
-    \end{align*}
-    and $\ell_y$ is fresh.
-    %
-    \item Let $s_2 = \rho_2 \star h_2$.
-    We have $\den[1]{s_2} = \langle 1,h_2\rangle$, hence
-    $\den[\mathtt{box}\ 1]{s_2} =
-    \langle\ell',h_2[\ell'\to 1]\rangle$ where $\ell'$ is fresh.
-    %
-    If we let $h'_2 = h_2[\ell'\to 1]$,
-    we have $\loc(y,\langle\rho_2,h'_2\rangle) = \ell_y$ and
-    $s_2(\ell_y) = h_2(\ell_y) = \ell_x$.
-    Moreover, $h^{''}_2=\drop(\{\ell_x\},h'_2) =
-    \{\ell_y\leadsto \ell_x,\ell'\to 1\}$. Consequently,
-    $\denl[\mathtt{*}y = \mathtt{box}\ 1]{l}{s_2} =
-    \langle\rho_3,h_3\rangle$ where
-    \[\rho_3 = \rho_2
-    \text{ and }
-    h_3 = \{\ell_y\leadsto\ell_x,\ell_x\Rightarrow\ell',
-    \ell'\to 1\}\]
-    %
-    \item Let us evaluate
-    $\denl[\{\mathtt{let\ mut}\ y = \mutborrow x;\
-    \mathtt{*}y = \mathtt{box}\ 1\}^l]{m}{s_1}$. Above, we have
-    computed $\denl[\mathtt{*}y = \mathtt{box}\ 1]{l}{
-    \denl[\mathtt{let\ mut}\ y = \mutborrow x]{l}{s_1}} =
-    \langle\rho_3,h_3\rangle$. Moreover,
-    $\drop(\{\ell\mid x\to^l\ell\in\rho_3\},h_3) = \drop(\{\ell_y\},h_3) =
-    \{\ell_x\Rightarrow\ell',\ell'\to 1\}$. Consequently,
-    $\denl[\{\mathtt{let\ mut}\ y = \mutborrow x;\
-    \mathtt{*}y = \mathtt{box}\ 1\}^l]{m}{s_1} =
-    \langle \rho_4,h_4\rangle$ where
-    \[\rho_4 = \rho_1 \text{ and } h_4 = \{\ell_x\Rightarrow\ell',\ell'\to 1\}\]
-    %
-    \item Let $s_4 = \rho_4 \star h_4$. We have
-    $s_4(\loc(x,s_4)) = s_4(\ell_x) = h_4(\ell_x)=\ell'$ and
-    $\ell'$ is not dangling in $h_4$ (because $\ell'\to 1 \in h_4$).
-    As $\type(x)$ is a box, $x$ has move semantics. Consequently,
-    $\den[x]{s_4} = \langle \ell', {h_4}|_{-\ell_x}\rangle$\ie
-    $\den[x]{s_4} = \langle \ell', \{\ell'\to 1\} \rangle$.
-    So, $\denl[\mathtt{let\ mut}\ z = x]{m}{s_4} = \langle \rho_5,h_5\rangle$
-    where
-    \begin{align*}
-      \rho_5 & = \rho_4[z\to^m \ell_z] = \{z\to^m \ell_z,\ x\to^m\ell_x\}\\
-      h_5 & = \{\ell_z\Rightarrow \ell',\ \ell'\to 1\}
-    \end{align*}
-    and $\ell_z$ is fresh.
-  \end{itemize}
-  \qed
-\end{example}
-
-\begin{example}
-  Consider the following illegal program $P_2$
-  that attempts to create two mutable references
-  to the same piece of data in the same scope:
-  \[
-    \{
-      \mathtt{let\ mut}\ x = 13;\
-      \mathtt{let\ mut}\ y = \mutborrow x;\
-      \mathtt{let\ mut}\ z = \mutborrow x
-    \}^m
-  \]
-  \begin{itemize}
-    \item Let $s_0=\emptyset \star \emptyset$.
-    We have $\den[13]{s_0} = \langle 13,\emptyset\rangle$, hence
-    $\denl[\mathtt{let\ mut}\ x = 13]{m}{s_0} =
-    \langle \rho_1,\ h_1\rangle$ where
-    \[\rho_1=\{x\to^m\ell_x\} \qquad
-    h_1 = \{\ell_x\to 13\}\]
-    and $\ell_x$ is fresh.
-    %
-    \item Let $s_1 = \rho_1 \star h_1$.
-    Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mutborrow x]{s_1} = \langle \ell_x,h_1\rangle$
-    with $\ell_x$ not borrowed as mutable in $h_1$.
-    So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mutborrow x]{m}{s_1} =
-    \langle \rho_2,\ h_2\rangle$
-    where
-    \begin{align*}
-      \rho_2 & = \rho_1[y\to^m\ell_y] = \{y\to^m\ell_y,\ x\to^m\ell_x\}\\
-      h_2 & = h_1[\ell_y\leadsto \ell_x] =
-      \{\ell_y\leadsto \ell_x,\ \ell_x\to 13\}
-    \end{align*}
-    and $\ell_y$ is fresh.
-    %
-    \item Let $s_2 = \rho_2 \star h_2$.
-    Then, we have $\loc(x,s_2) = \ell_x$, so
-    $\den[\mutborrow x]{s_2} = \langle \ell_x,h_2\rangle$
-    where $\ell_x$ is borrowed as mutable in $h_2$
-    (because $\ell_y\leadsto \ell_x \in h_2$).
-    So, $\denl[\mathtt{let\ mut}\ z = \mutborrow x]{m}{s_2}$
-    is undefined.
-  \end{itemize}
-  \qed
-\end{example}
-
-\begin{example}
-  Consider the following valid program $P'_2$ which is a variant
-  of $P_2$ with immutable references:
-  \[
-    \{
-      \mathtt{let\ mut}\ x = 13;\
-      \mathtt{let\ mut}\ y = \borrow x;\
-      \mathtt{let\ mut}\ z = \borrow x
-    \}^m
-  \]
-  \begin{itemize}
-    \item Let $s_0=\emptyset \star \emptyset$.
-    We have $\den[13]{s_0} = \langle 13,\emptyset\rangle$, hence
-    $\denl[\mathtt{let\ mut}\ x = 13]{m}{s_0} =
-    \langle \rho_1,\ h_1\rangle$ where
-    \[\rho_1=\{x\to^m\ell_x\} \qquad
-    h_1 = \{\ell_x\to 13\}\]
-    and $\ell_x$ is fresh.
-    %
-    \item Let $s_1 = \rho_1 \star h_1$.
-    Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\borrow x]{s_1} = \langle \ell_x,h_1\rangle$.
-    Therefore, we have
-    $\denl[\mathtt{let\ mut}\ y = \borrow x]{m}{s_1} =
-    \langle \rho_2,\ h_2\rangle$
-    where
-    \begin{align*}
-      \rho_2 & = \rho_1[y\to^m\ell_y] = \{y\to^m\ell_y,\ x\to^m\ell_x\}\\
-      h_2 & = h_1[\ell_y\to \ell_x] =
-      \{\ell_y\to \ell_x,\ \ell_x\to 13\}
-    \end{align*}
-    and $\ell_y$ is fresh.
-    %
-    \item Let $s_2 = \rho_2 \star h_2$.
-    Then, we have $\loc(x,s_2) = \ell_x$, so
-    $\den[\borrow x]{s_2} = \langle \ell_x,h_2\rangle$.
-    Therefore, we have
-    $\denl[\mathtt{let\ mut}\ z = \borrow x]{m}{s_2} =
-    \langle \rho_3,\ h_3\rangle$
-    where
-    \begin{align*}
-      \rho_3 & = \rho_2[z\to^m\ell_z] = \{z\to^m\ell_z,\ y\to^m\ell_y,\ x\to^m\ell_x\}\\
-      h_3 & = h_2[\ell_z\to \ell_x] =
-      \{\ell_z\to \ell_x,\ \ell_y\to \ell_x,\ \ell_x\to 13\}
-    \end{align*}
-    and $\ell_y$ is fresh.
-  \end{itemize}
-  \qed
-\end{example}
-
-\begin{example}
-  Consider the following illegal program $P_3$
-  where variable $x$ is assigned to $1$ while
-  borrowed to $y$:
-  \[
-    \{
-      \mathtt{let\ mut}\ x = 0;\
-      \mathtt{let\ mut}\ y = \mutborrow x;\
-      x = 1
-    \}^m
-  \]
-  \begin{itemize}
-    \item Let $s_0=\emptyset \star \emptyset$.
-    We have $\den[0]{s_0} = \langle 0,\emptyset\rangle$, hence
-    $\denl[\mathtt{let\ mut}\ x = 0]{m}{s_0} =
-    \langle \rho_1,\ h_1\rangle$ where
-    \[\rho_1=\{x\to^m\ell_x\} \qquad
-    h_1 = \{\ell_x\to 0\}\]
-    and $\ell_x$ is fresh.
-    %
-    \item Let $s_1 = \rho_1 \star h_1$.
-    Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mutborrow x]{s_1} = \langle \ell_x,h_1\rangle$
-    with $\ell_x$ not borrowed as mutable in $h_1$.
-    So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mutborrow x]{m}{s_1} =
-    \langle \rho_2,\ h_2\rangle$
-    where
-    \begin{align*}
-      \rho_2 & = \rho_1[y\to^m\ell_y] = \{y\to^m\ell_y,\ x\to^m\ell_x\}\\
-      h_2 & = h_1[\ell_y\leadsto \ell_x] =
-      \{\ell_y\leadsto \ell_x,\ \ell_x\to 0\}
-    \end{align*}
-    and $\ell_y$ is fresh.
-    %
-    \item Let $s_2 = \rho_2 \star h_2$.
-    Then, we have $\den[1]{s_2} = \langle 1,h'_2\rangle$ with $h'_2=h_2$.
-    Moreover, $\loc(x,\langle\rho_2,h'_2\rangle) = \ell_x$ is borrowed in $h'_2$.
-    Therefore, $\denl[x = 1]{m}{s_2}$ is undefined.
-  \end{itemize}
-  \qed
-\end{example}
-
-\begin{example}
-  Consider the following valid program $P_4$
-  where the first declaration of variable $x$ is
-  shadowed by the second:
-  \[
-    \{
-      \mathtt{let\ mut}\ x = 0;\
-      \mathtt{let\ mut}\ x = 1
-    \}^m
-  \]
-  \begin{itemize}
-    \item Let $s_0=\emptyset \star \emptyset$.
-    We have $\den[0]{s_0} = \langle 0,\emptyset\rangle$, hence
-    $\denl[\mathtt{let\ mut}\ x = 0]{m}{s_0} =
-    \langle \rho_1,\ h_1\rangle$ where
-    \[\rho_1=\{x\to^m\ell_x\} \qquad
-    h_1 = \{\ell_x\to 0\}\]
-    and $\ell_x$ is fresh.
-    %
-    \item Let $s_1 = \rho_1 \star h_1$.
-    We have $\den[1]{s_1} = \langle 1,h_1\rangle$, hence
-    $\denl[\mathtt{let\ mut}\ x = 1]{m}{s_1} =
-    \langle \rho_2,\ h_2\rangle$ where
-    \[\rho_2=\{x\to^m\ell'_x\} \qquad
-    h_2 = \{\ell_x\to 0,\ \ell'_x\to 1\}\]
-    and $\ell'_x$ is fresh.
-  \end{itemize}
-  \qed
-\end{example}
-
-\begin{example}
-  Consider the following illegal program $P_5$ that attempts to create
-  a borrowed reference to variable $z$ that exists outside of its lifetime:
-  {\small
-  \[
-    \{
-      \mathtt{let\ mut}\ x = 0;\
-      \mathtt{let\ mut}\ y = \mutborrow x;\
-      \{\mathtt{let\ mut}\ z = 0;\ y = \mutborrow z\}^l;\
-      \mathtt{let\ mut}\ w = y
-    \}^m
-  \]}
-  \begin{itemize}
-    \item Let $s_0=\emptyset \star \emptyset$.
-    We have $\den[0]{s_0} = \langle 0,\emptyset\rangle$, hence
-    $\denl[\mathtt{let\ mut}\ x = 0]{m}{s_0} =
-    \langle \rho_1,\ h_1\rangle$ where
-    \[\rho_1=\{x\to^m\ell_x\} \qquad
-    h_1 = \{\ell_x\to 0\}\]
-    and $\ell_x$ is fresh.
-    %
-    \item Let $s_1 = \rho_1 \star h_1$.
-    Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mutborrow x]{s_1} = \langle\ell_x, h_1\rangle$
-    with $\ell_x$ not borrowed as mutable in $h_1$.
-    So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mutborrow x]{m}{s_1} =
-    \langle \rho_2,\ h_2\rangle$
-    where
-    \begin{align*}
-      \rho_2 & = \rho_1[y\to^m\ell_y] = \{y\to^m\ell_y,\ x\to^m\ell_x\}\\
-      h_2 & = h_1[\ell_y\leadsto \ell_x] =
-      \{\ell_y\leadsto \ell_x,\ \ell_x\to 0\}
-    \end{align*}
-    and $\ell_y$ is fresh.
-    %
-    \item Let $s_2 = \rho_2 \star h_2$.
-    We have $\den[0]{s_2} = \langle 0,h_2\rangle$, hence
-    $\denl[\mathtt{let\ mut}\ z = 0]{l}{s_2} =
-    \langle \rho_3,\ h_3\rangle$ where
-    \begin{align*}
-      \rho_3 & = \rho_2[z\to^l\ell_z] =
-      \{z\to^l\ell_z,\ y\to^m\ell_y,\ x\to^m\ell_x\}\\
-      h_3 & = h_2[\ell_z\to 0] =
-      \{\ell_z\to 0,\ \ell_y\leadsto \ell_x,\ \ell_x\to 0\}
-    \end{align*}
-    and $\ell_z$ is fresh.
-    %
-    \item Let $s_3 = \rho_3 \star h_3$.
-    Then, we have $\loc(z,s_3) = \ell_z$, so
-    $\den[\mutborrow z]{s_3} = \langle\ell_z, h'_3\rangle$
-    with $h'_3=h_3$ and $\ell_z$ is not borrowed as mutable in $h'_3$.
-    Moreover, $\loc(y,\langle \rho_3,h'_3\rangle) = \ell_y$ is not
-    borrowed in $h'_3$
-    and $\drop(\{\ell_y\},h'_3) =
-    \{\ell_z\to 0,\ell_x\to 0\}$. Consequently,
-    $\denl[y = \mutborrow z]{l}{s_3} = \langle \rho_4,\ h_4\rangle$
-    where
-    \[\rho_4=\rho_3 \text{ and }
-    h_4=\{\ell_y\leadsto\ell_z,\ \ell_z\to 0,\ \ell_x\to 0\}\]
-    %
-    \item Let us evaluate
-    $\denl[\{\mathtt{let\ mut}\ z = 0;\ y = \mutborrow z\}^l]{m}{s_2}$.
-    Above, we have computed $\denl[y = \mutborrow z]{l}{
-    \denl[\mathtt{let\ mut}\ z = 0]{l}{s_2}} = \langle\rho_4,h_4\rangle$.
-    Moreover, we also have
-    $\drop(\{\ell\mid x\to^l\ell\in\rho_4\},h_4) = \drop(\{\ell_z\},h_4) =
-    \{\ell_y\leadsto\ell_z,\ \ell_x\to 0\}$. Consequently,
-    $\denl[\{\mathtt{let\ mut}\ z = 0;\ y = \mutborrow z\}^l]{m}{s_2} =
-    \langle \rho_5,h_5\rangle$ where
-    \[\rho_5 = \rho_2 \text{ and }
-    h_5 = \{\ell_y\leadsto\ell_z,\ \ell_x\to 0\}\]
-    %
-    \item Let $s_5 = \rho_5 \star h_5$.
-    We have $s_5(\loc(y,s_5)) = s_5(\ell_y) = h_5(\ell_y) = \ell_z$
-    and $\ell_z$ is dangling in $h_5$. Therefore, $\den[y]{s_5}$
-    is undefined. So,
-    $\denl[\mathtt{let\ mut}\ w = y]{m}{s_5}$ is undefined.
-  \end{itemize}
-  \qed
-\end{example}
-
-\begin{example}\label{ex:program-reborrow-valid}
-  Consider the following valid program $P_6$:
-  \[
-    \{
-      \mathtt{let\ mut}\ x = 0;\
-      \{
-        \mathtt{let\ mut}\ y = \mutborrow x;\
-        \{
-          \mathtt{let\ mut}\ z = \borrow*y
-        \}^l;\
-        *y = 1
-      \}^n
-    \}^m
-  \]
-  \begin{itemize}
-    \item Let $s_0=\emptyset \star \emptyset$.
-    We have $\den[0]{s_0} = \langle 0,\emptyset\rangle$, hence
-    $\denl[\mathtt{let\ mut}\ x = 0]{m}{s_0} =
-    \langle \rho_1,\ h_1\rangle$ where
-    \[\rho_1=\{x\to^m\ell_x\} \qquad
-    h_1 = \{\ell_x\to 0\}\]
-    and $\ell_x$ is fresh.
-    %
-    \item Let $s_1 = \rho_1 \star h_1$.
-    Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mutborrow x]{s_1} = \langle\ell_x, h_1\rangle$
-    with $\ell_x$ not borrowed as mutable in $h_1$.
-    So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mutborrow x]{n}{s_1} =
-    \langle \rho_2,\ h_2\rangle$
-    where
-    \begin{align*}
-      \rho_2 & = \rho_1[y\to^n\ell_y] = \{y\to^n\ell_y,\ x\to^m\ell_x\}\\
-      h_2 & = h_1[\ell_y\leadsto \ell_x] =
-      \{\ell_y\leadsto \ell_x,\ \ell_x\to 0\}
-    \end{align*}
-    and $\ell_y$ is fresh.
-    \item Let $s_2 = \rho_2 \star h_2$.
-    We have $\loc(*y,s_2) = s_2(\loc(y,s_2)) = s_2(\ell_y) = h_2(\ell_y) = \ell_x$,
-    so $\den[\borrow*y]{s_2} = \langle \ell_x,h_2\rangle$.
-    Moreover, $\type(\borrow*y)$ is not a box nor a $\mutborrow$, so
-    $\denl[\mathtt{let\ mut}\ z = \borrow*y]{l}{s_2} =
-    \langle \rho_3,\ h_3\rangle$
-    where
-    \begin{align*}
-      \rho_3 & = \rho_2[z\to^l\ell_z] = \{z\to^l\ell_z,\ y\to^n\ell_y,\ x\to^m\ell_x\}\\
-      h_3 & = h_2[\ell_z\to \ell_x] =
-      \{\ell_z\to \ell_x,\ \ell_y\leadsto \ell_x,\ \ell_x\to 0\}
-    \end{align*}
-    and $\ell_z$ is fresh.
-    \item Let us evaluate $\denl[\{\mathtt{let\ mut}\ z = \borrow*y\}^l]{n}{s_2}$.
-    Above, we have computed $\denl[\mathtt{let\ mut}\ z = \borrow*y]{l}{s_2} =
-    \langle \rho_3,\ h_3\rangle$. Moreover,
-    $\drop(\{\ell\mid x\to^l\ell\in\rho_3\},h_3) = \drop(\{\ell_z\},h_3) =
-    \{\ell_y\leadsto \ell_x,\ \ell_x\to 0\}$. Hence,
-    $\denl[\{\mathtt{let\ mut}\ z = \borrow*y\}^l]{n}{s_2}=\langle \rho_4,\ h_4\rangle$
-    where
-    \[\rho_4 = \rho_2 \text{ and } h_4 = \{\ell_y\leadsto \ell_x,\ \ell_x\to 0\}\]
-    \item Let $s_4 = \rho_4 \star h_4$.
-    We have $\den[1]{s_4} = \langle 1,h_4\rangle$. Moreover,
-    $\loc(y,s_4) = \ell_y$, $s_4(\ell_y) = h_4(\ell_y) = \ell_x$ and
-    $\drop(\{\ell_x\}, h_4) = \{\ell_y\leadsto \ell_x\}$. Therefore,
-    $\denl[*y = 1]{n}{s_4}=\langle \rho_5,\ h_5\rangle$ where
-    \[\rho_5 = \rho_4 \text{ and } h_5 = \{\ell_y\leadsto \ell_x,\ \ell_x\to 1\}\]
-    \item Let us evaluate $\denl[\{\mathtt{let\ mut}\ y = \mutborrow x;\
-    \{ \mathtt{let\ mut}\ z = \borrow*y \}^l;\ *y = 1 \}^n]{m}{s_1}$.
-    Above, we have computed
-    \[\denl[*y = 1]{n}{
-      \denl[\{\mathtt{let\ mut}\ z = \borrow*y\}^l]{n}{
-        \denl[\mathtt{let\ mut}\ y = \mutborrow x]{n}{s_1}
-      } = \langle \rho_5,\ h_5\rangle
-    }\]
-    Moreover, $\drop(\{\ell\mid x\to^n\ell\in\rho_5\},h_5) =
-    \drop(\{\ell_y\},h_5) = \{\ell_x\to 1\}$. So,
-    $\denl[\{\mathtt{let\ mut}\ y = \mutborrow x;\
-    \{ \mathtt{let\ mut}\ z = \borrow*y \}^l;\ *y = 1 \}^n]{m}{s_1} =
-    \langle \{x\to^m\ell_x\},\ \{\ell_x\to 1\}\rangle$.
-  \end{itemize}
-  \qed
-\end{example}
-
-\begin{example}
-  Consider the following program $P'_6$ which is a variant of $P_6$:
-  \[
-  \{
-    \mathtt{let\ mut}\ x = 0;\
-    \{
-      \mathtt{let\ mut}\ y = \mutborrow x;\
-        \{
-          \mathtt{let\ mut}\ z = \borrow*y;\
-          *y = 1
-        \}^l
-      \}^n
-    \}^m
-  \]
-  $P'_6$ is illegal because the immutable reborrow $\borrow *y$ in the inner
-  block prohibits the writing $*y = 1$ in this block.
-  \begin{itemize}
-    \item Let $s_0=\emptyset \star \emptyset$.
-    We have $\den[0]{s_0} = \langle 0,\emptyset\rangle$, hence
-    $\denl[\mathtt{let\ mut}\ x = 0]{m}{s_0} =
-    \langle \rho_1,\ h_1\rangle$ where
-    \[\rho_1=\{x\to^m\ell_x\} \qquad
-    h_1 = \{\ell_x\to 0\}\]
-    and $\ell_x$ is fresh.
-    %
-    \item Let $s_1 = \rho_1 \star h_1$.
-    Then, we have $\loc(x,s_1) = \ell_x$, so
-    $\den[\mutborrow x]{s_1} = \langle\ell_x, h_1\rangle$
-    with $\ell_x$ not borrowed as mutable in $h_1$.
-    So, we have
-    $\denl[\mathtt{let\ mut}\ y = \mutborrow x]{n}{s_1} =
-    \langle \rho_2,\ h_2\rangle$
-    where
-    \begin{align*}
-      \rho_2 & = \rho_1[y\to^n\ell_y] = \{y\to^n\ell_y,\ x\to^m\ell_x\}\\
-      h_2 & = h_1[\ell_y\leadsto \ell_x] =
-      \{\ell_y\leadsto \ell_x,\ \ell_x\to 0\}
-    \end{align*}
-    and $\ell_y$ is fresh.
-    \item Let $s_2 = \rho_2 \star h_2$.
-    We have $\loc(*y,s_2) = s_2(\loc(y,s_2)) = s_2(\ell_y) = h_2(\ell_y) = \ell_x$,
-    so $\den[\borrow*y]{s_2} = \langle \ell_x,h_2\rangle$.
-    Moreover, $\type(\borrow*y)$ is not a box nor a $\mutborrow$, so
-    $\denl[\mathtt{let\ mut}\ z = \borrow*y]{l}{s_2} =
-    \langle \rho_3,\ h_3\rangle$
-    where
-    \begin{align*}
-      \rho_3 & = \rho_2[z\to^l\ell_z] = \{z\to^l\ell_z,\ y\to^n\ell_y,\ x\to^m\ell_x\}\\
-      h_3 & = h_2[\ell_z\to \ell_x] =
-      \{\ell_z\to \ell_x,\ \ell_y\leadsto \ell_x,\ \ell_x\to 0\}
-    \end{align*}
-    and $\ell_z$ is fresh.
-    \item Let $s_3 = \rho_3 \star h_3$.
-    We have $\den[1]{s_3} = \langle 1,h_3\rangle$. Moreover,
-    $\loc(y,s_3) = \ell_y$ and $s_3(\ell_y) = h_3(\ell_y) = \ell_x$
-    is borrowed as immutable in $h_3$ (because $\ell_z\to \ell_x \in h_3$).
-    Therefore, $\denl[*y = 1]{n}{s_3}$ is undefined.
-  \end{itemize}
-  \qed
-\end{example}

@@ -1,4 +1,3 @@
-%
 \documentclass{llncs}
 
 \usepackage{url}
@@ -31,14 +30,12 @@
 \newcommand{\Vars}{\mathsf{Vars}}
 \newcommand{\Locs}{\mathsf{Locs}}
 \newcommand{\Leftvalues}{\mathsf{LV}}
-\newcommand{\locread}{\mathsf{loc_+}}
-\newcommand{\locreada}{\mathsf{loc_+^\alpha}}
+\newcommand{\type}{\mathsf{type}}
 \newcommand{\loc}{\mathsf{loc}}
 \newcommand{\loca}{\mathsf{loc}^\alpha}
 \newcommand{\drop}{\mathsf{drop}}
 \newcommand{\unwind}{\mathsf{unwind}}
 \newcommand{\Lifetimes}{\mathsf{Lifetimes}}
-\newcommand{\type}{\mathsf{type}}
 \newcommand{\movetype}{\mathsf{move}}
 \newcommand{\copytype}{\mathsf{copy}}
 \newcommand{\dom}{\mathsf{dom}}
@@ -127,8 +124,8 @@
 
 \begin{document}
 
-\title{A Soundness Proof of Borrowing\\by Abstract Interpretation of Rust}
-\titlerunning{A Soundness Proof of Borrowing by Abstract Interpretation of Rust}
+\title{On the Termination of Borrow Checking for Rust}
+\titlerunning{On the Termination of Borrow Checking for Rust}
 \author{TBD}
 \institute{TBD}
 
@@ -136,16 +133,13 @@
 
 \begin{abstract}
   \input{001_abstract}
-  \keywords{Type system, Borrowing, Rust, Static Analysis, Abstract Intepretation.}
+  \keywords{Borrowing, Type Checking, Rust, Termination.}
 \end{abstract}
 
 \input{010_introduction}
 \input{020_semantics}
-\input{030_abstract_semantics}
-\input{040_implementation}
 
 \input{090_conclusion}
-
 
 \bibliographystyle{plain}
 \bibliography{biblio}
