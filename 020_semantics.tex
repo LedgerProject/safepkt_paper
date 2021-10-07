@@ -185,18 +185,6 @@ replaces $13$ with $17$ inside the box in $x$.
   In all other cases, $t_1\sqcap t_2$ is undefined.
 \end{definition}
 
-\begin{definition}
-  The $\sqcup$ operator over $\mathsf{T}_\kappa$ is defined as
-  \begin{align*}
-    \mathsf{int}\sqcup\mathsf{int} &= \mathsf{int}\\
-    \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcup \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \borrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cup\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
-    \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcup \mutborrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \mutborrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cup\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
-    (\boxtype{t_1}) \sqcup (\boxtype{t_2}) &=\boxtype{(t_1\sqcup t_2)}\quad\text{if $t_1\sqcup t_2$ is defined}\\
-    \mathsf{dangling}\sqcup\mathsf{dangling} &= \mathsf{dangling}.
-  \end{align*}
-  In all other cases, $t_1\sqcup t_2$ is undefined.
-\end{definition}
-
 \begin{lemma}\label{lemma:glb-type}
   Let $I\subseteq\mathbb{N}$ and $\{t_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$.
   Then, if $\sqcap_{i\in I}t_i$ is defined, it is the greatest lower bound of $\{t_i\}_{i\in I}$.
@@ -262,6 +250,63 @@ replaces $13$ with $17$ inside the box in $x$.
     $(\boxtype{t'_1}) \sqcap (\boxtype{t'_2}) = t_1 \sqcap t_2$ is defined.
     \qed
   \end{itemize}
+\end{proof}
+
+\begin{definition}
+  The $\sqcup$ operator over $\mathsf{T}_\kappa$ is defined as
+  \begin{align*}
+    \mathsf{int}\sqcup\mathsf{int} &= \mathsf{int}\\
+    \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcup \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \borrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cup\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
+    \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcup \mutborrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \mutborrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cup\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
+    (\boxtype{t_1}) \sqcup (\boxtype{t_2}) &=\boxtype{(t_1\sqcup t_2)}\quad\text{if $t_1\sqcup t_2$ is defined}\\
+    \mathsf{dangling}\sqcup\mathsf{dangling} &= \mathsf{dangling}.
+  \end{align*}
+  In all other cases, $t_1\sqcup t_2$ is undefined.
+\end{definition}
+
+\begin{lemma}\label{lemma:lub-type}
+  Let $I\subseteq\mathbb{N}$ and $\{t_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$.
+  Then, if $\sqcup_{i\in I}t_i$ is defined, it is the least upper bound of
+  $\{t_i\}_{i\in I}$.
+\end{lemma}
+\begin{proof}
+  Assume that $\nu_I = \sqcup_{i\in I}t_i$ is defined.
+  We proceed by structural induction.
+  \begin{itemize}
+    \item (Base: there is a $t_k$ which is not a box)
+    If $t_k=\mathsf{int}$ then, as $\nu_I$ is defined, for all $i\in I$
+    we have $t_i=\mathsf{int}$. Therefore, $\nu_I=\mathsf{int}$
+    and so $\nu_I$ is an upper bound of $\{t_i\}_{i\in I}$.
+    Similarly if $t_k=\mathsf{dangling}$.
+    If $t_k$ is a borrow then, for all $i\in I$, $t_i$ is a borrow, and so
+    $\nu_I$ is a borrow which results from the union of the sets of
+    leftvalues of all the $t_i$'s. Hence, $\nu_I$ is an upper bound of
+    $\{t_i\}_{i\in I}$.
+    Similarly if $t_k$ is a mutable borrow.
+
+    Now, suppose that $\nu'_I$ is also an upper bound of $\{t_i\}_{i\in I}$.
+    If $\nu'_I=\mathsf{int}$ then each $t_i$ is $\mathsf{int}$, so
+    $\nu_I=\mathsf{int}$ and we have $\nu_I\sqsubseteq\nu'_I$.
+    Similarly if $\nu'_I=\mathsf{dangling}$.
+    If $\nu'_I=\borrow b$, then for all $i\in I$ we have $t_i = \borrow b_i$
+    and $b_i\subseteq b$. Hence, $\cup_{i\in I}b_i\subseteq b$ and so
+    $\borrow\cup_{i\in I}b_i\sqsubseteq\borrow b$. Consequently, we have
+    $\nu_I\sqsubseteq\nu'_I$ because $\nu_I=\borrow\cup_{i\in I}b_i$ in this case.
+    Similarly if $\nu'_I$ is a mutable borrow.
+    %
+    \item (Induction step) Suppose that for all $i\in I$ we have
+    $t_i = \boxtype{t'_i}$. Since $\nu_I$ is defined, also
+    $\sqcup_{i\in I}t'_i$ is defined and, by inductive hypothesis, it must be
+    the least upper bound of $\{t'_i\}_{i\in I}$. Then,
+    $\nu_I = \boxtype{(\sqcup_{i\in I}t'_i)}$ is an upper bound
+    of $\{t_i\}_{i\in I}$. Suppose that $\nu'_I$ is also an upper bound
+    of $\{t_i\}_{i\in I}$. Then, $\nu'_I=\boxtype{t}$ with
+    $t'_i\sqsubseteq t$ for all $i\in I$, and so $t$ is an upper bound
+    of $\{t'_i\}_{i\in I}$; hence, we have $\sqcup_{i\in I}t'_i\sqsubseteq t$
+    because $\sqcup_{i\in I}t'_i$ is the least upper bound and,
+    consequently, $\nu_I\sqsubseteq\nu'_I$.
+  \end{itemize}
+  \qed
 \end{proof}
 
 \begin{definition}[Typing]\label{def:typing}
