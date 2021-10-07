@@ -388,7 +388,9 @@ For that, we start by defining a concept of dependencies between leftvalues.
 Note that the closure in Def.~\ref{def:dependencies} makes $\gg$ transitive.
 
 Prop.~\ref{prop:acyclicity} proves that the dependencies between leftvalues
-model the pattern of the recursion in Def.~\ref{def:type}.
+model the pattern of the recursion in Def.~\ref{def:type}. Moreover,
+if the $\gg$ relation is acyclical, then $\gg$ (and consequently the recusion
+in Def.~\ref{def:type}) are well-founded.
 
 \begin{proposition}\label{prop:acyclicity}
   Given a context $\kappa$ and a typing $\tau$ over $\kappa$
