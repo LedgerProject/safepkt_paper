@@ -1,6 +1,51 @@
 \section{Introduction}\label{sec:introduction}
 
-This section will introduce the context of the paper: Rust, its very
-specific type system that guarantees memory safety, borrows and the
-limitations enforced by the borrow checker in order to guarantee the absence
-of dangling references.
+The Rust programming language is reaching widespread use,
+for instance for system programming,
+blockchain programming or smart contracts.
+A very specific feature of Rust is its ability to deallocate dynamically allocated
+data structure automatically, when they go out of scope. This is completely different
+from other programming languages, that either require programmers to free data structures
+explicitly, in code (such as C or C++), or embed a garbage collector, that scans the allocated memory
+and collects and frees unreachable data (such as Java, C\# and most modern programming languages).
+The former approach is error prone: programmers might miss deallocations or might deallocate twice;
+the latter is safer but more expensive and suboptimal:
+the garbage collector consumes resources and unreachable data remains
+allocated until the barbage collector is run.
+
+In Rust, each data structure is \emph{owned} by a variable. Once that variable goes
+out of scope, the data structure it owns gets freed as well. Assignments perform
+a transfer of ownership, from the rightvalue to the leftvalue, at least for some
+categories of data that can be \emph{moved} (intuitively, for reference types).
+In order to \emph{lend} a data structure as a parameter to a function, Rust allows the
+creation of \emph{borrows}, that can be seen as pointers in traditional programming languages.
+However, since borrows are access paths to data structures, the type checker of Rust
+must enforce strict rules on their creation and lifetime. For istance, at each given
+instant, the borrows of a data structure $X$ must be either all used for reading
+or there is actually only one borrow of $X$, used for writing.
+The implementation of the Rust compiler performs an additional type checking phase,
+after the traditional type checking is over,
+called \emph{borrow checking}.
+According to Rust developers, borrow checking is enough to guarantee that
+automatic deallocation does not create dangling pointers and multithreaded
+executions do not generate race conditions.
+
+A formal proof of the absence of dangling pointers has been provided in~\cite{Pearce21}.
+Namely, that article formalizes the borrow checker of Rust as a type system
+and proves its correctness. The formalization uses a notion of type that includes
+primitive types (such as \<int>), dynamically allocated data structures
+(collectively represented by a data boxing operator) and borrows of leftvalues,
+both for reading (immutable borrows)
+and for writing (mutable borrows). The type system rules are given by structural induction
+on the syntax of the Rust source code, hence are well-founded. However, they use, internally,
+a procedure to determine the type of leftvalues. Since borrows include other leftvalues,
+that procedure might end up in an infinite loop and never terminate. Hence type checking
+might not terminate as well.
+
+This paper provides a sufficient condition that entails that the type system
+in~\cite{Pearce21} terminates and shows that that condition holds for Rust programs that do not use
+reborrows (\textit{ie.} borrows of dereferences, practically equivalent to nops).
+This result is important in order to increase confidence in the borrow checker of Rust.
+Moreover, it provides a notion of well-foundness for the recursion used in the borrow checker,
+that future work can exploit in order to prove its properties by induction.
+

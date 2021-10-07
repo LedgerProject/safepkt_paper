@@ -338,11 +338,12 @@ Def.~3.11 from~\cite{Pearce21}.
 \end{definition}
 
 \noindent
-Note that $\type$ recurs in a way that, in general,
-is not well-founded, for the cases of $\borrow$ and $\borrow\mathtt{mut}$.
-Moreover, the $\sqcup$, in those two cases, might not be defined.
+Note that $\sqcup$ might be undefined for the cases of $\borrow$
+and $\borrow\mathtt{mut}$.
 As hinted in~\cite{Pearce21}, that corresponds to a situation when the program
 is not well typed, in the traditional sense of type checking.
+Moreover, note that, in the same two cases, $\type$ recurs in a way that, in general,
+is not well-founded.
 
 \begin{example}\label{ex:type_divergence}
   Consider the following typing:
