@@ -1,3 +1,110 @@
 \section{Rust and its Borrow Checker}\label{sec:rust}
 
-TODO
+This section shows examples about the use of borrows in
+Rust and how the borrow checker identifies illegal situations.
+
+Rust deallocates the data structure owned by a variable
+as soon as that variables goes out of scope. Consider for instance
+the following function, where the \<Box::new(13)> is the allocation of
+a data structure that wraps the integer $13$:
+
+\begin{verbatim}
+fn deallocate1() -> i32 { // accepted by the borrow checker
+    let x = Box::new(13);
+    return 17;
+}
+\end{verbatim}
+
+\noindent
+Local variable \<x> goes out of scope at the end of the function,
+hence Rust deallocates the box there, automatically.
+
+Assignments move the ownership of a value to their leftvalue. Consider
+for instance the following function:
+
+\begin{verbatim}
+fn deallocate2() { // rejected by the borrow checker
+    let x = Box::new(13);
+    {
+        let y = x;
+    }
+    println!("{}", x);
+}
+\end{verbatim}
+
+\noindent
+The ownership of the box moves from \<x> to \<y>. Since \<y> goes out of scope
+at the end of the inner block, the box gets deallocated there, before the
+\<println>. Consequently, the print statement is trying to print
+already deallocated data\ie is trying to access a dangling pointer.
+Correctly, the borrow checker of Rust rejects the previous function.
+
+Consider the following function now:
+
+\begin{verbatim}
+fn ok1() -> Box<i32> { // accepted by the borrow checker
+    let x = Box::new(13);
+    return x;
+}
+\end{verbatim}
+
+\noindent
+This time, the box owned by \<x> is assigned to the value returned by
+the function, that acquires its ownership and hands it to the caller of
+the function. Variable \<x> reaches the end of its scope at the end of the
+function, but it owns no value there, hence Rust does not deallocate
+anything inside \<ok1>.
+
+Things become more complicated if borrows of data structures exist.
+For instance, the following function tries to return a borrow of
+a data structure that has been already deallocated:
+
+\begin{verbatim}
+fn dangling() -> &Box<i32> { // rejected by the borrow checker
+    let i = Box::new(13);
+    let result = &i;
+    return result;
+}
+\end{verbatim}
+
+\noindent
+Local variable \<i> owns the box and goes out of scope at the end of the
+function, where the box gets deallocated. Consequently, the return value of
+the function is a dangling function. Correctly, Rust rejects this function.
+Namely, its borrow checker, as formalized in~\cite{Pearce21}, computes the
+following \emph{typing} at the end of the function:
+\[
+\{\<i>\to\boxtype{\mathsf{int},\<result>\to\borrow\{\<i>\}}\}
+\]
+from where it is apparent that the function is trying to return a borrow
+of a value that gets deallocated at the end of the function.
+
+Borrows are a sort of temporary ownership of a value. As a consequence,
+that value can be handled only through the borrow, for the whole
+duration of the borrow. Any other attempt to access the value is rejected.
+Consider for instance the following function:
+
+\begin{verbatim}
+fn writes_to_borrowed() { // rejected by the borrow checker
+    let v = 13;
+    let w = 17;
+    let mut y = &v;
+    let x = &y;
+    y = &w;
+    println!("{}{}{}{}", x, y, v, w);
+}
+\end{verbatim}
+
+\noindent
+Here, the \<y=\&w> statement is trying to modify its leftvalue \<y>
+that, howeverm has been borrowed at the previous line. Correcly, the borrow
+checker rejects this function. It computes the following typing
+just before the \<y=\&w> statement:
+
+\[
+\{\<v>\to\mathsf{int},\<w>\to\mathsf{int},\<y>\to\borrow\{\<v>\},\<x>\to\borrow\{\<y>\}\}
+\]
+
+\noindent
+from where it is apparent that \<y> is borrowed there. Therefore,
+the subsequent assignment \<y=\&w> gets rejected.
