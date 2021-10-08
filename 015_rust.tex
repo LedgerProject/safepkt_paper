@@ -80,8 +80,8 @@ from where it is apparent that the function is trying to return a borrow
 of a value that gets deallocated at the end of the function.
 
 Borrows are a sort of temporary ownership of a value. As a consequence,
-that value can be handled only through the borrow, for the whole
-duration of the borrow. Any other attempt to access the value is rejected.
+that value can be modified only through the borrow, for the whole
+duration of the borrow. Any other attempt to modify the value is rejected.
 Consider for instance the following function:
 
 \begin{verbatim}
@@ -97,7 +97,7 @@ fn writes_to_borrowed() { // rejected by the borrow checker
 
 \noindent
 Here, the \<y=\&w> statement is trying to modify its leftvalue \<y>
-that, howeverm has been borrowed at the previous line. Correcly, the borrow
+that, however, has been borrowed at the previous line. Correctly, the borrow
 checker rejects this function. It computes the following typing
 just before the \<y=\&w> statement:
 
@@ -108,3 +108,31 @@ just before the \<y=\&w> statement:
 \noindent
 from where it is apparent that \<y> is borrowed there. Therefore,
 the subsequent assignment \<y=\&w> gets rejected.
+
+Borrows in previous examples are immutable: the borrowed value can be read
+from them, but cannot be modified from them.
+But borrows can also be mutable, meaning that they allow to modify the
+borrowed value, with the dereference operator \<*>. In this sense,
+a mutable borrow takes full responsibility about the borrowed value, for its
+whole lifetime. When a mutable borrow to a value exist, that value cannot
+be written \emph{nor read} from any other path. Consider for instance
+the following function:
+
+\begin{verbatim}
+fn reads_from_mutably_borrowed() { // rejcted by the borrow checker
+    let mut z = 13;
+    let y = &mut z;
+    let x = z;
+    println!("{}{}{}", x, y, z);
+}
+\end{verbatim}
+
+\noindent
+The statement \<x=z> tries to read \<z>, that has been mutably borrowed
+at the previous line. Hence, the borrow checker rejects this function.
+It computes the typing
+\[
+\{\<z>\to\mathsf{int},\<y>\to\mutborrow\{\<z>\}\}
+\]
+just before \<x=z>, from where it is apparent that \<z> is mutably borrowed
+there.
