@@ -8,83 +8,6 @@
     \mathsf{w} ::= &\ x & \text{variable, with $x\in\kappa$}\\
     | &\ \mathtt{*}\mathsf{w} & \text{dereference.}
   \end{align*}
-  The set of \emph{expressions} \textsf{e} is defined as
-  \begin{align*}
-    \mathsf{e} ::= &\ i & \text{integer}\\
-    | &\ \mathsf{w} & \text{leftvalue}\\
-    | &\ \borrow\mathsf{w} & \text{borrow}\\
-    | &\ \mutborrow\mathsf{w} & \text{mutable borrow}\\
-    | &\ \mathtt{box}\ \mathsf{e} & \text{heap allocation.}
-  \end{align*}
-  The sets of \emph{terms} \textsf{t} and \emph{blocks} \textsf{b}
-  is defined as:
-  \begin{align*}
-    \mathsf{t} ::= &\ \mathsf{w}=\mathsf{e} & \text{assignment}\\
-    | &\ \mathtt{let\ mut}\ x=\mathsf{e} & \text{declaration, with $x\in\Vars$}\\
-    | &\ \{\mathsf{t_1};\ldots;\mathsf{t_n}\}^l & \text{block, with $n\ge 0$ and $l$ is a \emph{lifetime}.}
-  \end{align*}
-\end{definition}
-
-\begin{example}\label{ex:program}
-  The following valid program $P_1$ consists of a block that contains an inner block.
-  \[
-    \{
-      \mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
-      \{\mathtt{let\ mut}\ y = \mutborrow x;\
-      \mathtt{*}y = \mathtt{box}\ 1\}^l;\
-      \mathtt{let\ mut}\ z = x
-    \}^m
-  \]
-  \qed
-\end{example}
-
-The $*$ operator is called \emph{dereference}. In general, dereference means to access the
-value bound to a reference. In Rust, borrows, mutable borrows and boxes are all references.
-Hence, dereference can be used to read the value bound to a borrow, as in
-\[
-\{
-\mathtt{let\ mut}\ x = 13;\
-\mathtt{let\ mut}\ y = \borrow x;\
-\mathtt{let\ mut}\ z = \mathtt{*}y
-\}^l
-\]
-that reads the value bound to the address of $x$, hence copying $13$ into $z$.
-Dereference can also be used to access the value bound to a mutable borrow, as in
-\[
-\{
-\mathtt{let\ mut}\ x = 13;\
-\mathtt{let\ mut}\ y = \mutborrow x;\
-\mathtt{let\ mut}\ z = \mathtt{*}y
-\}^l
-\]
-that, again, copies $13$ into $z$.
-By using mutable borrows, one can also \emph{mutate} the referenced value, as in
-\[
-\{
-\mathtt{let\ mut}\ x = \mathtt{box}\ 0;\
-\mathtt{let\ mut}\ y = \mutborrow x;\
-\mathtt{*}y = \mathtt{box}\ 1
-\}^l
-\]
-that modifies $x$, so that it ends up being bound to a box containing $1$. Since $y$ holds a mutable borrow,
-it is legal to mutate the value bound to it, which would not be the case with a non-mutable borrow.
-Finally, the $*$ operator can be used to dereference a box, as in
-\[
-\{
-\mathtt{let\ mut}\ x = \mathtt{box}\ 13;\
-\mathtt{let\ mut}\ y = *x
-\}^l
-\]
-that binds $y$ to $13$. This works for writing into a box as well:
-\[
-\{
-\mathtt{let\ mut}\ x = \mathtt{box}\ 13;\
-\mathtt{let\ mut}\ *x = 17
-\}^l
-\]
-replaces $13$ with $17$ inside the box in $x$.
-
-\begin{definition}[Root of leftvalues]\label{def:root}
   The \emph{root} of a leftvalue is the starting variable to which the dereferences of the
   leftvalue are applied. Namely, we define
   \begin{align*}
@@ -92,6 +15,20 @@ replaces $13$ with $17$ inside the box in $x$.
     \mathsf{root}(\mathtt{*}\mathsf{w}) &= \mathsf{root}(\mathsf{w}).
   \end{align*}
 \end{definition}
+
+The types used by the borrow checker are somehow non-standard, in the sense
+that they can describe primitive types (such as \<int>) or structures
+dynamically allocated in memory (collectively represented by a box), but can also refer to
+a borrow or mutable borrow of one or more leftvalues.
+Moreover, a type can state that a value has been \emph{moved}, that is, assigned
+to another owner. Consequently, it exists but cannot be dereferenced.
+We write this as \<dangling>. In comparison to~\cite{Pearce21}, we are using
+a slight simplified set of types here, since~\cite{Pearce21} provides
+the \emph{ghost} type $t$ of a value that has been moved, as $\<dangling>(t)$.
+This information is important to ensure that a variable is subsequently
+reassigned a value compatible
+with its type $t$. However, we abstract this detail here, since it does not contribute to
+the termination of the algorithm for typing leftvalues.
 
 \begin{definition}[Types]
   The set of \emph{types} over a context $\kappa$ is
@@ -102,8 +39,8 @@ replaces $13$ with $17$ inside the box in $x$.
     | &\ \boxtype{\mathsf{T}_\kappa} & \text{box}\\
     | &\ \mathsf{dangling} & \text{dangling}
   \end{align*}
-  where $n\ge 1$ and the $\mathsf{w}_i$, with $1\le i\le n$, are leftvalues
-  using only variables in $\dom(\kappa)$. This set is ordered by $\sqsubseteq$, defined as
+  where $n\ge 1$ and $\mathsf{w}_i\in\Leftvalues_\kappa$ for $1\le i\le n$.
+  This set is ordered by $\sqsubseteq$, defined as
   \begin{align*}
     \mathsf{int}&\sqsubseteq\mathsf{int}\\
     \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \sqsubseteq
@@ -114,6 +51,9 @@ replaces $13$ with $17$ inside the box in $x$.
     \mathsf{dangling}&\sqsubseteq\mathsf{dangling.}
   \end{align*}
 \end{definition}
+
+We state now some results about the set of types and report
+the greatest lower bound and least upper bound operators on types.
 
 \begin{lemma}
   \label{lemma:partial-order-types}
@@ -309,15 +249,22 @@ replaces $13$ with $17$ inside the box in $x$.
   \qed
 \end{proof}
 
+We can now define the typings. They are a type environment, that is,
+type information about the variables in scope at a given program point.
+
 \begin{definition}[Typing]\label{def:typing}
   Given a context $\kappa$, a \emph{typing} $\tau$ over $\kappa$ is
-  a map from the variables in $\kappa$ % $\tau$
-  to types.
+  a map from the variables in $\kappa$ to types.
 \end{definition}
 
-A typing provides types to variables and can be extended in order to type
+A typing provides types to variables but can be used to type
 leftvalues as well, as shown below. Def.~\ref{def:type} is a translation of
-Def.~3.11 from~\cite{Pearce21}.
+Def.~3.11 from~\cite{Pearce21}. It can be seen as an algorithm for typing leftvalues
+and, as such, it is heavily used in the borrow checker formalized in~\cite{Pearce21}.
+The algorithm queries the typing when the leftvalue is actually a variable,
+and dereferences borrows or boxes when the leftvalue contains one or more
+\<*> operations. Types \<int> and \<dangling> cannot be dereferenced, hence the
+algorithm fails in that case for them.
 
 \begin{definition}[Type of leftvalues]\label{def:type}
   Given a context $\kappa$, a typing $\tau$ over $\kappa$
@@ -342,8 +289,11 @@ Note that $\sqcup$ might be undefined for the cases of $\borrow$
 and $\borrow\mathtt{mut}$.
 As hinted in~\cite{Pearce21}, that corresponds to a situation when the program
 is not well typed, in the traditional sense of type checking.
-Moreover, note that, in the same two cases, $\type$ recurs in a way that, in general,
-is not well-founded.
+
+Def.~\ref{def:typing} is clearly recursive, both on the structure of \<w> and
+on the leftvalues contained in the borrows or mutable borrows that occur in the typing.
+In general, that recursion is not well-founded. In algorithmic terms, this means
+that the algorithm for computing the type of leftvalues might not terminate.
 
 \begin{example}\label{ex:type_divergence}
   Consider the following typing:

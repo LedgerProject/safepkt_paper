@@ -119,7 +119,7 @@ be written \emph{nor read} from any other path. Consider for instance
 the following function:
 
 \begin{verbatim}
-fn reads_from_mutably_borrowed() { // rejcted by the borrow checker
+fn reads_from_mutably_borrowed() { // rejected by the borrow checker
     let mut z = 13;
     let y = &mut z;
     let x = z;
@@ -134,5 +134,52 @@ It computes the typing
 \[
 \{\<z>\to\mathsf{int},\<y>\to\mutborrow\{\<z>\}\}
 \]
-just before \<x=z>, from where it is apparent that \<z> is mutably borrowed
-there.
+just before \<x=z>, from where it is apparent that \<z> is mutably borrowed there.
+
+For the same reason, a mutable borrow cannot coexist with any other borrow. Consider for instance
+the following function:
+
+\begin{verbatim}
+fn both_borrows() { // rejected by the borrow checker
+    let mut z = 13;
+    let b1 = &z;
+    let b2 = &mut z;
+    println!("{}{}{}", z, b1, b2);
+}
+\end{verbatim}
+
+\noindent
+The attempt to create a mutable borrow of \<z> fails because there is a lready a borrow of \<z>
+in scope (inside variable \<b1>). This function is consequently rejected by the borrow checker.
+
+Borrows are a \emph{deep} temporary ownership, in the sense that take
+responsibility (temporarily) for the borrowed object and everything that is reachable from it.
+Consider for instance the following function:
+
+\begin{verbatim}
+fn both_borrows_complex() { // rejected by the borrow checker
+    let b = 13;
+    let x = Box::new(b);
+    let y = Box::new(x);
+    let mut z = Box::new(y);
+    let v = &**z;
+    let w = &mut z;
+    println!("{}{}", v, w);
+}
+\end{verbatim}
+
+\noindent
+The borrow checker rejects this function since it complains about
+\<z> being borrowed mutably by \<w> while it is also borrowed by \<v>.
+Actually, \<v> borrows \<**z>, but that is reachable from \<z>, hence
+the two borrows cannot coexist.
+The borrow checker computes the typing
+\[
+\{\<b>\to\mathsf{int},\<x>\to\boxtype{\mathsf{int}},\<y>\to\boxtype{\boxtype{\mathsf{int}}},
+\<z>\to\boxtype{\boxtype{\boxtype{\mathsf{int}}}},\<v>\to\borrow\{\<**z>\}\}
+\]
+just before the declaration of \<w>, from where it is apparent that \<**z> is
+already borrowed and hence \<z> is already borrowed and cannot be subsequently mutably borrowed.
+
+The previous example shows that, in general, the borrow checker builds typings
+where borrows refers to leftvalues (such as \<**z> inthe example) that are not necessarily variables.
