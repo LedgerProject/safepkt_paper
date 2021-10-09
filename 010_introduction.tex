@@ -4,14 +4,14 @@ The Rust programming language is reaching widespread use,
 for instance for system programming,
 blockchain programming or smart contracts.
 A very specific feature of Rust is its ability to deallocate dynamically allocated
-data structure automatically, when they go out of scope. This is completely different
+data structures automatically, when they go out of scope. This is completely different
 from other programming languages, that either require programmers to free data structures
 explicitly, in code (such as C or C++), or embed a garbage collector, that scans the allocated memory
 and collects and frees unreachable data (such as Java, C\# and most modern programming languages).
 The former approach is error prone: programmers might miss deallocations or might deallocate twice;
 the latter is safer but more expensive and suboptimal:
 the garbage collector consumes resources and unreachable data remains
-allocated until the barbage collector is run.
+allocated until the garbage collector is run.
 
 In Rust, each data structure is \emph{owned} by a variable. Once that variable goes
 out of scope, the data structure it owns gets freed as well. Assignments perform
@@ -48,4 +48,3 @@ reborrows (\textit{ie.} borrows of dereferences, practically equivalent to nops)
 This result is important in order to increase confidence in the borrow checker of Rust.
 Moreover, it provides a notion of well-foundness for the recursion used in the borrow checker,
 that future work can exploit in order to prove its properties by induction.
-
