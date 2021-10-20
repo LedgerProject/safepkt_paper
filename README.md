@@ -1,1 +1,1 @@
-# Semantics of the Rust language and borrow checker formalization by abstract interpretation
+# Termination Analysis of the Borrow Checker of Rust
