@@ -1,0 +1,92 @@
+\section{Semantical Invariant}\label{sec:invariant}
+
+This section proves an invariant of the typing rules
+from~\cite{Pearce21}. Namely,
+if those rules are applied to a typing $\tau$ hose dependencies are acyclical,
+they can only lead to a typing $\tau'$ whose dependencies are acyclical as well.
+By Prop.~\ref{prop:acyclicity}, this means that the recursion used for
+typing leftvalues in those rules is well-founded,
+hence the implementation of the typing rules from~\cite{Pearce21} terminates.
+
+We prove the invariant by rule induction.
+
+Some rules from~\cite{Pearce21} obviously keep the dependencies acyclical,
+since they do not change the typing. This is the case of rules
+\textsf{T-Const}, \textsf{T-Copy}, \textsf{T-MutBorrow} and
+\textsf{T-ImmBorrow}.
+
+Other rules keep the dependencies acyclical by rule induction,
+such as \textsf{T-Box} and \textsf{T-Seq}.
+
+Rule \textsf{T-Move} is used for typing the evaluation of a leftvalue
+whose type has move semantics. This modifies the typing since, in Rust,
+the ownership of the leftvalue moves away from itself.
+Formally, for this rule it is $\tau'=\mathsf{move}(\tau,\mathsf{w})$
+for a suitable leftvalue $\mathsf{w}$,
+where the $\mathsf{move}$ function
+modifies the binding for the root of $\mathsf{w}$ and is defined as:
+\[
+\mathsf{move}(\tau,\mathsf{w})=\tau[\mathsf{root}(\mathsf{w})\mapsto
+  \mathsf{strike}(\mathsf{w},\tau(\mathsf{root}(\mathsf{w})))]
+\]
+where
+\begin{align*}
+  \mathsf{strike}(x,t)&=\mathsf{dangling}\\
+  \mathsf{strike}(\mathtt{*}\mathsf{w},\boxtype{t})&=
+  \boxtype{\mathsf{strike}(\mathsf{w},t)}.
+\end{align*}
+The function $\mathsf{strike}$ is undefined otherwise.
+
+\begin{lemma}\label{lem:move_imvariant}
+  If rule \textsf{T-Move} is applied from a typing $\tau$ whose dependencies
+  are acyclical and leads to a typing $\tau'$, then the dependencies
+  of $\tau'$ are acyclical as well.
+\end{lemma}
+\begin{proof}
+  Following~\cite{Pearce21}, it is $\tau'=\mathsf{move}(\tau,\mathsf{w})$
+  for a suitable
+  leftvalue $\mathsf{w}$. Hence typings $\tau$ and $\tau'$ coincide
+  on all bindings but for that for $r=\mathsf{root}(\mathsf{w})$, where
+  \[
+  \tau'(r)=\mathsf{strike}(\mathsf{w},\tau(r)).
+  \]
+  Let us show that the set of dependencies between leftvalues induced
+  by $\tau'$ is included in the set of dependencies between leftvalues
+  induced by $\tau$. This follows from two facts:
+  \begin{enumerate}
+  \item for every type $t$ and leftvalue $\mathsf{w}''$, the $\mathsf{strike}$
+    function reduces the dependencies, that is,
+    $\mathsf{dependencies}(\mathsf{w}'',\mathsf{strike}(\mathsf{w},t))
+    \subseteq\mathsf{dependencies}(\mathsf{w}'',t)$;
+  \item for every type $t$, if a borrow occurs in
+    $\mathsf{strike}(\mathsf{w},t)$ then it occurs also in $t$.
+  \end{enumerate}
+  These two facts are proved by induction on $\mathsf{w}$.
+  \begin{itemize}
+  \item Base case: $\mathsf{w}=x\in\Vars$. Then $\mathsf{strike}(\mathsf{w},t)
+    =\mathsf{dangling}$,
+    which entails that $\mathsf{dependencies}
+    (\mathsf{w}'',\mathsf{strike}(\mathsf{w},t))=\varnothing$ and no borrow
+    occurs in $\mathsf{strike}(\mathsf{w},t)$. Both 1 and 2 hold trivially.
+  \item Inductive case: $\mathsf{w}=\mathtt{*}\mathsf{w}'$ and assume that
+    1 and 2 hold for $\mathsf{w}'$. Then it must be $t=\boxtype{t'}$
+    for some type $t'$ and $\mathsf{strike}(\mathsf{w},t)
+    =\boxtype{\mathsf{strike}(\mathsf{w}',t')}$. Hence
+    \begin{align*}
+      \mathsf{dependencies}(\mathsf{w}'',\mathsf{strike}(\mathsf{w},t))&=
+      \mathsf{dependencies}(\mathsf{w}'',\boxtype{\mathsf{strike}(\mathsf{w}',t')})\\
+      &=\mathsf{dependencies}(\mathtt{*}\mathsf{w}'',\mathsf{strike}(\mathsf{w}',t'))\\
+      \text{(by inductive hypothesis)}&\subseteq
+      \mathsf{dependencies}(\mathtt{*}\mathsf{w}'',t')\\
+      &=\mathsf{dependencies}(\mathsf{w}'',\boxtype{t'})\\
+      &=\mathsf{dependencies}(\mathsf{w}'',t)
+    \end{align*}
+    hence 1 holds for $\mathsf{w}$. Moreover, if a borrow occurs in
+    $\mathsf{strike}(\mathsf{w},t)$ then it must occurs
+    in $\boxtype{\mathsf{strike}(\mathsf{w}',t')}$, that is, it must occur in
+    $\mathsf{strike}(\mathsf{w}',t')$. By inductive hypothesis, the borrow
+    occurs in $t'$ and hence in $t=\boxtype{t'}$. Therefore, 2 holds for
+    $\mathsf{w}$ as well.
+  \end{itemize}
+  \qed
+\end{proof}
