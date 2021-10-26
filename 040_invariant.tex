@@ -2,7 +2,7 @@
 
 This section proves an invariant of the typing rules
 from~\cite{Pearce21}. Namely,
-if those rules are applied to a typing $\tau$ hose dependencies are acyclical,
+if those rules are applied to a typing $\tau$ whose dependencies are acyclical,
 they can only lead to a typing $\tau'$ whose dependencies are acyclical as well.
 By Prop.~\ref{prop:acyclicity}, this means that the recursion used for
 typing leftvalues in those rules is well-founded,
@@ -37,7 +37,7 @@ where
 \end{align*}
 The function $\mathsf{strike}$ is undefined otherwise.
 
-\begin{lemma}\label{lem:move_imvariant}
+\begin{lemma}\label{lem:move_invariant}
   If rule \textsf{T-Move} is applied from a typing $\tau$ whose dependencies
   are acyclical and leads to a typing $\tau'$, then the dependencies
   of $\tau'$ are acyclical as well.
@@ -88,5 +88,34 @@ The function $\mathsf{strike}$ is undefined otherwise.
     occurs in $t'$ and hence in $t=\boxtype{t'}$. Therefore, 2 holds for
     $\mathsf{w}$ as well.
   \end{itemize}
+  \qed
+\end{proof}
+
+The \textsf{T-Block} rule is used at the end of a block of code, where the set $S$ of local
+variables declared in the block goes out of scope. As a consequence, this rule removes
+the type bindings for those variables in $S$ from the initial typing $\tau$. It performs this
+through a function $\mathsf{drop}$ that projects away those variables from $\tau$ and is defined as:
+\[
+\mathsf{drop}(\tau,S)=\tau|_{-S}.
+\]
+The invariant for rule \textsf{T-Block} follows by rule induction and by the following result:
+%
+\begin{lemma}\label{lem:drop_invariant}
+  If rule \textsf{drop} is applied from a typing $\tau$ whose dependencies
+  are acyclical and leads to a typing $\tau'$, then the dependencies
+  of $\tau'$ are acyclical as well.
+\end{lemma}
+\begin{proof}
+  By definition, it is $\tau'=\tau|_{-S}$. Therefore, $\tau'$ consists of a subset of the
+  type bindings in $\tau$: it is a typing for a context $\kappa'$ while $\tau$ is a
+  typing for a context $\kappa$, with $\kappa'\subseteq\kappa$, and they coincide
+  on $\kappa'$. As a consequence,
+  \[
+  \bigcup\limits_{x\in\kappa'}\mathsf{dependencies}(x,\tau'(x))\subseteq
+  \bigcup\limits_{x\in\kappa}\mathsf{dependencies}(x,\tau(x)).
+  \]
+  Moreover, if a borrow occurs in $\tau'$, it also occurs in $\tau$. It follows
+  that the dependencies induced by $\tau'$ are included in those induced by $\tau$
+  and if the latter are acyclical, also the former must be acyclical.
   \qed
 \end{proof}
