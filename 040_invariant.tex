@@ -101,7 +101,7 @@ through a function $\mathsf{drop}$ that projects away those variables from $\tau
 The invariant for rule \textsf{T-Block} follows by rule induction and by the following result:
 %
 \begin{lemma}\label{lem:drop_invariant}
-  If rule \textsf{drop} is applied from a typing $\tau$ whose dependencies
+  If \textsf{drop} is applied from a typing $\tau$ whose dependencies
   are acyclical and leads to a typing $\tau'$, then the dependencies
   of $\tau'$ are acyclical as well.
 \end{lemma}
@@ -117,5 +117,121 @@ The invariant for rule \textsf{T-Block} follows by rule induction and by the fol
   Moreover, if a borrow occurs in $\tau'$, it also occurs in $\tau$. It follows
   that the dependencies induced by $\tau'$ are included in those induced by $\tau$
   and if the latter are acyclical, also the former must be acyclical.
+  \qed
+\end{proof}
+
+The rule \textsf{T-Declare} models the declaration of a new variable $x$,
+bound to a term $t$. The evaluation of $t$ leads to a typing $\tau$ that, by rule induction,
+satisfies the invariant. As a final step, this rule
+enlarges $\tau$ with a binding for $x$. Since $x$ is
+fresh (that is, $x\not\in\dom(\tau)$),
+variable $x$ does not occur in the right-hand side of that binding. Namely, the rule
+leads to a new typing $\tau'=\tau[x\to T]$ where $T$ is the type of $t$, such that
+$x$ does not occur in $T$. The invariant for rule \textsf{T-Declare} follows by the next result.
+
+\begin{lemma}\label{lem:declare_invariant}
+  Let $\tau$ be a typing for the context $\kappa$ whose dependencies
+  are acyclical; let $x\not\in\kappa$ and $T\in\mathsf{T}_\kappa$ (hence $x$ does not occur in $T$).
+  Then the dependencies of $\tau'=\tau[x\to T]$ are acyclical as well.
+\end{lemma}
+\begin{proof}
+  Let $\kappa'=\kappa\cup\{x\}$.
+  Let us compare the set
+  \[
+  R_\kappa=\{\mathtt{*}\mathsf{w}\gg\mathsf{w}\mid\mathsf{w}\in\Leftvalues_\kappa\}
+  \cup\bigcup\limits_{y\in\kappa}\mathsf{dependencies}(y,\tau(y))
+  \]
+  with the set
+  \begin{align*}
+  R_{\kappa'}&=\{\mathtt{*}\mathsf{w}\gg\mathsf{w}\mid\mathsf{w}\in\Leftvalues_{\kappa'}\}
+  \cup\bigcup\limits_{y\in\kappa'}\mathsf{dependencies}(y,\tau'(y))\\
+  &=\{\mathtt{*}\mathsf{w}\gg\mathsf{w}\mid\mathsf{w}\in\Leftvalues_\kappa\}
+  \cup\{\mathtt{*}\mathsf{w}\gg\mathsf{w}\mid\mathsf{w}\in\Leftvalues_{\kappa'}\setminus
+  \Leftvalues_{\kappa}\}\\
+  &\qquad\cup\bigcup\limits_{y\in\kappa}\mathsf{dependencies}(y,\tau(y))\\
+  &\qquad\cup\mathsf{dependencies}(x,\tau'(x))\\
+  &=R_\kappa\cup\underbrace{\{\mathtt{*}\mathsf{w}\gg\mathsf{w}\mid\mathsf{w}\in\Leftvalues_{\kappa'}\setminus
+  \Leftvalues_{\kappa}\}}_A\cup\underbrace{\mathsf{dependencies}(x,T)}_B\\
+  \end{align*}
+  The difference are the sets of dependencies $A$ and $B$. By construction:
+  \begin{enumerate}
+  \item the dependencies in
+    $A$ have the form $\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 1}\mathsf{w}\gg\mathsf{w}$ where $x$ occurs in $\mathsf{w}$ and hence
+    also in $\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 1}\mathsf{w}$;
+  \item the dependencies in $B$ have the form
+    $\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 1}x\gg\mathsf{w}$ where $x$ does not occur
+    in $\mathsf{w}$.
+  \end{enumerate}
+  In particular, note that there is no dependency in $A\cup B$ such that
+  $x$ occurs in its right-hand side but not in its left-hand side.
+
+  Let us compute the closure of $R_{\kappa'}$ now. For that, it is useful to introduce the notation
+  \[
+  C_\tau(R_1,R_2)=\left\{\underbrace{\mathtt{*}\cdots\mathtt{*}}_{n}\mathsf{w}_1\gg\mathsf{w}_3\left|
+  \begin{array}{l}
+    \mathsf{w}_1\gg\mathsf{w}_2\in R_1,\ \underbrace{\mathtt{*}\cdots\mathtt{*}}_{n\ge 0}\mathsf{w}_2\gg\mathsf{w}_3\in R_2\\
+    \text{and $\mathsf{w_3}$ is in a borrow that occurs in $\tau$}
+  \end{array}\right.\right\}.
+  \]
+  It is
+  \begin{align*}
+    \mathsf{closure}(R_{\kappa'})&=R_{\kappa}\cup A\cup B\cup C_{\tau'}(R_\kappa,R_\kappa)\\
+    &\qquad\cup C_{\tau'}(R_k,A\cup B)\cup C_{\tau'}(A\cup B, R_\kappa)\cup C_{\tau'}(A\cup B,A\cup B)\\
+    &=R_{\kappa}\cup A\cup B\cup C_{\tau}(R_\kappa,R_\kappa)\cup C_{[x\to T]}(R_\kappa,R_\kappa)\\
+    &\qquad\cup C_{\tau'}(R_k,A\cup B)\cup C_{\tau'}(A\cup B, R_\kappa)\cup C_{\tau'}(A\cup B,A\cup B)\\
+    &=\mathsf{closure}(R_\kappa)\cup A\cup B\cup C_{[x\to T]}(R_\kappa,R_\kappa)\\
+    &\qquad\cup C_{\tau'}(R_k,A\cup B)\cup C_{\tau'}(A\cup B, R_\kappa)\cup C_{\tau'}(A\cup B,A\cup B)
+  \end{align*}
+  Since all dependencies in $A\cup B$ contain $x$ on their left-hand side, that does not
+  occur in $R_\kappa$ instead, it is $C_{\tau'}(R_\kappa,A\cup B)=\varnothing$.
+  Since all dependencies in $A$ contain $x$ on their right-hand side, that does not
+  occur in $R_\kappa$ instead, it is $C_{\tau'}(A\cup B,R_\kappa)=C_{\tau'}(B,R_\kappa)$.
+  If a leftvalue occurs in a borrow in $T$, either that same leftvalue occured in a borrow
+  of $\tau$ as well, or otherwise it is never in the right-hand side of the dependencies
+  in $R_\kappa$. It follows that $C_{[x\to T]}(R_\kappa,R_\kappa)\subseteq\mathsf{closure}(R_\kappa)$.
+  Therefore
+  \[
+    \mathsf{closure}(R_{\kappa'})=\mathsf{closure}(R_\kappa)
+    \cup A\cup B\cup C_{\tau'}(B, R_\kappa)\cup C_{\tau'}(A\cup B,A\cup B).
+  \]
+  Since $A$ and $B$ satisfy the conditions 1 and 2 reported above, respectively, it follows that
+  also the dependencies in $C_\tau'(A\cup B,A\cup B)$ satisfy either 1 or 2. Moreover,
+  the dependencies in $C_{\tau'}(B,R_\kappa)$ satisfy condition 2. We conclude that the
+  dependencies in $\mathit{diff}=\mathsf{closure}(R_{\kappa'})\setminus\mathsf{closure}(R_\kappa)$
+  satisfy either condition 1 or condition 2 above.
+
+  Suppose now, by contradiction, that the dependencies in
+  $\mathsf{closure}(R_{\kappa'})$ be cyclical. Hence there is a cycle of dependencies
+  from $\mathsf{closure}(R_{\kappa'})$: $\mathsf{w}_0\gg\mathsf{w}_1\gg\mathsf{w}_2\gg\cdots\gg
+  \mathsf{w}_{k-1}\gg\mathsf{w}_k\gg\mathsf{w}_0$. Such dependencies
+  cannot be all in $\mathsf{closure}(R_\kappa)$ since, by hypothesis, the dependencies
+  induced by $\tau$ are acyclical. Therefore, there is at least one such dependency
+  that belongs to $\mathit{diff}$. Namely, without lost of generality, we can assume that
+  $\mathsf{w}_k\gg\mathsf{w}_0\in\mathit{diff}$. As shown above, either 1 or 2 holds for
+  $\mathsf{w}_k\gg\mathsf{w}_0$ and we have two corresponding cases:
+  \begin{itemize}
+  \item $\mathsf{w}_k=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 1}\mathsf{w}_0$
+    and $x$ occurs in $\mathsf{w}_\kappa$. Since $x$ does not occur in the dependencies
+    in $\mathsf{closure}(R_\kappa)$, we conclude that also
+    $\mathsf{w}_{k-1}\gg\mathsf{w}_k\in\mathit{diff}$. Since $x$ occurs in $\mathsf{w}_k$,
+    it follows that 1 must hold for $\mathsf{w}_{k-1}\gg\mathsf{w}_k$ as well and hence
+    $\mathsf{w}_{k-1}=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 1}\mathsf{w}_k=
+    \underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 2}\mathsf{w}_0$ and $x$
+    occurs in $\mathsf{w}_{k-1}$. We can continue with this reasoning for the whole cycle, until
+    we reach its starting leftvalue $\mathsf{w}_0$ and conclude that
+    $\mathsf{w}_0=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge k+1}\mathsf{w}_0$, which is
+    impossible.
+  \item $\mathsf{w}_k=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 1}x$ and $x$ does not occur in
+    $\mathsf{w}_0$. Since $x$ occurs in $\mathsf{w}_\kappa$
+    and $x$ does not occur in the dependencies
+    in $\mathsf{closure}(R_\kappa)$, we conclude that also
+    $\mathsf{w}_{k-1}\gg\mathsf{w}_k\in\mathit{diff}$.
+    Since $x$ occurs in $\mathsf{w}_k$,
+    it follows that 1 must hold for $\mathsf{w}_{k-1}\gg\mathsf{w}_k$ and hence
+    $x$ occurs in $\mathsf{w}_{k-1}$ as well. We can continue with
+    this reasoning for the whole cycle, until
+    we reach its starting leftvalue $\mathsf{w}_0$ and conclude that $x$ occurs in $\mathsf{w}_0$,
+    which is impossible.
+  \end{itemize}
   \qed
 \end{proof}
