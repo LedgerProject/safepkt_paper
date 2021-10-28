@@ -3,6 +3,97 @@
 This section provides a sufficient condition for the termination of the
 leftvalue typing algorithm in Def.~\ref{def:type}.
 
+The notion of \emph{linearization} for typings means that they map
+variables in a way that does not allow cycles, since a variable is mapped
+into a type whose variables have strictly larger rank. This is formally expressed below.
+
+\begin{definition}\label{def:linearization}
+  A typing $\tau$ over a context $\kappa$ is \emph{linearizable} if there exists
+  an injective function $\phi:\kappa\to\mathbb{N}$ such that, for every $x\in\kappa$ and every
+  $v$ that occurs in $\tau(x)$, it is $\phi(x)>\phi(v)$. We say that $\phi(y)$ is the \emph{rank} of $y$.
+\end{definition}
+
+A linearizable typing induces an ordering between leftvalues. Intuitively, either
+the number of dereferences decreases, or the rank of the root decreases.
+
+\begin{definition}\label{def:ordering}
+  Given a context $\kappa$ and a linearizable typing $\tau$ over $\kappa$, the
+  relation $>$ between leftvalues is defined as
+  \begin{enumerate}
+  \item $\mathtt{*}\mathsf{w}>\mathsf{w}$;
+  \item $\mathsf{w}_1>\mathsf{w}_2$ if $\phi(\mathsf{root}(\mathsf{w}_1))>\phi(\mathsf{root}(\mathsf{w}_2))$.
+  \end{enumerate}
+\end{definition}
+
+\begin{proposition}\label{prop:well-founded}
+  The relation $>$ from Def.~\ref{def:ordering} is well-founded.
+\end{proposition}
+\begin{proof}
+  Assume by contradiction that $>$ is not well-founded. Then there is an infinite sequence of
+  leftvalues $s=\mathsf{w}_0>\mathsf{w}_1>\cdots>\mathsf{w}_n>\cdots$.
+  Since, in the first rule of Def.~\ref{def:ordering}, it is
+  $\mathsf{root}(\mathtt{*}\mathsf{w})=\mathsf{root}(\mathsf{w})$ and consequently
+  $\phi(\mathsf{root}(\mathtt{*}\mathsf{w}))=\phi(\mathsf{root}(\mathsf{w}))$,
+  we conclude that the rank of the root of the leftvalues
+  decreases at most
+  $|\kappa|$ times in $s$ or remains constant. Hence, there is a finite $k$ such that
+  $\phi(\mathsf{root}(\mathsf{w}_{k}))=\phi(\mathsf{root}(\mathsf{w}_{k+i}))$
+  for all $i\ge 0$. This means that, from $k$ onwards, only rule 1 of Def.~\ref{def:ordering}
+  is applied. But that rule strictly decreases the size of the leftvalues and consequently cannot
+  be applied indefinitely. This is in incompatible with the hypothesis that $s$ be infinite.
+  \qed
+\end{proof}
+
+Since $>$ is well-founded, we can use it in a proof by induction, as for the next result.
+
+\begin{proposition}\label{prop:termination}
+  If the typing $\tau$ over $\kappa$ is linearizable, then the algorithm for computing $\type$ given in
+  Def.~\ref{def:type} terminates.
+\end{proposition}
+\begin{proof}
+  We actually prove a stronger statement, namely that, given $\mathsf{w}\in\Leftvalues_\kappa$:
+  \begin{enumerate}
+  \item $\type(\mathsf{w},\tau)$ terminates;
+  \item every variable $v$ that occurs in $\type(\mathsf{w},\tau)$
+    is such that $\phi(\mathsf{root}(\mathsf{w}))>\phi(v)$.
+  \end{enumerate}
+  We proceed by induction on $\mathsf{w}$. The base case is when $\mathsf{w}$ is actually the variable $x$
+  of lowest rank. By Def.~\ref{def:type}, it is $\type(x,\tau)=\tau(x)$ hence it terminates and
+  no variable occurs in it, since (Def.~\ref{def:linearization})
+  the rank of those variables should be even lower, which is impossible.
+  Assume now that both~1 and~2 hold for all leftvalues $\mathsf{w}'$ such that $\mathsf{w}>\mathsf{w}'$.
+  If $\mathsf{w}$ is a variable $x$, then $\type(x,\tau)=\tau(x)$ hence
+  $\type(\mathsf{w},\tau)$ terminates and every variable $v$ that occurs in $\tau(x)$ is such that
+  $\phi(x)>\phi(v)$ (Def.~\ref{def:linearization}). Hence both~1 and~2 hold for $\mathsf{w}$ as well.
+  If, instead, $\mathsf{w}=\mathtt{*}\mathsf{w}'$ for a suitable $\mathsf{w}'$,
+  then $\mathsf{w}>\mathsf{w}'$ (Def.~\ref{def:ordering}) and by inductive hypothesis we know that~1
+  and~2 hold for $\mathsf{w}'$. The computation of $\type(\mathtt{*}\mathsf{w}',\tau)$
+  first recurs on $\type(\mathsf{w}',\tau)$ (Def.~\ref{def:type}).
+  In the first, second, third and seventh case of Def.~\ref{def:type} also the
+  computation of $\type(\mathtt{*}\mathsf{w}',\tau)$ terminates and property~2 is vacuously true.
+  In the sixth case in Def.~\ref{def:type}, the computation of
+  $\type(\mathtt{*}\mathsf{w}',\tau)$ terminates and
+  $\type(\mathsf{w}',\tau)=\boxtype{\type(\mathtt{*}\mathsf{w}',\tau)}$.
+  Since $\mathsf{w}'$ and $\mathtt{*}\mathsf{w}'$ have the same root, condition~2
+  lifts from $\mathsf{w}'$ to $\mathtt{*}\mathsf{w}'$.
+  In the fourth and fifth cases, by inductive hypothesis we know that~2 holds
+  for $\mathsf{w}'$ and consequently the roots of the $\mathsf{w}_i$ in Def.~\ref{def:type}
+  have lower rank than the root of $\mathsf{w}'$. That is, $\mathsf{w}'>\mathsf{w}_i$
+  for every $i$. By inductive hypothesis, both~1 and~2 hold for those $\mathsf{w}_i$ as well. Hence
+  all $\type(\mathsf{w}_i,\tau)$ terminate. If any of them is undefined
+  or if $\sqcup_{1\le i\le n}\type(\mathsf{w}_i,\tau)$ is undefined, also
+  $\mathsf{type}(\mathtt{*}\mathsf{w}',\tau)$ is undefined and therefore terminates and
+  satisfies~2 vacuously. Otherwise
+  $\mathsf{type}(\mathtt{*}\mathsf{w}',\tau)$ terminates and yields
+  $\sqcup_{1\le i\le n}\type(\mathsf{w}_i,\tau)$.
+  Since $\sqcup$ does not introduce any new variable
+  (Def.~\ref{def:lub}), every variable that occurs in
+  $\sqcup_{1\le i\le n}\type(\mathsf{w}_i,\tau)$ has lower rank than
+  $\mathsf{root}(\mathsf{w}')=\mathsf{root}(\mathsf{w})$. Therefore
+  both~1 and~2 hold for $\mathsf{w}$ also in this case.
+  \qed
+\end{proof}
+
 The following definition captures how leftvalues \emph{decrease}
 during the recursion in Def.~\ref{def:type}.
 
