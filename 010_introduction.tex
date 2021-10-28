@@ -20,7 +20,7 @@ categories of data that can be \emph{moved} (intuitively, for reference types).
 In order to \emph{lend} a data structure as a parameter to a function, Rust allows the
 creation of \emph{borrows}, that can be seen as pointers in traditional programming languages.
 However, since borrows are access paths to data structures, the type checker of Rust
-must enforce strict rules on their creation and lifetime. For istance, at each given
+must enforce strict rules on their creation and lifetime. For instance, at each given
 instant, the borrows of a data structure $X$ must be either all used for reading
 or there is actually only one borrow of $X$, used for writing.
 The implementation of the Rust compiler performs an additional type checking phase,

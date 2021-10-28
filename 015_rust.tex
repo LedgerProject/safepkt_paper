@@ -70,7 +70,7 @@ fn dangling() -> &Box<i32> { // rejected by the borrow checker
 \noindent
 Local variable \<i> owns the box and goes out of scope at the end of the
 function, where the box gets deallocated. Consequently, the return value of
-the function is a dangling function. Correctly, Rust rejects this function.
+the function is a dangling pointer. Correctly, Rust rejects this function.
 Namely, its borrow checker, as formalized in~\cite{Pearce21}, computes the
 following \emph{typing} at the end of the function:
 \[
