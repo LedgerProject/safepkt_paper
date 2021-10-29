@@ -1,32 +1,44 @@
 name: Build LaTeX documents
 
-# Controls when the action will run. 
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
+  # Triggers the workflow on tag push prefixed with "safepkt-paper-v"
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
+    tags:
+      - safepkt-paper-v*.*.*
 jobs:
+
   build_latex:
+
     runs-on: ubuntu-latest
+
     steps:
+
+      - name: Set env
+        run: echo "RELEASE_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Create a release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          automatic_release_tag: ${{ env.RELEASE_NAME }}
+
       - name: Set up Git repository
         uses: actions/checkout@v2
+
       - name: Compile paper
         uses: xu-cheng/latex-action@v2
         with:
           root_file: 000_rust.tex
+
       - name: Check pdf files
         run: |
           file 000_rust.pdf | grep -q ' PDF '
+
       - name: Rename pdf files
         run: |
           mv 000_rust.pdf rust.pdf
+
       - name: Upload
         uses: actions/upload-artifact@v2
         with:
@@ -34,3 +46,9 @@ jobs:
           path: |
             rust.pdf
         if: always()
+
+      - name: Publish paper
+        run: /bin/bash -c "source $GITHUB_WORKSPACE/.github/publication/publish.sh"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NAME: ${{ env.RELEASE_NAME }}
