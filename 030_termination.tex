@@ -6,7 +6,7 @@ idea that the Rust type system forces programmers to build
 \emph{linear} data structures. This translates into a notion of
 \emph{linearization} for typings, meaning that they map
 variables in a way that does not allow cycles: each variable is mapped
-into a type where variables have strictly lower ranks.
+into a type whose variables have strictly lower ranks.
 
 \begin{definition}\label{def:linearization}
   A typing $\tau$ over a context $\kappa$ is \emph{linearizable} if there exists
@@ -70,7 +70,7 @@ Since $>$ is well-founded, we can use it in a proof by induction, as in the next
   then $\mathsf{w}>\mathsf{w}'$ (Def.~\ref{def:ordering}) and by inductive hypothesis we know that~1
   and~2 hold for $\mathsf{w}'$. The computation of $\type(\mathtt{*}\mathsf{w}',\tau)$
   first recurs on $\type(\mathsf{w}',\tau)$ (Def.~\ref{def:type}).
-  In the first, second, third and seventh case of Def.~\ref{def:type} also the
+  In the first, second and third case of Def.~\ref{def:type} also the
   computation of $\type(\mathtt{*}\mathsf{w}',\tau)$ terminates and property~2 is vacuously true.
   In the sixth case in Def.~\ref{def:type}, the computation of
   $\type(\mathtt{*}\mathsf{w}',\tau)$ terminates and

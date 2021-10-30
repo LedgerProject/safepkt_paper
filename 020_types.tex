@@ -1,5 +1,8 @@
 \section{Semantics}\label{sec:semantics}
 
+This section gives a formal definition of the types used by the borrow checker
+of Rust and of the typing procedure for leftvalues defined in~\cite{Pearce21}.
+
 \begin{definition}
   We assume there is a set of variables $\Vars$.
   A context $\kappa\subseteq\Vars$ is a finite set of variables in scope.
@@ -17,7 +20,7 @@
 \end{definition}
 
 The types used by the borrow checker are somehow non-standard, in the sense
-that they can describe primitive types (such as \<int>) or structures
+that they describe primitive types (such as \<int>) or structures
 dynamically allocated in memory (collectively represented by a box), but can also refer to
 a borrow or mutable borrow of one or more leftvalues.
 Moreover, a type can state that a value has been \emph{moved}, that is, assigned
@@ -25,9 +28,9 @@ to another owner. Consequently, it exists but cannot be dereferenced.
 We write this as \<dangling>. In comparison to~\cite{Pearce21}, we are using
 a slight simplified set of types here, since~\cite{Pearce21} provides
 the \emph{ghost} type $t$ of a value that has been moved, as $\<dangling>(t)$.
-This information is important to ensure that a variable is subsequently
-reassigned a value compatible
-with its type $t$. However, we abstract this detail here, since it does not contribute to
+This information is important to ensure that a variable, whose value has been
+previously moved away, is subsequently reassigned a value compatible
+with its original type $t$. However, we abstract this detail here, since it is irrelevant for
 the termination of the algorithm for typing leftvalues.
 
 \begin{definition}[Types]
@@ -51,9 +54,6 @@ the termination of the algorithm for typing leftvalues.
     \mathsf{dangling}&\sqsubseteq\mathsf{dangling.}
   \end{align*}
 \end{definition}
-
-We state now some results about the set of types and report
-the greatest lower bound and least upper bound operators on types.
 
 \begin{lemma}
   \label{lemma:partial-order-types}
@@ -113,84 +113,84 @@ the greatest lower bound and least upper bound operators on types.
   \qed
 \end{proof}
 
-\begin{definition}
-  The $\sqcap$ operator over $\mathsf{T}_\kappa$ is defined as
-  \begin{align*}
-    \mathsf{int}\sqcap\mathsf{int} &= \mathsf{int}\\
-    \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \borrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cap\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
-    \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \mutborrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \mutborrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cap\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
-    (\boxtype{t_1}) \sqcap (\boxtype{t_2}) &=\boxtype{(t_1\sqcap t_2)}\quad\text{if $t_1\sqcap t_2$ is defined}\\
-    \mathsf{dangling}\sqcap\mathsf{dangling} &= \mathsf{dangling}.
-  \end{align*}
-  In all other cases, $t_1\sqcap t_2$ is undefined.
-\end{definition}
+%\begin{definition}
+%  The $\sqcap$ operator over $\mathsf{T}_\kappa$ is defined as
+%  \begin{align*}
+%    \mathsf{int}\sqcap\mathsf{int} &= \mathsf{int}\\
+%    \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \borrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cap\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
+%    \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcap \mutborrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \mutborrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cap\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
+%    (\boxtype{t_1}) \sqcap (\boxtype{t_2}) &=\boxtype{(t_1\sqcap t_2)}\quad\text{if $t_1\sqcap t_2$ is defined}\\
+%    \mathsf{dangling}\sqcap\mathsf{dangling} &= \mathsf{dangling}.
+%  \end{align*}
+%  In all other cases, $t_1\sqcap t_2$ is undefined.
+%\end{definition}
 
-\begin{lemma}\label{lemma:glb-type}
-  Let $I\subseteq\mathbb{N}$ and $\{t_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$.
-  Then, if $\sqcap_{i\in I}t_i$ is defined, it is the greatest lower bound of $\{t_i\}_{i\in I}$.
-\end{lemma}
-\begin{proof}
-  Assume that $\mu_I = \sqcap_{i\in I}t_i$ is defined.
-  We proceed by structural induction.
-  \begin{itemize}
-    \item (Base: there is a $t_k$ which is not a box)
-    If $t_k=\mathsf{int}$ then, as $\mu_I$ is defined, for all $i\in I$
-    we have $t_i=\mathsf{int}$. Therefore, $\mu_I=\mathsf{int}$
-    and so $\mu_I$ is a lower bound of $\{t_i\}_{i\in I}$.
-    Similarly if $t_k=\mathsf{dangling}$.
-    If $t_k$ is a borrow then, for all $i\in I$, $t_i$ is a borrow, and so
-    $\mu_I$ is a borrow which results from the intersection of the sets of
-    leftvalues of all the $t_i$'s. Hence, $\mu_I$ is a lower bound of
-    $\{t_i\}_{i\in I}$.
-    Similarly if $t_k$ is a mutable borrow.
+%\begin{lemma}\label{lemma:glb-type}
+%  Let $I\subseteq\mathbb{N}$ and $\{t_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$.
+%  Then, if $\sqcap_{i\in I}t_i$ is defined, it is the greatest lower bound of $\{t_i\}_{i\in I}$.
+%\end{lemma}
+%\begin{proof}
+%  Assume that $\mu_I = \sqcap_{i\in I}t_i$ is defined.
+%  We proceed by structural induction.
+%  \begin{itemize}
+%    \item (Base: there is a $t_k$ which is not a box)
+%    If $t_k=\mathsf{int}$ then, as $\mu_I$ is defined, for all $i\in I$
+%    we have $t_i=\mathsf{int}$. Therefore, $\mu_I=\mathsf{int}$
+%    and so $\mu_I$ is a lower bound of $\{t_i\}_{i\in I}$.
+%    Similarly if $t_k=\mathsf{dangling}$.
+%    If $t_k$ is a borrow then, for all $i\in I$, $t_i$ is a borrow, and so
+%    $\mu_I$ is a borrow which results from the intersection of the sets of
+%    leftvalues of all the $t_i$'s. Hence, $\mu_I$ is a lower bound of
+%    $\{t_i\}_{i\in I}$.
+%    Similarly if $t_k$ is a mutable borrow.
+%
+%    Now, suppose that $\mu'_I$ is also a lower bound of $\{t_i\}_{i\in I}$.
+%    If $\mu'_I=\mathsf{int}$ then each $t_i$ is $\mathsf{int}$, so
+%    $\mu_I=\mathsf{int}$ and we have $\mu'_I\sqsubseteq\mu_I$.
+%    Similarly if $\mu'_I=\mathsf{dangling}$.
+%    If $\mu'_I=\borrow b$, then for all $i\in I$ we have $t_i = \borrow b_i$
+%    and $b \subseteq b_i$. Hence, $b \subseteq \cap_{i\in I}b_i$ and so
+%    $\borrow b \sqsubseteq \borrow\cap_{i\in I}b_i$. Consequently, we have
+%    $\mu'_I\sqsubseteq\mu_I$ because $\mu_I=\borrow\cap_{i\in I}b_i$ in this case.
+%    Similarly if $\mu'_I$ is a mutable borrow.
+%    %
+%    \item (Induction step) Suppose that for all $i\in I$ we have
+%    $t_i = \boxtype{t'_i}$. Since $\mu_I$ is defined, also
+%    $\sqcap_{i\in I}t'_i$ is defined and, by inductive hypothesis, it must be the greatest
+%    lower bound of $\{t'_i\}_{i\in I}$. Then,
+%    $\mu_I = \boxtype{(\sqcap_{i\in I}t'_i)}$ is a lower bound
+%    of $\{t_i\}_{i\in I}$. Suppose that $\mu'_I$ is also a lower bound
+%    of $\{t_i\}_{i\in I}$. Then, $\mu'_I=\boxtype{t}$ with
+%    $t\sqsubseteq t'_i$ for all $i\in I$, and so $t$ is a lower bound
+%    of $\{t'_i\}_{i\in I}$; hence, we have $t\sqsubseteq \sqcap_{i\in I}t'_i$
+%    because $\sqcap_{i\in I}t'_i$ is the greatest lower bound and,
+%    consequently, $\mu'_I\sqsubseteq\mu_I$.
+%  \end{itemize}
+%  \qed
+%\end{proof}
 
-    Now, suppose that $\mu'_I$ is also a lower bound of $\{t_i\}_{i\in I}$.
-    If $\mu'_I=\mathsf{int}$ then each $t_i$ is $\mathsf{int}$, so
-    $\mu_I=\mathsf{int}$ and we have $\mu'_I\sqsubseteq\mu_I$.
-    Similarly if $\mu'_I=\mathsf{dangling}$.
-    If $\mu'_I=\borrow b$, then for all $i\in I$ we have $t_i = \borrow b_i$
-    and $b \subseteq b_i$. Hence, $b \subseteq \cap_{i\in I}b_i$ and so
-    $\borrow b \sqsubseteq \borrow\cap_{i\in I}b_i$. Consequently, we have
-    $\mu'_I\sqsubseteq\mu_I$ because $\mu_I=\borrow\cap_{i\in I}b_i$ in this case.
-    Similarly if $\mu'_I$ is a mutable borrow.
-    %
-    \item (Induction step) Suppose that for all $i\in I$ we have
-    $t_i = \boxtype{t'_i}$. Since $\mu_I$ is defined, also
-    $\sqcap_{i\in I}t'_i$ is defined and, by inductive hypothesis, it must be the greatest
-    lower bound of $\{t'_i\}_{i\in I}$. Then,
-    $\mu_I = \boxtype{(\sqcap_{i\in I}t'_i)}$ is a lower bound
-    of $\{t_i\}_{i\in I}$. Suppose that $\mu'_I$ is also a lower bound
-    of $\{t_i\}_{i\in I}$. Then, $\mu'_I=\boxtype{t}$ with
-    $t\sqsubseteq t'_i$ for all $i\in I$, and so $t$ is a lower bound
-    of $\{t'_i\}_{i\in I}$; hence, we have $t\sqsubseteq \sqcap_{i\in I}t'_i$
-    because $\sqcap_{i\in I}t'_i$ is the greatest lower bound and,
-    consequently, $\mu'_I\sqsubseteq\mu_I$.
-  \end{itemize}
-  \qed
-\end{proof}
-
-\begin{lemma}\label{lemma:technical-type}
-  Let $t\in\mathsf{T}_\kappa$. For any $t_1,t_2\in\mathsf{T}_\kappa$,
-  if $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$ then $t_1\sqcap t_2$ is defined.
-\end{lemma}
-\begin{proof}
-  We proceed by structural induction on $t$.
-  \begin{itemize}
-    \item (Base: $t$ is not a box)
-    Let $t_1,t_2\in\mathsf{T}_\kappa$ with $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$.
-    If $t$ is $\mathsf{int}$ (resp. a borrow, a mutable borrow or $\mathsf{dangling}$)
-    then, necessarily, $t_1$ and $t_2$ are $\mathsf{int}$ (resp. a borrow,
-    a mutable borrow or $\mathsf{dangling}$), hence $t_1\sqcap t_2$ is defined.
-    %
-    \item (Induction step) Suppose that $t = \boxtype{t'}$.
-    Let $t_1,t_2\in\mathsf{T}_\kappa$ with $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$.
-    Then, necessarily, $t_1 = \boxtype{t'_1}$ and $t_2 = \boxtype{t'_2}$
-    with $t'\sqsubseteq t'_1$ and $t'\sqsubseteq t'_2$. By induction
-    hypothesis, $t'_1\sqcap t'_2$ is defined, so
-    $(\boxtype{t'_1}) \sqcap (\boxtype{t'_2}) = t_1 \sqcap t_2$ is defined.
-    \qed
-  \end{itemize}
-\end{proof}
+%\begin{lemma}\label{lemma:technical-type}
+%  Let $t\in\mathsf{T}_\kappa$. For any $t_1,t_2\in\mathsf{T}_\kappa$,
+%  if $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$ then $t_1\sqcap t_2$ is defined.
+%\end{lemma}
+%\begin{proof}
+%  We proceed by structural induction on $t$.
+%  \begin{itemize}
+%    \item (Base: $t$ is not a box)
+%    Let $t_1,t_2\in\mathsf{T}_\kappa$ with $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$.
+%    If $t$ is $\mathsf{int}$ (resp. a borrow, a mutable borrow or $\mathsf{dangling}$)
+%    then, necessarily, $t_1$ and $t_2$ are $\mathsf{int}$ (resp. a borrow,
+%    a mutable borrow or $\mathsf{dangling}$), hence $t_1\sqcap t_2$ is defined.
+%    %
+%    \item (Induction step) Suppose that $t = \boxtype{t'}$.
+%    Let $t_1,t_2\in\mathsf{T}_\kappa$ with $t\sqsubseteq t_1$ and $t\sqsubseteq t_2$.
+%    Then, necessarily, $t_1 = \boxtype{t'_1}$ and $t_2 = \boxtype{t'_2}$
+%    with $t'\sqsubseteq t'_1$ and $t'\sqsubseteq t'_2$. By induction
+%    hypothesis, $t'_1\sqcap t'_2$ is defined, so
+%    $(\boxtype{t'_1}) \sqcap (\boxtype{t'_2}) = t_1 \sqcap t_2$ is defined.
+%    \qed
+%  \end{itemize}
+%\end{proof}
 
 \begin{definition}\label{def:lub}
   The $\sqcup$ operator over $\mathsf{T}_\kappa$ is defined as
@@ -263,7 +263,8 @@ Def.~3.11 from~\cite{Pearce21}. It can be seen as an algorithm for typing leftva
 and, as such, it is heavily used in the borrow checker formalized in~\cite{Pearce21}.
 The algorithm queries the typing when the leftvalue is actually a variable,
 and dereferences borrows or boxes when the leftvalue contains one or more
-\<*> operations. Types \<int> and \<dangling> cannot be dereferenced, hence the
+\<*> operations, recurring in the case of borrows.
+Types \<int> and \<dangling> cannot be dereferenced, hence the
 algorithm fails in that case for them.
 
 \begin{definition}[Type of leftvalues]\label{def:type}
@@ -278,8 +279,7 @@ algorithm fails in that case for them.
     \text{undefined} & \text{if $\type(\mathsf{w},\tau)=\mathsf{int}$}\\
     \sqcup_{1\le i\le n}\type(\mathsf{w}_i,\tau) & \text{if $\type(\mathsf{w},\tau)=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
     \sqcup_{1\le i\le n}\type(\mathsf{w}_i,\tau) & \text{if $\type(\mathsf{w},\tau)=\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
-    t & \text{if $\type(\mathsf{w},\tau)=\boxtype{t}$}\\
-    \text{undefined} & \text{otherwise.}
+    t & \text{if $\type(\mathsf{w},\tau)=\boxtype{t}$.}
     \end{cases}
   \end{align*}
 \end{definition}
@@ -287,24 +287,17 @@ algorithm fails in that case for them.
 \noindent
 Note that $\sqcup$ might be undefined for the cases of $\borrow$
 and $\borrow\mathtt{mut}$.
-As hinted in~\cite{Pearce21}, that corresponds to a situation when the program
+As hinted in~\cite{Pearce21}, this corresponds to a situation when the program
 is not well typed, in the traditional sense of type checking.
 
-Def.~\ref{def:type} is clearly recursive, both on the structure of \<w> and
+Def.~\ref{def:type} is clearly recursive, both on the structure of $\mathsf{w}$ and
 on the leftvalues contained in the borrows or mutable borrows that occur in the typing.
 In general, that recursion is not well-founded. In algorithmic terms, this means
 that the algorithm for computing the type of leftvalues might not terminate.
-
-\begin{example}\label{ex:type_divergence}
-  Consider the following typing:
-  \[
-  \{x\to\borrow\{\mathtt{*}x\}\}.
-  \]
-  Then the definition of $\type(\mathtt{*}x,\tau)$ ends in an infinite loop.
-\end{example}
-
-\noindent
-Ex.~\ref{ex:type_divergence} can be arbitrarily complicated, through the
+Consider for instance the typing $\{x\to\borrow\{\mathtt{*}x\}\}$:
+the definition of $\type(\mathtt{*}x,\tau)$ ends in an infinite loop.
+This example can be arbitrarily complicated, through the
 use of more involved cycles that pass through more variables. As a consequence,
-the natural question is to understand when Def.~\ref{def:type} is well-founded.
-For that, we start by defining a concept of dependencies between leftvalues.
+the natural question is to understand when the recursion in
+Def.~\ref{def:type} is well-founded and if that is always the case when it is
+used by the borrow checker of Rust.

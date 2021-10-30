@@ -16,7 +16,7 @@ fn deallocate1() -> i32 { // accepted by the borrow checker
 \end{verbatim}
 
 \noindent
-Local variable \<x> goes out of scope at the end of the function,
+Local variable $x$ goes out of scope at the end of the function,
 hence Rust deallocates the box there, automatically.
 
 Assignments move the ownership of a value to their leftvalue. Consider
@@ -33,7 +33,7 @@ fn deallocate2() { // rejected by the borrow checker
 \end{verbatim}
 
 \noindent
-The ownership of the box moves from \<x> to \<y>. Since \<y> goes out of scope
+The ownership of the box moves from $x$ to $y$. Since $y$ goes out of scope
 at the end of the inner block, the box gets deallocated there, before the
 \<println>. Consequently, the print statement is trying to print
 already deallocated data\ie it is trying to access a dangling pointer.
@@ -49,9 +49,9 @@ fn ok1() -> Box<i32> { // accepted by the borrow checker
 \end{verbatim}
 
 \noindent
-This time, the box owned by \<x> is assigned to the value returned by
+This time, the box owned by $x$ is assigned to the value returned by
 the function, that acquires its ownership and hands it to the caller of
-the function. Variable \<x> reaches the end of its scope at the end of the
+the function. Variable $x$ reaches the end of its scope at the end of the
 function, but it owns no value there, hence Rust does not deallocate
 anything inside \<ok1>.
 
@@ -68,19 +68,19 @@ fn dangling() -> &Box<i32> { // rejected by the borrow checker
 \end{verbatim}
 
 \noindent
-Local variable \<i> owns the box and goes out of scope at the end of the
+Local variable $i$ owns the box and goes out of scope at the end of the
 function, where the box gets deallocated. Consequently, the return value of
 the function is a dangling pointer. Correctly, Rust rejects this function.
 Namely, its borrow checker, as formalized in~\cite{Pearce21}, computes the
 following \emph{typing} (or \emph{type environment}) at the end of the function:
 \[
-\{\<i>\to\boxtype{\mathsf{int},\<result>\to\borrow\{\<i>\}}\}
+\{i\to\boxtype{\mathsf{int},\<result>\to\borrow\{i\}}\}
 \]
 from where it is apparent that the function is trying to return a borrow
 of a value that gets deallocated at the end of the function. Note that the borrow
 checker allows one to
 use types that are borrows of more leftvalues (not just variables),
-such as $\borrow\{\<x>,\<**y>\}$.
+such as $\borrow\{z,\mathtt{**}y\}$.
 Such types arise from the reconciliation of the typings at the end of
 conditional statements (that we do not show in this paper).
 
@@ -101,17 +101,17 @@ fn writes_to_borrowed() { // rejected by the borrow checker
 \end{verbatim}
 
 \noindent
-Here, the \<y=\&w> statement is trying to modify the leftvalue \<y>
+Here, the \<y=\&w> statement is trying to modify the leftvalue $y$
 that, however, has been borrowed at the previous line. Correctly, the borrow
 checker rejects this function. It computes the following typing
 just before the \<y=\&w> statement:
 
 \[
-\{\<v>\to\mathsf{int},\<w>\to\mathsf{int},\<y>\to\borrow\{\<v>\},\<x>\to\borrow\{\<y>\}\}
+\{v\to\mathsf{int},w\to\mathsf{int},y\to\borrow\{v\},x\to\borrow\{y\}\}
 \]
 
 \noindent
-from where it is apparent that \<y> is borrowed there. Therefore,
+from where it is apparent that $y$ is borrowed there. Therefore,
 the subsequent assignment \<y=\&w> gets rejected.
 
 Borrows in previous examples are immutable: the borrowed value can be read
@@ -133,13 +133,13 @@ fn reads_from_mutably_borrowed() { // rejected by the borrow checker
 \end{verbatim}
 
 \noindent
-The statement \<x=z> tries to read \<z>, that has been mutably borrowed
+The statement \<x=z> tries to read $z$, that has been mutably borrowed
 at the previous line. Hence, the borrow checker rejects this function.
 It computes the typing
 \[
-\{\<z>\to\mathsf{int},\<y>\to\mutborrow\{\<z>\}\}
+\{z\to\mathsf{int},y\to\mutborrow\{z\}\}
 \]
-just before \<x=z>, from where it is apparent that \<z> is mutably borrowed there.
+just before \<x=z>, from where it is apparent that $z$ is mutably borrowed there.
 
 %For the same reason, a mutable borrow cannot coexist with any other borrow. Consider for instance
 %the following function:
@@ -154,7 +154,7 @@ just before \<x=z>, from where it is apparent that \<z> is mutably borrowed ther
 %\end{verbatim}
 %
 %\noindent
-%The attempt to create a mutable borrow of \<z> fails because there is already a borrow of \<z>
+%The attempt to create a mutable borrow of $z$ fails because there is already a borrow of $z$
 %in scope (inside variable \<b1>). This function is consequently rejected by the borrow checker.
 
 %Borrows are a \emph{deep} temporary ownership, in the sense that they take
@@ -175,13 +175,13 @@ just before \<x=z>, from where it is apparent that \<z> is mutably borrowed ther
 %
 %\noindent
 %The borrow checker rejects this function since it complains about
-%\<z> being borrowed mutably by \<w> while it is also borrowed by \<v>.
-%Actually, \<v> borrows \<**z>, but that is reachable from \<z>, hence
+%$z$ being borrowed mutably by $w$ while it is also borrowed by $v$.
+%Actually, $v$ borrows $\mathtt{**}z$, but that is reachable from $z$, hence
 %the two borrows cannot coexist.
 %The borrow checker computes the typing
 %\[
-%\{\<b>\to\mathsf{int},\<x>\to\boxtype{\mathsf{int}},\<y>\to\boxtype{\boxtype{\mathsf{int}}},
-%\<z>\to\boxtype{\boxtype{\boxtype{\mathsf{int}}}},\<v>\to\borrow\{\<**z>\}\}
+%\{b\to\mathsf{int},x\to\boxtype{\mathsf{int}},y\to\boxtype{\boxtype{\mathsf{int}}},
+%z\to\boxtype{\boxtype{\boxtype{\mathsf{int}}}},v\to\borrow\{\mathtt{**}z\}\}
 %\]
-%just before the declaration of \<w>, from where it is apparent that \<**z> is
-%already borrowed and hence \<z> is already borrowed as well and cannot be subsequently mutably borrowed.
+%just before the declaration of $w$, from where it is apparent that $\mathtt{**}z$ is
+%already borrowed and hence $z$ is already borrowed as well and cannot be subsequently mutably borrowed.
