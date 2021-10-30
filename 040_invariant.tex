@@ -2,21 +2,22 @@
 
 This section proves an invariant of the typing rules
 from~\cite{Pearce21}. Namely,
-if those rules are applied to a typing $\tau$ whose dependencies are acyclical,
-they can only lead to a typing $\tau'$ whose dependencies are acyclical as well.
-By Prop.~\ref{prop:acyclicity}, this means that the recursion used for
+if those rules are applied to a linearizable typing $\tau$,
+they can only lead to a linearizable typing $\tau'$.
+By Prop.~\ref{prop:termination}, this means that the recursion used for
 typing leftvalues in those rules is well-founded,
 hence the implementation of the typing rules from~\cite{Pearce21} terminates.
 
-We prove the invariant by rule induction.
+We prove the invariant by rule induction on the rule for statements in~\cite{Perace21}.
 
-Some rules from~\cite{Pearce21} obviously keep the dependencies acyclical,
-since they do not change the typing. This is the case of rules
+Some rules from~\cite{Pearce21} obviously satisfy the invariant,
+since they do not modify the typing (for them, $\tau=\tau'$).
+This is the case of rules
 \textsf{T-Const}, \textsf{T-Copy}, \textsf{T-MutBorrow} and
 \textsf{T-ImmBorrow}.
 
-Other rules keep the dependencies acyclical by rule induction,
-such as \textsf{T-Box} and \textsf{T-Seq}.
+Other rules satisfy the invariant by a simple application of
+rule induction, such as \textsf{T-Box} and \textsf{T-Seq}.
 
 Rule \textsf{T-Move} is used for typing the evaluation of a leftvalue
 whose type has move semantics. This modifies the typing since, in Rust,
@@ -35,61 +36,10 @@ where
   \mathsf{strike}(\mathtt{*}\mathsf{w},\boxtype{t})&=
   \boxtype{\mathsf{strike}(\mathsf{w},t)}.
 \end{align*}
-The function $\mathsf{strike}$ is undefined otherwise.
-
-\begin{lemma}\label{lem:move_invariant}
-  If rule \textsf{T-Move} is applied from a typing $\tau$ whose dependencies
-  are acyclical and leads to a typing $\tau'$, then the dependencies
-  of $\tau'$ are acyclical as well.
-\end{lemma}
-\begin{proof}
-  Following~\cite{Pearce21}, it is $\tau'=\mathsf{move}(\tau,\mathsf{w})$
-  for a suitable
-  leftvalue $\mathsf{w}$. Hence typings $\tau$ and $\tau'$ coincide
-  on all bindings but for that for $r=\mathsf{root}(\mathsf{w})$, where
-  \[
-  \tau'(r)=\mathsf{strike}(\mathsf{w},\tau(r)).
-  \]
-  Let us show that the set of dependencies between leftvalues induced
-  by $\tau'$ is included in the set of dependencies between leftvalues
-  induced by $\tau$. This follows from two facts:
-  \begin{enumerate}
-  \item for every type $t$ and leftvalue $\mathsf{w}''$, the $\mathsf{strike}$
-    function reduces the dependencies, that is,
-    $\mathsf{dependencies}(\mathsf{w}'',\mathsf{strike}(\mathsf{w},t))
-    \subseteq\mathsf{dependencies}(\mathsf{w}'',t)$;
-  \item for every type $t$, if a borrow occurs in
-    $\mathsf{strike}(\mathsf{w},t)$ then it occurs also in $t$.
-  \end{enumerate}
-  These two facts are proved by induction on $\mathsf{w}$.
-  \begin{itemize}
-  \item Base case: $\mathsf{w}=x\in\Vars$. Then $\mathsf{strike}(\mathsf{w},t)
-    =\mathsf{dangling}$,
-    which entails that $\mathsf{dependencies}
-    (\mathsf{w}'',\mathsf{strike}(\mathsf{w},t))=\varnothing$ and no borrow
-    occurs in $\mathsf{strike}(\mathsf{w},t)$. Both 1 and 2 hold trivially.
-  \item Inductive case: $\mathsf{w}=\mathtt{*}\mathsf{w}'$ and assume that
-    1 and 2 hold for $\mathsf{w}'$. Then it must be $t=\boxtype{t'}$
-    for some type $t'$ and $\mathsf{strike}(\mathsf{w},t)
-    =\boxtype{\mathsf{strike}(\mathsf{w}',t')}$. Hence
-    \begin{align*}
-      \mathsf{dependencies}(\mathsf{w}'',\mathsf{strike}(\mathsf{w},t))&=
-      \mathsf{dependencies}(\mathsf{w}'',\boxtype{\mathsf{strike}(\mathsf{w}',t')})\\
-      &=\mathsf{dependencies}(\mathtt{*}\mathsf{w}'',\mathsf{strike}(\mathsf{w}',t'))\\
-      \text{(by inductive hypothesis)}&\subseteq
-      \mathsf{dependencies}(\mathtt{*}\mathsf{w}'',t')\\
-      &=\mathsf{dependencies}(\mathsf{w}'',\boxtype{t'})\\
-      &=\mathsf{dependencies}(\mathsf{w}'',t)
-    \end{align*}
-    hence 1 holds for $\mathsf{w}$. Moreover, if a borrow occurs in
-    $\mathsf{strike}(\mathsf{w},t)$ then it must occurs
-    in $\boxtype{\mathsf{strike}(\mathsf{w}',t')}$, that is, it must occur in
-    $\mathsf{strike}(\mathsf{w}',t')$. By inductive hypothesis, the borrow
-    occurs in $t'$ and hence in $t=\boxtype{t'}$. Therefore, 2 holds for
-    $\mathsf{w}$ as well.
-  \end{itemize}
-  \qed
-\end{proof}
+The function $\mathsf{strike}$ is undefined otherwise. The intuition is that
+$\mathsf{strike}$ can only make the set of variables in the right-hand side
+of the typing smaller. Therefore, it can never make $\tau'$
+non-linearizable. This is proved below.
 
 \begin{lemma}\label{lem:move_invariant}
   If rule \textsf{T-Move} is applied from a linearizable typing $\tau$
@@ -99,41 +49,23 @@ The function $\mathsf{strike}$ is undefined otherwise.
   By definition of $\mathsf{move}$, the only
   difference between $\tau$ and $\tau'$ is at $r=\mathsf{root}(\mathsf{w})$,
   where the variables that occur in $\tau'(r)$ are included in those that occur
-  in $\tau(r)$ ($\mathsf{strike}$ can only strike away part of the type of $\tau(r)$).
+  in $\tau(r)$ ($\mathsf{strike}$ can only strike away part of the type $\tau(r)$).
   Hence the same function $\phi$ that exists for $\tau$ (Def.~\ref{def:linearization})
-  can be used to show that $\tau'$ is linearizable.
+  shows that $\tau'$ is linearizable.
   \qed
 \end{proof}
 
-The \textsf{T-Block} rule is used at the end of a block of code, where the set $S$ of local
+Rule \textsf{T-Block} is used at the end of a block of code, where the set $S$ of local
 variables declared in the block goes out of scope. As a consequence, this rule removes
 the type bindings for those variables in $S$ from the initial typing $\tau$. It performs this
-through a function $\mathsf{drop}$ that projects away those variables from $\tau$ and is defined as:
+through a function $\mathsf{drop}$ that projects those variables away from $\tau$ and is defined as:
 \[
 \mathsf{drop}(\tau,S)=\tau|_{-S}.
 \]
-The invariant for rule \textsf{T-Block} follows by rule induction and by the following result:
+The invariant for rule \textsf{T-Block} follows by rule induction and by the following result,
+whose intuition is that the removal of bindings from a typing can never make it
+non-linearizable.
 %
-\begin{lemma}\label{lem:drop_invariant}
-  If \textsf{drop} is applied from a typing $\tau$ whose dependencies
-  are acyclical and leads to a typing $\tau'$, then the dependencies
-  of $\tau'$ are acyclical as well.
-\end{lemma}
-\begin{proof}
-  By definition, it is $\tau'=\tau|_{-S}$. Therefore, $\tau'$ consists of a subset of the
-  type bindings in $\tau$: it is a typing for a context $\kappa'$ while $\tau$ is a
-  typing for a context $\kappa$, with $\kappa'\subseteq\kappa$, and they coincide
-  on $\kappa'$. As a consequence,
-  \[
-  \bigcup\limits_{x\in\kappa'}\mathsf{dependencies}(x,\tau'(x))\subseteq
-  \bigcup\limits_{x\in\kappa}\mathsf{dependencies}(x,\tau(x)).
-  \]
-  Moreover, if a borrow occurs in $\tau'$, it also occurs in $\tau$. It follows
-  that the dependencies induced by $\tau'$ are included in those induced by $\tau$
-  and if the latter are acyclical, also the former must be acyclical.
-  \qed
-\end{proof}
-
 \begin{lemma}\label{lem:drop_invariant}
   If \textsf{drop} is applied from a linearizable typing $\tau$
   and leads to a typing $\tau'$, then also $\tau'$ is linearizable.
@@ -141,12 +73,12 @@ The invariant for rule \textsf{T-Block} follows by rule induction and by the fol
 \begin{proof}
   The difference between $\tau$ and $\tau'$ is that $\tau'$ is missing some
   bindings for some variables that have been projected away. Therefore,
-  Hence the same function $\phi$ that exists for $\tau$ (Def.~\ref{def:linearization})
+  the same function $\phi$ that exists for $\tau$ (Def.~\ref{def:linearization})
   can be used to show that $\tau'$ is linearizable.
   \qed
 \end{proof}
 
-The rule \textsf{T-Declare} models the declaration of a new variable $x$,
+Rule \textsf{T-Declare} models the declaration of a new variable $x$,
 bound to a term $t$. The evaluation of $t$ leads to a typing $\tau$ that, by rule induction,
 satisfies the invariant. As a final step, this rule
 enlarges $\tau$ with a binding for $x$. Since $x$ is
@@ -154,113 +86,6 @@ fresh (that is, $x\not\in\dom(\tau)$),
 variable $x$ does not occur in the right-hand side of that binding. Namely, the rule
 leads to a new typing $\tau'=\tau[x\to T]$ where $T$ is the type of $t$, such that
 $x$ does not occur in $T$. The invariant for rule \textsf{T-Declare} follows by the next result.
-
-\begin{lemma}\label{lem:declare_invariant}
-  Let $\tau$ be a typing for the context $\kappa$ whose dependencies
-  are acyclical; let $x\not\in\kappa$ and $T\in\mathsf{T}_\kappa$ (hence $x$ does not occur in $T$).
-  Then the dependencies of $\tau'=\tau[x\to T]$ are acyclical as well.
-\end{lemma}
-\begin{proof}
-  Let $\kappa'=\kappa\cup\{x\}$.
-  Let us compare the set
-  \[
-  R_\kappa=\{\mathtt{*}\mathsf{w}\gg\mathsf{w}\mid\mathsf{w}\in\Leftvalues_\kappa\}
-  \cup\bigcup\limits_{y\in\kappa}\mathsf{dependencies}(y,\tau(y))
-  \]
-  with the set
-  \begin{align*}
-  R_{\kappa'}&=\{\mathtt{*}\mathsf{w}\gg\mathsf{w}\mid\mathsf{w}\in\Leftvalues_{\kappa'}\}
-  \cup\bigcup\limits_{y\in\kappa'}\mathsf{dependencies}(y,\tau'(y))\\
-  &=\{\mathtt{*}\mathsf{w}\gg\mathsf{w}\mid\mathsf{w}\in\Leftvalues_\kappa\}
-  \cup\{\mathtt{*}\mathsf{w}\gg\mathsf{w}\mid\mathsf{w}\in\Leftvalues_{\kappa'}\setminus
-  \Leftvalues_{\kappa}\}\\
-  &\qquad\cup\bigcup\limits_{y\in\kappa}\mathsf{dependencies}(y,\tau(y))\\
-  &\qquad\cup\mathsf{dependencies}(x,\tau'(x))\\
-  &=R_\kappa\cup\underbrace{\{\mathtt{*}\mathsf{w}\gg\mathsf{w}\mid\mathsf{w}\in\Leftvalues_{\kappa'}\setminus
-  \Leftvalues_{\kappa}\}}_A\cup\underbrace{\mathsf{dependencies}(x,T)}_B\\
-  \end{align*}
-  The difference are the sets of dependencies $A$ and $B$. By construction:
-  \begin{enumerate}
-  \item the dependencies in
-    $A$ have the form $\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 1}\mathsf{w}\gg\mathsf{w}$ where $x$ occurs in $\mathsf{w}$ and hence
-    also in $\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 1}\mathsf{w}$;
-  \item the dependencies in $B$ have the form
-    $\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 1}x\gg\mathsf{w}$ where $x$ does not occur
-    in $\mathsf{w}$.
-  \end{enumerate}
-  In particular, note that there is no dependency in $A\cup B$ such that
-  $x$ occurs in its right-hand side but not in its left-hand side.
-
-  Let us compute the closure of $R_{\kappa'}$ now. For that, it is useful to introduce the notation
-  \[
-  C_\tau(R_1,R_2)=\left\{\underbrace{\mathtt{*}\cdots\mathtt{*}}_{n}\mathsf{w}_1\gg\mathsf{w}_3\left|
-  \begin{array}{l}
-    \mathsf{w}_1\gg\mathsf{w}_2\in R_1,\ \underbrace{\mathtt{*}\cdots\mathtt{*}}_{n\ge 0}\mathsf{w}_2\gg\mathsf{w}_3\in R_2\\
-    \text{and $\mathsf{w_3}$ is in a borrow that occurs in $\tau$}
-  \end{array}\right.\right\}.
-  \]
-  It is
-  \begin{align*}
-    \mathsf{closure}(R_{\kappa'})&=R_{\kappa}\cup A\cup B\cup C_{\tau'}(R_\kappa,R_\kappa)\\
-    &\qquad\cup C_{\tau'}(R_k,A\cup B)\cup C_{\tau'}(A\cup B, R_\kappa)\cup C_{\tau'}(A\cup B,A\cup B)\\
-    &=R_{\kappa}\cup A\cup B\cup C_{\tau}(R_\kappa,R_\kappa)\cup C_{[x\to T]}(R_\kappa,R_\kappa)\\
-    &\qquad\cup C_{\tau'}(R_k,A\cup B)\cup C_{\tau'}(A\cup B, R_\kappa)\cup C_{\tau'}(A\cup B,A\cup B)\\
-    &=\mathsf{closure}(R_\kappa)\cup A\cup B\cup C_{[x\to T]}(R_\kappa,R_\kappa)\\
-    &\qquad\cup C_{\tau'}(R_k,A\cup B)\cup C_{\tau'}(A\cup B, R_\kappa)\cup C_{\tau'}(A\cup B,A\cup B)
-  \end{align*}
-  Since all dependencies in $A\cup B$ contain $x$ on their left-hand side, that does not
-  occur in $R_\kappa$ instead, it is $C_{\tau'}(R_\kappa,A\cup B)=\varnothing$.
-  Since all dependencies in $A$ contain $x$ on their right-hand side, that does not
-  occur in $R_\kappa$ instead, it is $C_{\tau'}(A\cup B,R_\kappa)=C_{\tau'}(B,R_\kappa)$.
-  If a leftvalue occurs in a borrow in $T$, either that same leftvalue occured in a borrow
-  of $\tau$ as well, or otherwise it is never in the right-hand side of the dependencies
-  in $R_\kappa$. It follows that $C_{[x\to T]}(R_\kappa,R_\kappa)\subseteq\mathsf{closure}(R_\kappa)$.
-  Therefore
-  \[
-    \mathsf{closure}(R_{\kappa'})=\mathsf{closure}(R_\kappa)
-    \cup A\cup B\cup C_{\tau'}(B, R_\kappa)\cup C_{\tau'}(A\cup B,A\cup B).
-  \]
-  Since $A$ and $B$ satisfy the conditions 1 and 2 reported above, respectively, it follows that
-  also the dependencies in $C_\tau'(A\cup B,A\cup B)$ satisfy either 1 or 2. Moreover,
-  the dependencies in $C_{\tau'}(B,R_\kappa)$ satisfy condition 2. We conclude that the
-  dependencies in $\mathit{diff}=\mathsf{closure}(R_{\kappa'})\setminus\mathsf{closure}(R_\kappa)$
-  satisfy either condition 1 or condition 2 above.
-
-  Suppose now, by contradiction, that the dependencies in
-  $\mathsf{closure}(R_{\kappa'})$ be cyclical. Hence there is a cycle of dependencies
-  from $\mathsf{closure}(R_{\kappa'})$: $\mathsf{w}_0\gg\mathsf{w}_1\gg\mathsf{w}_2\gg\cdots\gg
-  \mathsf{w}_{k-1}\gg\mathsf{w}_k\gg\mathsf{w}_0$. Such dependencies
-  cannot be all in $\mathsf{closure}(R_\kappa)$ since, by hypothesis, the dependencies
-  induced by $\tau$ are acyclical. Therefore, there is at least one such dependency
-  that belongs to $\mathit{diff}$. Namely, without lost of generality, we can assume that
-  $\mathsf{w}_k\gg\mathsf{w}_0\in\mathit{diff}$. As shown above, either 1 or 2 holds for
-  $\mathsf{w}_k\gg\mathsf{w}_0$ and we have two corresponding cases:
-  \begin{itemize}
-  \item $\mathsf{w}_k=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 1}\mathsf{w}_0$
-    and $x$ occurs in $\mathsf{w}_\kappa$. Since $x$ does not occur in the dependencies
-    in $\mathsf{closure}(R_\kappa)$, we conclude that also
-    $\mathsf{w}_{k-1}\gg\mathsf{w}_k\in\mathit{diff}$. Since $x$ occurs in $\mathsf{w}_k$,
-    it follows that 1 must hold for $\mathsf{w}_{k-1}\gg\mathsf{w}_k$ as well and hence
-    $\mathsf{w}_{k-1}=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 1}\mathsf{w}_k=
-    \underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 2}\mathsf{w}_0$ and $x$
-    occurs in $\mathsf{w}_{k-1}$. We can continue with this reasoning for the whole cycle, until
-    we reach its starting leftvalue $\mathsf{w}_0$ and conclude that
-    $\mathsf{w}_0=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge k+1}\mathsf{w}_0$, which is
-    impossible.
-  \item $\mathsf{w}_k=\underbrace{\mathtt{*}\cdots\mathtt{*}}_{\ge 1}x$ and $x$ does not occur in
-    $\mathsf{w}_0$. Since $x$ occurs in $\mathsf{w}_\kappa$
-    and $x$ does not occur in the dependencies
-    in $\mathsf{closure}(R_\kappa)$, we conclude that also
-    $\mathsf{w}_{k-1}\gg\mathsf{w}_k\in\mathit{diff}$.
-    Since $x$ occurs in $\mathsf{w}_k$,
-    it follows that 1 must hold for $\mathsf{w}_{k-1}\gg\mathsf{w}_k$ and hence
-    $x$ occurs in $\mathsf{w}_{k-1}$ as well. We can continue with
-    this reasoning for the whole cycle, until
-    we reach its starting leftvalue $\mathsf{w}_0$ and conclude that $x$ occurs in $\mathsf{w}_0$,
-    which is impossible.
-  \end{itemize}
-  \qed
-\end{proof}
 
 \begin{lemma}\label{lem:declare_invariant}
   Let $\tau$ be a linearizable typing for the context $\kappa$;
@@ -281,7 +106,7 @@ $x$ does not occur in $T$. The invariant for rule \textsf{T-Declare} follows by 
   \qed
 \end{proof}
 
-The assignment rule \textsf{T-Assign} writes a value of type $t$ into a leftvalue $\mathsf{w}$.
+Rule \textsf{T-Assign} writes a value of type $t$ into a leftvalue $\mathsf{w}$.
 It performs this by computing $\tau'=\mathsf{write}(\tau,\mathsf{w},t,\mathit{strong})$,
 a function that yields the final typing from the typing $\tau$ resulting after the computation of $t$.
 By rule induction, $\tau$ is linearizable. In order to show that $\tau'$ is linearizable as well,
@@ -302,10 +127,11 @@ where
 and
 \begin{align*}
   \mathsf{apply}(y,\langle\tau,t\rangle)&=\tau[y\to t]\\
-  \mathsf{expand}(\langle\tau,t\rangle)&=\langle\tau,\boxtype{t}\rangle
+  \mathsf{expand}(\langle\tau,t\rangle)&=\langle\tau,\boxtype{t}\rangle.
 \end{align*}
 %
-The details are complex and we refer the interested reader to~\cite{Pearce21}.
+The details of these functions
+are complex and we refer the interested reader to~\cite{Pearce21}.
 Here, it is important to observe that $\mathsf{write}$
 can either completely replace the type of $x$
 (\emph{strong} update) or modify the previous type of variables
@@ -315,44 +141,12 @@ No other variables can see their type updated.
 \begin{lemma}\label{lem:write_invariant}
   Let $\tau$ be a linearizable typing for the context $\kappa$;
   let $\mathsf{w}\in\Leftvalues_\kappa$ and $t\in\mathsf{T}_\kappa$.
-  %\begin{enumerate}
-  %\item no variable, that occurs in the mutable borrows in $t$, occurs in
-  %  the borrows or mutable borrows in $\tau$;
-  %\item no variable, that occurs in the borrows in $t$, occurs in the mutable
-  %  borrows in $\tau$.
-  %\end{enumerate}
   Let $\tau'=\mathsf{write}(\tau,\mathsf{w},t,\mathit{strong})$ be
   the application of function $\mathsf{write}$ in rule \textsf{T-Assign},
   used there to assign the type $t$ to $\mathsf{w}$.
   Then $\tau'$ is linearizable as well.
-  %If $\mathsf{root}(\mathsf{w})$ does not occur in the borrows nor in the mutable
-  %borrows of $\tau'$, then $\tau'$ is linearizable as well.
 \end{lemma}
 \begin{proof}
-%  We proceed by induction on the rank of $x=\mathsf{root}(\mathsf{w})$.
-%  The base case is when the rank of $x$ is the lowest of
-%  the linearization. By Def.~\ref{def:linearization}, $\tau(x)$ cannot contain any variables
-%  and consequently cannot contain any kind of borrow. It follows that
-%  \begin{align*}
-%    \mathsf{write}(\tau,\mathsf{w},t,\mathit{modality})&=
-%    \mathsf{write}(\tau,\underbrace{\mathtt{*}\cdots\mathtt{*}}_nx,t,\mathit{modality})\\
-%    &=\mathsf{apply}(x,\update(\tau,n,\tau(x),t,\mathit{modality}))
-%  \end{align*}
-%  where only the first three cases of the definition of $\update$ apply here
-%  (also in the recursive calls). Hence
-%  $\update(\tau,n,\tau(x),t,\mathit{modality})=\langle\tau,t''\rangle$ for a suitable
-%  type $t''$. %  is a type that contains only variables from $t$.
-%  We have $\tau'=\mathsf{write}(\tau,\mathsf{w},t,\mathit{modality})=\tau[x\to t'']$.
-%  Consider the function $\phi$ that shows that $\tau$ is linearizable (Def.~\ref{def:linearization}).
-%  Let us extend $\phi$ into an injective function $\phi'$ that gives $x$ the highest rank:
-%  \[
-%  \phi'=\phi\left[x\to 1+\max\limits_{y\in\kappa, y\not=x}\phi(y)\right].
-%  \]
-%  Since $x$ does not occur in the borrows nor in the mutable borrows of $\tau'$
-%  and since $\tau$ is linearizable, for every $y\in\kappa$, $y\not=x$, it is
-%  $\phi'(y)=\phi(x)>\phi(v)=\phi'(v)$ for every $v$ that occurs in $\tau(y)=\tau'(y)$.
-%  Moreover, by construction $\phi'(x)>\phi(v)=\phi'(v)$ for every $v$ that occurs in $\tau'(x)$.
-%  That is, $\phi'$ is linearizable as well.
   The function $\mathsf{write}$ modifies a set of variables $v_1,\ldots,v_n$ in $\tau$ to compute $\tau'$.
   The type of the other variables remains unchanged between $\tau$ and $\tau'$. Since the
   type system in~\cite{Pearce21} guarantees that borrowed variables are not modified,
