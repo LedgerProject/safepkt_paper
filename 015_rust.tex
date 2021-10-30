@@ -4,7 +4,7 @@ This section shows examples about the use of borrows in
 Rust and how the borrow checker identifies illegal situations.
 
 Rust deallocates the data structure owned by a variable
-as soon as that variables goes out of scope. Consider for instance
+as soon as that variable goes out of scope. Consider for instance
 the following function, where the \<Box::new(13)> is the allocation of
 a data structure that wraps the integer $13$:
 
@@ -36,7 +36,7 @@ fn deallocate2() { // rejected by the borrow checker
 The ownership of the box moves from \<x> to \<y>. Since \<y> goes out of scope
 at the end of the inner block, the box gets deallocated there, before the
 \<println>. Consequently, the print statement is trying to print
-already deallocated data\ie is trying to access a dangling pointer.
+already deallocated data\ie it is trying to access a dangling pointer.
 Correctly, the borrow checker of Rust rejects the previous function.
 
 Consider the following function now:
@@ -72,12 +72,17 @@ Local variable \<i> owns the box and goes out of scope at the end of the
 function, where the box gets deallocated. Consequently, the return value of
 the function is a dangling pointer. Correctly, Rust rejects this function.
 Namely, its borrow checker, as formalized in~\cite{Pearce21}, computes the
-following \emph{typing} at the end of the function:
+following \emph{typing} (or \emph{type environment}) at the end of the function:
 \[
 \{\<i>\to\boxtype{\mathsf{int},\<result>\to\borrow\{\<i>\}}\}
 \]
 from where it is apparent that the function is trying to return a borrow
-of a value that gets deallocated at the end of the function.
+of a value that gets deallocated at the end of the function. Note that the borrow
+checker allows one to
+use types that are borrows of more leftvalues (not just variables),
+such as $\borrow\{\<x>,\<**y>\}$.
+Such types arise from the reconciliation of the typings at the end of
+conditional statements (that we do not show in this paper).
 
 Borrows are a sort of temporary ownership of a value. As a consequence,
 that value can be modified only through the borrow, for the whole
@@ -96,7 +101,7 @@ fn writes_to_borrowed() { // rejected by the borrow checker
 \end{verbatim}
 
 \noindent
-Here, the \<y=\&w> statement is trying to modify its leftvalue \<y>
+Here, the \<y=\&w> statement is trying to modify the leftvalue \<y>
 that, however, has been borrowed at the previous line. Correctly, the borrow
 checker rejects this function. It computes the following typing
 just before the \<y=\&w> statement:
@@ -111,7 +116,7 @@ the subsequent assignment \<y=\&w> gets rejected.
 
 Borrows in previous examples are immutable: the borrowed value can be read
 from them, but cannot be modified from them.
-But borrows can also be mutable, meaning that they allow to modify the
+Borrows can also be mutable, meaning that they allow one to modify the
 borrowed value, with the dereference operator \<*>. In this sense,
 a mutable borrow takes full responsibility about the borrowed value, for its
 whole lifetime. When a mutable borrow to a value exists, that value cannot
@@ -136,50 +141,47 @@ It computes the typing
 \]
 just before \<x=z>, from where it is apparent that \<z> is mutably borrowed there.
 
-For the same reason, a mutable borrow cannot coexist with any other borrow. Consider for instance
-the following function:
+%For the same reason, a mutable borrow cannot coexist with any other borrow. Consider for instance
+%the following function:
+%
+%\begin{verbatim}
+%fn both_borrows() { // rejected by the borrow checker
+%    let mut z = 13;
+%    let b1 = &z;
+%    let b2 = &mut z;
+%    println!("{}{}{}", z, b1, b2);
+%}
+%\end{verbatim}
+%
+%\noindent
+%The attempt to create a mutable borrow of \<z> fails because there is already a borrow of \<z>
+%in scope (inside variable \<b1>). This function is consequently rejected by the borrow checker.
 
-\begin{verbatim}
-fn both_borrows() { // rejected by the borrow checker
-    let mut z = 13;
-    let b1 = &z;
-    let b2 = &mut z;
-    println!("{}{}{}", z, b1, b2);
-}
-\end{verbatim}
-
-\noindent
-The attempt to create a mutable borrow of \<z> fails because there is already a borrow of \<z>
-in scope (inside variable \<b1>). This function is consequently rejected by the borrow checker.
-
-Borrows are a \emph{deep} temporary ownership, in the sense that they take
-responsibility (temporarily) for the borrowed object and everything that is reachable from it.
-Consider for instance the following function:
-
-\begin{verbatim}
-fn both_borrows_complex() { // rejected by the borrow checker
-    let b = 13;
-    let x = Box::new(b);
-    let y = Box::new(x);
-    let mut z = Box::new(y);
-    let v = &**z;
-    let w = &mut z;
-    println!("{}{}", v, w);
-}
-\end{verbatim}
-
-\noindent
-The borrow checker rejects this function since it complains about
-\<z> being borrowed mutably by \<w> while it is also borrowed by \<v>.
-Actually, \<v> borrows \<**z>, but that is reachable from \<z>, hence
-the two borrows cannot coexist.
-The borrow checker computes the typing
-\[
-\{\<b>\to\mathsf{int},\<x>\to\boxtype{\mathsf{int}},\<y>\to\boxtype{\boxtype{\mathsf{int}}},
-\<z>\to\boxtype{\boxtype{\boxtype{\mathsf{int}}}},\<v>\to\borrow\{\<**z>\}\}
-\]
-just before the declaration of \<w>, from where it is apparent that \<**z> is
-already borrowed and hence \<z> is already borrowed and cannot be subsequently mutably borrowed.
-
-The previous example shows that, in general, the borrow checker builds typings
-where borrows refers to leftvalues (such as \<**z> in the example) that are not necessarily variables.
+%Borrows are a \emph{deep} temporary ownership, in the sense that they take
+%responsibility (temporarily) for the borrowed object and everything that is reachable from it.
+%Consider for instance the following function:
+%
+%\begin{verbatim}
+%fn both_borrows_complex() { // rejected by the borrow checker
+%    let b = 13;
+%    let x = Box::new(b);
+%    let y = Box::new(x);
+%    let mut z = Box::new(y);
+%    let v = &**z;
+%    let w = &mut z;
+%    println!("{}{}", v, w);
+%}
+%\end{verbatim}
+%
+%\noindent
+%The borrow checker rejects this function since it complains about
+%\<z> being borrowed mutably by \<w> while it is also borrowed by \<v>.
+%Actually, \<v> borrows \<**z>, but that is reachable from \<z>, hence
+%the two borrows cannot coexist.
+%The borrow checker computes the typing
+%\[
+%\{\<b>\to\mathsf{int},\<x>\to\boxtype{\mathsf{int}},\<y>\to\boxtype{\boxtype{\mathsf{int}}},
+%\<z>\to\boxtype{\boxtype{\boxtype{\mathsf{int}}}},\<v>\to\borrow\{\<**z>\}\}
+%\]
+%just before the declaration of \<w>, from where it is apparent that \<**z> is
+%already borrowed and hence \<z> is already borrowed as well and cannot be subsequently mutably borrowed.
