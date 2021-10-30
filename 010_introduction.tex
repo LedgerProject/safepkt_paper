@@ -5,7 +5,7 @@ for instance for system programming,
 blockchain programming or smart contracts.
 A very specific feature of Rust is its ability to deallocate dynamically allocated
 data structures automatically, when they go out of scope. This is completely different
-from other programming languages, that either require programmers to free data structures
+from what happens in other programming languages, that either require programmers to free data structures
 explicitly, in code (such as C or C++), or embed a garbage collector, that scans the allocated memory
 and collects and frees unreachable data (such as Java, C\# and most modern programming languages).
 The former approach is error prone: programmers might miss deallocations or might deallocate twice;
@@ -21,30 +21,28 @@ In order to \emph{lend} a data structure as a parameter to a function, Rust allo
 creation of \emph{borrows}, that can be seen as pointers in traditional programming languages.
 However, since borrows are access paths to data structures, the type checker of Rust
 must enforce strict rules on their creation and lifetime. For instance, at each given
-instant, the borrows of a data structure $X$ must be either all used for reading
-or there is actually only one borrow of $X$, used for writing.
-The implementation of the Rust compiler performs an additional type checking phase,
-after the traditional type checking is over,
-called \emph{borrow checking}.
-According to Rust developers, borrow checking is enough to guarantee that
+instant, a borrowed location cannot be written as long as the borrow exists.
+The implementation of the Rust compiler performs an additional \emph{borrow checking} phase,
+after the traditional type checking is over.
+According to the developers of Rust, borrow checking is enough to guarantee that
 automatic deallocation does not create dangling pointers and multithreaded
 executions do not generate race conditions.
 
-A formal proof of the absence of dangling pointers has been provided in~\cite{Pearce21}.
-Namely, that article formalizes the borrow checker of Rust as a type system
-and proves its correctness. The formalization uses a notion of type that includes
-primitive types (such as \<int>), dynamically allocated data structures
+A formalization of the borrow checker of Rust and a proof of its correctness have been provided in~\cite{Pearce21}.
+Namely, that article formalizes the borrow checker as a type system, whose
+types include primitive types (such as \<int>), dynamically allocated data structures
 (collectively represented by a data boxing operator) and borrows of leftvalues,
 both for reading (immutable borrows)
 and for writing (mutable borrows). The type system rules are given by structural induction
-on the syntax of the Rust source code, hence are well-founded. However, they use, internally,
-a procedure to determine the type of leftvalues. Since borrows include other leftvalues,
-that procedure might end up in an infinite loop and never terminate. Hence type checking
-might not terminate as well.
+on the syntax of the Rust source code, and are hence well-founded. However, they use, internally,
+a procedure to type leftvalues. Since borrows include other leftvalues,
+the definition of that procedure seem to end up in an infinite loop and never terminate.
+In that case, the borrow checker would not terminate either.
 
-This paper provides a sufficient condition that entails that the type system
-in~\cite{Pearce21} terminates and shows that that condition holds for Rust programs that do not use
-reborrows (\textit{ie.} borrows of dereferences, practically equivalent to nops).
+This paper provides a sufficient condition that entails that the borrow checker
+in~\cite{Pearce21} terminates, basically based on data structures being \emph{linearizable} at run time,
+and shows that that condition holds for the specific kind of type
+environments that the borrow checker builds during its execution.
 This result is important in order to increase confidence in the borrow checker of Rust.
 Moreover, it provides a notion of well-foundness for the recursion used in the borrow checker,
-that future work can exploit in order to prove its properties by induction.
+that future work can exploit in order to prove other properties by induction.
