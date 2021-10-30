@@ -3,9 +3,13 @@ is its ability to deallocate dynamically-allocated
 data structures as soon as they go out of scope, without relying on a garbage
 collector. At the same time, Rust lets programmers create references,
 called \emph{borrows}, to data structures. A borrow static checker enforces
-that borrows can only be used in a controlled way, so that dangling references cannot arise.
-The borrow checker has been formalized and proved correct~\cite{Pearce21}, although there
-are situations when that checker might fail to terminate.
-This paper provides a sufficient condition that guarantees termination for the borrow checker
-of Rust and proves that that condition holds for programs that do not make use of \emph{reborrows}
-(check at the end if this latter property actually holds).
+that borrows can only be used in a controlled way, so that automatic deallocation
+does not introduce dangling references.
+The borrow checker has been formalized in~\cite{Pearce21}. However, its
+termination is non-obvious since, in general, it diverges if started
+from type environments that contain cycles between variables.
+This paper proves that the borrow checker does terminate, by
+providing a sufficient condition that forbids cycles
+and guarantees termination. It proves
+that that condition holds for the type environments
+that actually arise during the type-checking procedure.
