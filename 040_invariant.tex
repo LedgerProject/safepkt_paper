@@ -13,12 +13,14 @@ Some rules from~\cite{Pearce21} obviously satisfy the invariant,
 since they do not modify the typing (for them, $\tau=\tau'$).
 This is the case of rules
 \textsf{T-Const}, \textsf{T-Copy}, \textsf{T-MutBorrow} and
-\textsf{T-ImmBorrow}.
+\textsf{T-ImmBorrow} (pages 3:23 and 3:24 of~\cite{Pearce21}).
 
 Other rules satisfy the invariant by a simple application of
-rule induction, such as \textsf{T-Box} and \textsf{T-Seq}.
+rule induction, such as \textsf{T-Box} and \textsf{T-Seq}
+(pages 3:24 and 3:25 of~\cite{Pearce21}).
 
-Rule \textsf{T-Move} is used for typing the evaluation of a leftvalue
+Rule \textsf{T-Move} (page 3:24 of~\cite{Pearce21})
+is used for typing the evaluation of a leftvalue
 whose type has move semantics. This modifies the typing since, in Rust,
 the ownership of the leftvalue moves away from itself.
 Formally, for this rule it is $\tau'=\mathsf{move}(\tau,\mathsf{w})$
@@ -54,7 +56,8 @@ non-linearizable. This is proved below.
   \qed
 \end{proof}
 
-Rule \textsf{T-Block} is used at the end of a block of code, where the set $S$ of local
+Rule \textsf{T-Block} (page 3:25 of~\cite{Pearce21}) is used at the end of a
+block of code, where the set $S$ of local
 variables declared in the block goes out of scope. As a consequence, this rule removes
 the type bindings for those variables in $S$ from the initial typing $\tau$. It performs this
 through a function $\mathsf{drop}$ that projects those variables away from $\tau$ and is defined as:
@@ -77,10 +80,10 @@ non-linearizable.
   \qed
 \end{proof}
 
-Rule \textsf{T-Declare} models the declaration of a new variable $x$,
-bound to a term $t$. The evaluation of $t$ leads to a typing $\tau$ that, by rule induction,
-satisfies the invariant. As a final step, this rule
-enlarges $\tau$ with a binding for $x$. Since $x$ is
+Rule \textsf{T-Declare} (page 3:25 of~\cite{Pearce21}) models the declaration
+of a new variable $x$, bound to a term $t$. The evaluation of $t$ leads to a
+typing $\tau$ that, by rule induction, satisfies the invariant. As a final
+step, this rule enlarges $\tau$ with a binding for $x$. Since $x$ is
 fresh (that is, $x\not\in\dom(\tau)$),
 variable $x$ does not occur in the right-hand side of that binding. Namely, the rule
 leads to a new typing $\tau'=\tau[x\to T]$ where $T$ is the type of $t$, such that
@@ -105,7 +108,8 @@ $x$ does not occur in $T$. The invariant for rule \textsf{T-Declare} follows by 
   \qed
 \end{proof}
 
-Rule \textsf{T-Assign} writes a value of type $t$ into a leftvalue $\mathsf{w}$.
+Rule \textsf{T-Assign} (page 3:25 of~\cite{Pearce21}) writes a value of type
+$t$ into a leftvalue $\mathsf{w}$.
 It performs this by computing $\tau'=\mathsf{write}(\tau,\mathsf{w},t,\mathit{strong})$,
 a function that yields the final typing from the typing $\tau$ resulting after the computation of $t$.
 By rule induction, $\tau$ is linearizable. In order to show that $\tau'$ is linearizable as well,
@@ -155,8 +159,8 @@ No other variables can see their type updated.
   forbids the presence of $x$ in the borrows in $t$ ($\neg\mathsf{writeProhibited}$ in rule
   \textsf{T-Assign}); or they are inside a mutable borrow in $\tau$ (last case of
   $\update$ above), but hence they would be mutably borrowed and the type system
-  in~\cite{Pearce21} would have forbidded to read mutably borrowed variables in order to compute
-  the type $t$ (see rule \textsf{T-MutBorrow} at page~24 of~\cite{Pearce21}).
+  in~\cite{Pearce21} would have forbidden to read mutably borrowed variables in order to compute
+  the type $t$ (see rule \textsf{T-MutBorrow} at page~3:24 of~\cite{Pearce21}).
   This means that such $v_1,\ldots,v_n$ only occurs in the left-hand side of the bindings of $\tau'$.
   Consider now the function $\phi$ that shows that $\tau$ is linearizable (Def.~\ref{def:linearization}).
   Let us extend $\phi$ into an injective function $\phi'$ that gives $v_1,\ldots,v_n$ the highest ranks:

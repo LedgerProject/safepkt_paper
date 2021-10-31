@@ -36,7 +36,7 @@ both for reading (immutable borrows)
 and for writing (mutable borrows). The type system rules are given by structural induction
 on the syntax of the Rust source code, and are hence well-founded. However, they use, internally,
 a procedure to type leftvalues. Since borrows include other leftvalues,
-the definition of that procedure seem to end up in an infinite loop and never terminate.
+the definition of that procedure seems to end up in an infinite loop and never terminate.
 In that case, the borrow checker would not terminate either.
 
 This paper provides a sufficient condition that entails that the borrow checker
