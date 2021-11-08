@@ -1,15 +1,17 @@
-A distinguished feature of the Rust programming language
-is its ability to deallocate dynamically-allocated
-data structures as soon as they go out of scope, without relying on a garbage
-collector. At the same time, Rust lets programmers create references,
-called \emph{borrows}, to data structures. A borrow static checker enforces
-that borrows can only be used in a controlled way, so that automatic deallocation
-does not introduce dangling references.
-The borrow checker has been formalized in~\cite{Pearce21}. However, its
-termination is non-obvious since, in general, it diverges if started
-from type environments that contain cycles between variables.
-This paper proves that the borrow checker does terminate, by
-providing a sufficient condition that forbids cycles
-and guarantees termination. It proves
-that that condition holds for the type environments
-that actually arise during the type-checking procedure.
+A distinguished feature of the Rust programming language is its
+ability to deallocate dynamically-allocated data structures as soon as
+they go out of scope, without relying on a garbage collector. At the
+same time, Rust lets programmers create references, called
+\emph{borrows}, to data structures. A static borrow checker enforces
+that borrows can only be used in a controlled way, so that automatic
+deallocation does not introduce dangling references.  Featherweight
+Rust provides a formalisation for a subset of Rust where borrow
+checking is encoded using flow typing~\cite{Pearce21}.  However, we
+have identified a source of non-termination within the calculus which
+arises when typing environments contain cycles between variables.  In
+fact, it turns out that well-typed programs cannot lead to such
+environments --- but this is not immediately obvious from the
+presentation.  This paper develops a sufficient condition that forbids
+cycles and, hence, guarantees termination.  Furthermore, we prove this
+condition is, in fact, maintained by Featherweight Rust for well-typed
+programs.
