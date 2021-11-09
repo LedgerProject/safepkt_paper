@@ -1,43 +1,53 @@
 \section{Introduction}\label{sec:introduction}
 
-The Rust programming language is reaching widespread use,
-for instance for system programming,
-blockchain programming or smart contracts.
-A very specific feature of Rust is its ability to deallocate dynamically allocated
-data structures automatically, when they go out of scope. This is completely different
-from what happens in other programming languages, that either require programmers to free data structures
-explicitly, in code (such as C or C++), or embed a garbage collector, that scans the allocated memory
-and collects and frees unreachable data (such as Java, C\# and most modern programming languages).
-The former approach is error prone: programmers might miss deallocations or might deallocate twice;
-the latter is safer but more expensive and suboptimal:
-the garbage collector consumes resources and unreachable data remains
-allocated until the garbage collector is run.
+The Rust programming language is seeing widespread use in areas such
+as system programming~\cite{ABGMMMS16,BBBPRR17,LCGPDL17}, blockchain
+systems~\cite{HHHH18,NQ20} and smart
+contracts~\cite{Ash20,ZHCKHJJMS20} and more~\cite{BHR18,AMPS19}.  A
+key feature of Rust is its ability to automatically deallocate
+dynamically allocated data when it goes out of scope. This is
+different from what happens in most other programming languages, that
+either: require programmers free data structures explicitly in code
+(such as C or C++); or, embed a garbage collector that scans allocated
+memory and frees unreachable data (such as Java, C\#, etc).  The
+former approach is error prone: programmers might miss deallocations
+or might deallocate twice; the latter is safer but more expensive and
+suboptimal: the garbage collector consumes resources and unreachable
+data remains allocated until the garbage collector is run.
 
-In Rust, each data structure is \emph{owned} by a variable. Once that variable goes
-out of scope, the data structure it owns gets freed as well. Assignments perform
-a transfer of ownership, from the rightvalue to the leftvalue, at least for some
-categories of data that can be \emph{moved} (intuitively, for reference types).
-In order to \emph{lend} a data structure as a parameter to a function, Rust allows the
-creation of \emph{borrows}, that can be seen as pointers in traditional programming languages.
-However, since borrows are access paths to data structures, the type checker of Rust
-must enforce strict rules on their creation and lifetime. For instance, at each given
-instant, a borrowed location cannot be written as long as the borrow exists.
-The implementation of the Rust compiler performs an additional \emph{borrow checking} phase,
-after the traditional type checking is over.
-According to the developers of Rust, borrow checking is enough to guarantee that
-automatic deallocation does not create dangling pointers and multithreaded
-executions do not generate race conditions.
+In Rust, each data structure is \emph{owned} by a
+variable~\cite{RustBook}. Once that variable goes out of scope, the
+data structure it owns gets freed as well.  Data is divided into two
+categories: that which can be {\em copied} (e.g. primitives); and that
+which must be {\em moved} (e.g. mutable borrows).  For the latter,
+assignments result in a transfer of ownership from the rightvalue to
+the leftvalue.  In order to \emph{lend} a data structure as a
+parameter to a function, \marginpar{Explain better}{Rust} allows the
+creation of \emph{borrows}, that can be seen as pointers in
+traditional programming languages.  However, since borrows are access
+paths to data structures, the type checker of Rust must enforce strict
+rules on their creation and lifetime. For instance, at each given
+instant, a borrowed location cannot be written as long as the borrow
+exists.  The implementation of the Rust compiler performs an
+additional \emph{borrow checking} phase, after the traditional type
+checking is over.  According to the developers of Rust, borrow
+checking is enough to guarantee that automatic deallocation does not
+create dangling pointers and multithreaded executions do not generate
+race conditions.
 
-A formalization of the borrow checker of Rust and a proof of its correctness have been provided in~\cite{Pearce21}.
-Namely, that article formalizes the borrow checker as a type system, whose
-types include primitive types (such as \<int>), dynamically allocated data structures
-(collectively represented by a data boxing operator) and borrows of leftvalues,
-both for reading (immutable borrows)
-and for writing (mutable borrows). The type system rules are given by structural induction
-on the syntax of the Rust source code, and are hence well-founded. However, they use, internally,
-a procedure to type leftvalues. Since borrows include other leftvalues,
-the definition of that procedure seems to end up in an infinite loop and never terminate.
-In that case, the borrow checker would not terminate either.
+Featherweight Rust formalises a subset of Rust and includes a proof of
+correctness for borrow checking~\cite{Pearce21}.  In particular,
+borrow checking is formalised as a flow-sensitive type system, whose
+types include primitives (such as \<int>), dynamically allocated data
+structures (collectively represented by a data boxing operator) and
+borrows of leftvalues, both for reading (immutable borrows) and for
+writing (mutable borrows). The type system rules are given by
+structural induction on the syntax of the Rust source code, and are
+hence well-founded. However, they use, internally, a procedure to type
+leftvalues. Since borrows include other leftvalues, we have discovered
+that this procedure's definition may end up in an infinite loop and
+never terminate.  In that case, the borrow checker would not terminate
+either.
 
 This paper provides a sufficient condition that entails that the borrow checker
 in~\cite{Pearce21} terminates, basically based on data structures being \emph{linearizable} at run time,
