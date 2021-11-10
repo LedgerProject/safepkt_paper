@@ -24,20 +24,8 @@ is used for typing the evaluation of a leftvalue
 whose type has move semantics. This modifies the typing since, in Rust,
 the ownership of the leftvalue moves away from itself.
 Formally, for this rule it is $\tau'=\mathsf{move}(\tau,\mathsf{w})$
-for a suitable leftvalue $\mathsf{w}$,
-where the $\mathsf{move}$ function
-modifies the binding for the root of $\mathsf{w}$ and is defined as:
-\[
-\mathsf{move}(\tau,\mathsf{w})=\tau[\mathsf{root}(\mathsf{w})\mapsto
-  \mathsf{strike}(\mathsf{w},\tau(\mathsf{root}(\mathsf{w})))]
-\]
-where
-\begin{align*}
-  \mathsf{strike}(x,t)&=\mathsf{dangling}\\
-  \mathsf{strike}(\mathtt{*}\mathsf{w},\boxtype{t})&=
-  \boxtype{\mathsf{strike}(\mathsf{w},t)}.
-\end{align*}
-The function $\mathsf{strike}$ is undefined otherwise. The intuition is that
+for a suitable leftvalue $\mathsf{w}$.
+The intuition is that
 $\mathsf{strike}$ can only make the set of variables in the right-hand side
 of the typing smaller. Therefore, it can never make $\tau'$
 non-linearizable. This is proved below.

@@ -1,1 +1,97 @@
 \section{The Borrow Checker}\label{sec:borrow_checker}
+
+The borrow checker has been formalized as a type system whose rules
+map the typing $\tau$ before the evaluation of a syntactical object $s$ to
+the typing $\tau'$ resulting after that evaluation.
+We write this as $\tau\vdash s\dashv\tau'$.
+For expressions, the typing
+rules provide the type $T$ of the expression as well:
+$\tau\vdash e:T\dashv\tau'$.
+
+Let us start from the typing rules for expressions.
+
+\underline{\textsf{T-Const}}.
+This rule applies to integer constants. Their evaluation
+yields a value of type $\mathsf{int}$ and does not modify the typing:
+\[
+\frac
+    {}
+    {\tau\vdash i:\mathsf{int}\dashv\tau}
+\]
+
+\underline{\textsf{T-Copy}}.
+The first rule for leftvalues applies to those leftvalues whose type
+has copy semantics. Their evaluation yields their value
+and the typing remains unchanged. The rule requires that the leftvalue
+can be accessed for reading:
+\[
+\frac
+    {T=\type(\mathsf{w},\tau)\quad\copytype(T)\quad\neg\mathsf{readProhibited}(\mathsf{w},\tau)}
+    {\tau\vdash\mathsf{w}:T\dashv\tau}
+\]
+
+\underline{\textsf{T-Move}}.
+The second rule for leftvalues applies to those leftvalues whose type
+has move semantics. Their evaluation yields their value,
+whose ownership is moved away from the leftvalue. Because of this,
+the typing gets modified, by letting the old container of the value
+get the $\mathsf{dangling}$ type (it cannot be used anymore).
+As a consequence, reading, from a leftvalue, a value with move semantics
+amounts to writing into its old container and requires write permission:
+\[
+\frac
+    {T=\type(\mathsf{w},\tau)\quad\movetype(T)\quad\neg\mathsf{writeProhibited}(\mathsf{w},\tau)}
+    {\tau\vdash\mathsf{w}:T\dashv\mathsf{move}(\mathsf{w},\tau)}
+\]
+where the $\mathsf{move}$ function
+modifies the binding for the root of $\mathsf{w}$:
+\[
+\mathsf{move}(\mathsf{w},\tau)=\tau[\mathsf{root}(\mathsf{w})\mapsto
+  \mathsf{strike}(\mathsf{w},\tau(\mathsf{root}(\mathsf{w})))]
+\]
+with
+\begin{align*}
+  \mathsf{strike}(x,T)&=\mathsf{dangling}\\
+  \mathsf{strike}(\mathtt{*}\mathsf{w},\boxtype{T})&=
+  \boxtype{\mathsf{strike}(\mathsf{w},T)}.
+\end{align*}
+The function $\mathsf{strike}$ is undefined otherwise.
+
+\underline{\textsf{T-ImmBorrow}}.
+The evaluation of the borrow expression requires the borrow to be readable and have full type
+(only value with full type can be borrowed in Rust):
+\[
+\frac
+    {\mathsf{full}(\type(\mathsf{w},\tau))\quad\neg\mathsf{readProhibited}(\mathsf{w},\tau)}
+    {\tau\vdash\borrow\mathsf{w}:\borrow\{\mathsf{w}\}\dashv\tau}
+\]
+
+\underline{\textsf{T-MutBorrow}}.
+The evaluation of the mutable borrow expression requires the borrow to be writable and have full type
+(only value with full type can be borrowed in Rust). Moreover, Rust requires that
+the borrowed leftvalue never traverses an immutable borrow:
+\[
+\frac
+    {\mathsf{full}(\type(\mathsf{w},\tau))\quad\neg\mathsf{writeProhibited}(\mathsf{w},\tau)
+    \quad\mathsf{mutable}(\mathsf{w},\tau(\mathsf{root}(\mathsf{w})),\tau)}
+    {\tau\vdash\mutborrow\mathsf{w}:\mutborrow\{\mathsf{w}\}\dashv\tau}
+\]
+where
+\begin{align*}
+  \mathsf{mutable}(x,T,\tau)&=\mathit{true}\\
+  \mathsf{mutable}(\mathtt{*}\mathsf{w},\boxtype{T},\tau)&=\mathsf{mutable}(\mathsf{w},T,\tau)\\
+  \mathsf{mutable}(\mathtt{*}\underbrace{\mathtt{*}\cdots\mathtt{*}}_mx,
+  \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},\tau)&=\bigwedge\limits_{i=1}^n
+  \mathsf{mutable}(\underbrace{\mathtt{*}\cdots\mathtt{*}}_m\mathsf{w}_i,
+  \tau(\mathsf{root}(\mathsf{w}_i)),\tau)
+\end{align*}
+
+\underline{\textsf{T-Box}}.
+The evaluation of the box expression simply recurs on the boxed expression:
+\[
+\frac
+    {\tau\vdash\mathsf{e}:T\dashv\tau'}
+    {\tau\vdash\mathtt{box}\ \mathsf{e}:\boxtype{T}\dashv\tau'}
+\]
+
+Let us consider the typing rules for the terms now.

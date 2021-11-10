@@ -66,7 +66,7 @@ the termination of the algorithm for typing leftvalues.
     \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} \quad\text{iff $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\subseteq\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}$}\\
     \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} & \sqsubseteq
     \mutborrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} \quad\text{iff $\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\subseteq\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\}$}\\
-    \boxtype{t_1}&\sqsubseteq\boxtype{t_2} \quad\text{iff $t_1\sqsubseteq t_2$}\\
+    \boxtype{T_1}&\sqsubseteq\boxtype{T_2} \quad\text{iff $T_1\sqsubseteq T_2$}\\
     \mathsf{dangling}&\sqsubseteq\mathsf{dangling.}
   \end{align*}
 \end{definition}
@@ -80,50 +80,50 @@ the termination of the algorithm for typing leftvalues.
   \begin{itemize}
     \item (Reflexivity)
     \begin{itemize}
-      \item (Base) For any type $t$ that is not a box we have
-      $t\sqsubseteq t$.
-      \item (Induction step) If $t\sqsubseteq t$ for a type $t$ then
-      $\boxtype{t}\sqsubseteq \boxtype{t}$.
+      \item (Base) For any type $T$ that is not a box we have
+      $T\sqsubseteq T$.
+      \item (Induction step) If $T\sqsubseteq T$ for a type $T$ then
+      $\boxtype{T}\sqsubseteq \boxtype{T}$.
     \end{itemize}
     %
-    \item (Antisymmetry) Suppose that $t_1 \sqsubseteq t_2$ and
-    $t_2 \sqsubseteq t_1$.
+    \item (Antisymmetry) Suppose that $T_1 \sqsubseteq T_2$ and
+    $T_2 \sqsubseteq T_1$.
     \begin{itemize}
-      \item (Base: $t_1$ or $t_2$ is not a box)
-      If $t_1$ or $t_2$ is $\mathsf{int}$, then so is the other
-      because $\mathsf{int}$ can only be greater than itself, and so $t_1 = t_2$.
-      Similarly if $t_1$ or $t_2$ is $\mathsf{dangling}$.
-      If $t_1$ or $t_2$ is a borrow, then so is the other because
-      a borrow can only precede a borrow, and so we have $t_1 = t_2$
+      \item (Base: $T_1$ or $T_2$ is not a box)
+      If $T_1$ or $T_2$ is $\mathsf{int}$, then so is the other
+      because $\mathsf{int}$ can only be greater than itself, and so $T_1 = T_2$.
+      Similarly if $T_1$ or $T_2$ is $\mathsf{dangling}$.
+      If $T_1$ or $T_2$ is a borrow, then so is the other because
+      a borrow can only precede a borrow, and so we have $T_1 = T_2$
       by antisymmetry of $\subseteq$.
-      Similarly if $t_1$ or $t_2$ is a mutable borrow.
-      \item (Induction step) Suppose that $t_1=\boxtype{t'_1}$ and
-      $t_2=\boxtype{t'_2}$ for types $t'_1,t'_2$ such that
-      $(t'_1 \sqsubseteq t'_2 \land t'_2 \sqsubseteq t'_1) \Rightarrow t'_1 = t'_2$.
-      As $t_1 \sqsubseteq t_2$ and $t_2 \sqsubseteq t_1$, we have
-      $t'_1 \sqsubseteq t'_2$ and $t'_2 \sqsubseteq t'_1$, so
-      $t'_1 = t'_2$, hence $t_1 = t_2$.
+      Similarly if $T_1$ or $T_2$ is a mutable borrow.
+      \item (Induction step) Suppose that $T_1=\boxtype{T'_1}$ and
+      $T_2=\boxtype{T'_2}$ for types $T'_1,T'_2$ such that
+      $(T'_1 \sqsubseteq T'_2 \land T'_2 \sqsubseteq T'_1) \Rightarrow T'_1 = T'_2$.
+      As $T_1 \sqsubseteq T_2$ and $T_2 \sqsubseteq T_1$, we have
+      $T'_1 \sqsubseteq T'_2$ and $T'_2 \sqsubseteq T'_1$, so
+      $T'_1 = T'_2$, hence $T_1 = T_2$.
     \end{itemize}
     %
-    \item (Transitivity) Suppose that $t_1 \sqsubseteq t_2$ and $t_2 \sqsubseteq t_3$.
+    \item (Transitivity) Suppose that $T_1 \sqsubseteq T_2$ and $T_2 \sqsubseteq T_3$.
     \begin{itemize}
-      \item (Base: $t_1$, $t_2$ or $t_3$ is not a box)
-      If $t_1$, $t_2$ or $t_3$ is $\mathsf{int}$, we necessarily have
-      $t_1=t_2=t_3=\mathsf{int}$ because $\mathsf{int}$ is only related to
-      itself, and so $t_1\sqsubseteq t_3$. Similarly if
-      $t_1$, $t_2$ or $t_3$ is $\mathsf{dangling}$.
-      If $t_1$, $t_2$ or $t_3$ is a borrow, then so are the others because
+      \item (Base: $T_1$, $T_2$ or $T_3$ is not a box)
+      If $T_1$, $T_2$ or $T_3$ is $\mathsf{int}$, we necessarily have
+      $T_1=T_2=T_3=\mathsf{int}$ because $\mathsf{int}$ is only related to
+      itself, and so $T_1\sqsubseteq T_3$. Similarly if
+      $T_1$, $T_2$ or $T_3$ is $\mathsf{dangling}$.
+      If $T_1$, $T_2$ or $T_3$ is a borrow, then so are the others because
       a borrow is only related to a borrow, and so we have
-      $t_1\sqsubseteq t_3$ by transitivity of $\subseteq$.
-      Similarly if $t_1$, $t_2$ or $t_3$ is a mutable borrow.
-      \item (Induction step) Suppose that $t_1=\boxtype{t'_1}$,
-      $t_2=\boxtype{t'_2}$ and $t_3=\boxtype{t'_3}$ for types
-      $t'_1,t'_2,t'_3$ such that
-      $(t'_1 \sqsubseteq t'_2 \land t'_2 \sqsubseteq t'_3) \Rightarrow
-      t'_1 \sqsubseteq t'_3$.
-      As $t_1 \sqsubseteq t_2$ and $t_2 \sqsubseteq t_3$, we have
-      $t'_1 \sqsubseteq t'_2$ and $t'_2 \sqsubseteq t'_3$, so
-      $t'_1 \sqsubseteq t'_3$, hence $t_1 \sqsubseteq t_3$.
+      $T_1\sqsubseteq T_3$ by transitivity of $\subseteq$.
+      Similarly if $T_1$, $T_2$ or $T_3$ is a mutable borrow.
+      \item (Induction step) Suppose that $T_1=\boxtype{T'_1}$,
+      $T_2=\boxtype{T'_2}$ and $T_3=\boxtype{T'_3}$ for types
+      $T'_1,T'_2,T'_3$ such that
+      $(T'_1 \sqsubseteq T'_2 \land T'_2 \sqsubseteq T'_3) \Rightarrow
+      T'_1 \sqsubseteq T'_3$.
+      As $T_1 \sqsubseteq T_2$ and $T_2 \sqsubseteq T_3$, we have
+      $T'_1 \sqsubseteq T'_2$ and $T'_2 \sqsubseteq T'_3$, so
+      $T'_1 \sqsubseteq T'_3$, hence $T_1 \sqsubseteq T_3$.
     \end{itemize}
   \end{itemize}
   \qed
@@ -214,57 +214,82 @@ the termination of the algorithm for typing leftvalues.
     \mathsf{int}\sqcup\mathsf{int} &= \mathsf{int}\\
     \borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcup \borrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \borrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cup\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
     \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\} \sqcup \mutborrow\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\} &= \mutborrow(\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}\cup\{\mathsf{w}'_1,\ldots,\mathsf{w}'_{n'}\})\\
-    (\boxtype{t_1}) \sqcup (\boxtype{t_2}) &=\boxtype{(t_1\sqcup t_2)}\quad\text{if $t_1\sqcup t_2$ is defined}\\
+    (\boxtype{T_1}) \sqcup (\boxtype{T_2}) &=\boxtype{(T_1\sqcup T_2)}\quad\text{if $T_1\sqcup T_2$ is defined}\\
     \mathsf{dangling}\sqcup\mathsf{dangling} &= \mathsf{dangling}.
   \end{align*}
-  In all other cases, $t_1\sqcup t_2$ is undefined.
+  In all other cases, $\sqcup$ is undefined.
 \end{definition}
 
 \begin{lemma}\label{lemma:lub-type}
-  Let $I\subseteq\mathbb{N}$ and $\{t_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$.
-  Then, if $\sqcup_{i\in I}t_i$ is defined, it is the least upper bound of
-  $\{t_i\}_{i\in I}$.
+  Let $I\subseteq\mathbb{N}$ and $\{T_i\}_{i\in I}\subseteq\mathsf{T}_\kappa$.
+  Then, if $\sqcup_{i\in I}T_i$ is defined, it is the least upper bound of
+  $\{T_i\}_{i\in I}$.
 \end{lemma}
 \begin{proof}
-  Assume that $\nu_I = \sqcup_{i\in I}t_i$ is defined.
+  Assume that $\nu_I = \sqcup_{i\in I}T_i$ is defined.
   We proceed by structural induction.
   \begin{itemize}
-    \item (Base: there is a $t_k$ which is not a box)
-    If $t_k=\mathsf{int}$ then, as $\nu_I$ is defined, for all $i\in I$
-    we have $t_i=\mathsf{int}$. Therefore, $\nu_I=\mathsf{int}$
-    and so $\nu_I$ is an upper bound of $\{t_i\}_{i\in I}$.
-    Similarly if $t_k=\mathsf{dangling}$.
-    If $t_k$ is a borrow then, for all $i\in I$, $t_i$ is a borrow, and so
+    \item (Base: there is a $T_k$ which is not a box)
+    If $T_k=\mathsf{int}$ then, as $\nu_I$ is defined, for all $i\in I$
+    we have $T_i=\mathsf{int}$. Therefore, $\nu_I=\mathsf{int}$
+    and so $\nu_I$ is an upper bound of $\{T_i\}_{i\in I}$.
+    Similarly if $T_k=\mathsf{dangling}$.
+    If $T_k$ is a borrow then, for all $i\in I$, $T_i$ is a borrow, and so
     $\nu_I$ is a borrow which results from the union of the sets of
-    leftvalues of all the $t_i$'s. Hence, $\nu_I$ is an upper bound of
-    $\{t_i\}_{i\in I}$.
-    Similarly if $t_k$ is a mutable borrow.
+    leftvalues of all the $T_i$'s. Hence, $\nu_I$ is an upper bound of
+    $\{T_i\}_{i\in I}$.
+    Similarly if $T_k$ is a mutable borrow.
 
-    Now, suppose that $\nu'_I$ is also an upper bound of $\{t_i\}_{i\in I}$.
-    If $\nu'_I=\mathsf{int}$ then each $t_i$ is $\mathsf{int}$, so
+    Now, suppose that $\nu'_I$ is also an upper bound of $\{T_i\}_{i\in I}$.
+    If $\nu'_I=\mathsf{int}$ then each $T_i$ is $\mathsf{int}$, so
     $\nu_I=\mathsf{int}$ and we have $\nu_I\sqsubseteq\nu'_I$.
     Similarly if $\nu'_I=\mathsf{dangling}$.
-    If $\nu'_I=\borrow b$, then for all $i\in I$ we have $t_i = \borrow b_i$
+    If $\nu'_I=\borrow b$, then for all $i\in I$ we have $T_i = \borrow b_i$
     and $b_i\subseteq b$. Hence, $\cup_{i\in I}b_i\subseteq b$ and so
     $\borrow\cup_{i\in I}b_i\sqsubseteq\borrow b$. Consequently, we have
     $\nu_I\sqsubseteq\nu'_I$ because $\nu_I=\borrow\cup_{i\in I}b_i$ in this case.
     Similarly if $\nu'_I$ is a mutable borrow.
     %
     \item (Induction step) Suppose that for all $i\in I$ we have
-    $t_i = \boxtype{t'_i}$. Since $\nu_I$ is defined, also
-    $\sqcup_{i\in I}t'_i$ is defined and, by inductive hypothesis, it must be
-    the least upper bound of $\{t'_i\}_{i\in I}$. Then,
-    $\nu_I = \boxtype{(\sqcup_{i\in I}t'_i)}$ is an upper bound
-    of $\{t_i\}_{i\in I}$. Suppose that $\nu'_I$ is also an upper bound
-    of $\{t_i\}_{i\in I}$. Then, $\nu'_I=\boxtype{t}$ with
-    $t'_i\sqsubseteq t$ for all $i\in I$, and so $t$ is an upper bound
-    of $\{t'_i\}_{i\in I}$; hence, we have $\sqcup_{i\in I}t'_i\sqsubseteq t$
-    because $\sqcup_{i\in I}t'_i$ is the least upper bound and,
+    $T_i = \boxtype{T'_i}$. Since $\nu_I$ is defined, also
+    $\sqcup_{i\in I}T'_i$ is defined and, by inductive hypothesis, it must be
+    the least upper bound of $\{T'_i\}_{i\in I}$. Then,
+    $\nu_I = \boxtype{(\sqcup_{i\in I}T'_i)}$ is an upper bound
+    of $\{T_i\}_{i\in I}$. Suppose that $\nu'_I$ is also an upper bound
+    of $\{T_i\}_{i\in I}$. Then, $\nu'_I=\boxtype{T}$ with
+    $T'_i\sqsubseteq T$ for all $i\in I$, and so $T$ is an upper bound
+    of $\{T'_i\}_{i\in I}$; hence, we have $\sqcup_{i\in I}T'_i\sqsubseteq T$
+    because $\sqcup_{i\in I}T'_i$ is the least upper bound and,
     consequently, $\nu_I\sqsubseteq\nu'_I$.
   \end{itemize}
   \qed
 \end{proof}
 
+Rust distinguishes between types with copy semantics
+and type with move semantics.
+Values whose type has copy semantics
+are copied upon reading, while values whose type has
+move semantics are \emph{moved}, in the sense that their original container
+loses the ownership to the value. Only mutable borrows and dynamically
+allocated data (hence boxes) have move semantics.
+
+\begin{definition}[Copy and move types]\label{def:copy_move}
+  Let $T\in\mathsf{T}_\kappa$. Then $T$ \emph{has move semantics}, and we write
+  $\movetype(T)$, if and only if $T=\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$ or
+  $T=\boxtype{T'}$ for some $T'$. In all other cases, $T$ \emph{has copy semantics},
+  and we write $\copytype(T)$.
+\end{definition}
+
+Another useful notion is that of \emph{full} types. They are types that do not contain
+$\mathsf{dangling}$. This notion is important because, as we will see
+in Sec.~\ref{sec:borrow_checker}, only value with full type can be borrowed in Rust.
+
+\begin{definition}[Full type]\label{def:full}
+  A type $T\in\mathsf{T}_\kappa$ is \emph{full}
+  if and only if $\mathsf{dangling}$ does not occur inside $T$.
+  We write it as $\mathsf{full}(T)$.
+\end{definition}
+  
 We can now define the typings or type environments, that is,
 information about the types of the variables in scope at a given program point.
 
@@ -272,6 +297,27 @@ information about the types of the variables in scope at a given program point.
   Given a context $\kappa$, a \emph{typing} $\tau$ over $\kappa$ is
   a map from the variables in $\kappa$ to types.
 \end{definition}
+
+The types used in a typing can include borrows and mutable borrows.
+The basic idea of the borrow checker is that the variables in
+the leftvalues in those borrows (mutable or not) can only be used
+in a restricted way~\cite{Pearce21}.
+
+\begin{definition}[Read/Write Prohibited]\label{def:prohibited}
+  Let $\kappa$ be a context and $\tau$ a \emph{typing} over $\kappa$.
+  Then $\mathsf{w}\in\Leftvalues_\kappa$ is
+  \emph{read prohibited in $\tau$},
+  written as $\mathsf{readProhibited}(\mathsf{w},\tau)$,
+  if $\mathsf{root}(\mathsf{w})$ occurs in a mutable borrow inside $\tau$.
+  Moreover, $\mathsf{w}$ is \emph{write prohibited in $\tau$}, written
+  as $\mathsf{writeProhibited}(\mathsf{w},\tau)$,
+  if $\mathsf{root}(\mathsf{w})$ occurs in a borrow or in a
+  mutable borrow inside $\tau$.
+\end{definition}
+
+\noindent
+It follows that $\mathsf{readProhibited}(\mathsf{w},\tau)$ entails
+$\mathsf{writeProhibited}(\mathsf{w},\tau)$.
 
 A typing provides types to variables but can be used to type
 leftvalues as well, as shown below. Def.~\ref{def:type} is a translation of
@@ -295,7 +341,7 @@ algorithm fails for them.
     \text{undefined} & \text{if $\type(\mathsf{w},\tau)=\mathsf{int}$}\\
     \sqcup_{1\le i\le n}\type(\mathsf{w}_i,\tau) & \text{if $\type(\mathsf{w},\tau)=\borrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
     \sqcup_{1\le i\le n}\type(\mathsf{w}_i,\tau) & \text{if $\type(\mathsf{w},\tau)=\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\}$}\\
-    t & \text{if $\type(\mathsf{w},\tau)=\boxtype{t}$.}
+    T & \text{if $\type(\mathsf{w},\tau)=\boxtype{T}$.}
     \end{cases}
   \end{align*}
 \end{definition}
