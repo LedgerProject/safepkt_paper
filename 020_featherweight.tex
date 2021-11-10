@@ -1,7 +1,7 @@
-\section{Semantics}\label{sec:semantics}
+\section{Simplified Featherweight Rust}\label{sec:featherweight}
 
-This section gives a formal definition of the types used by the borrow checker
-of Rust and of the typing procedure for leftvalues defined in~\cite{Pearce21}.
+This section gives a formal, simplified presentation of Featherweight Rust
+and of the typing rules of its borrow checker~\cite{Pearce21}.
 
 \begin{definition}
   We assume there is a set of variables $\Vars$.
@@ -17,20 +17,36 @@ of Rust and of the typing procedure for leftvalues defined in~\cite{Pearce21}.
     \mathsf{root}(x) &= x\qquad\text{if $x\in\Vars$}\\
     \mathsf{root}(\mathtt{*}\mathsf{w}) &= \mathsf{root}(\mathsf{w}).
   \end{align*}
+  The set of \emph{expressions} \textsf{e} is defined as
+  \begin{align*}
+    \mathsf{e} ::= &\ i & \text{integer}\\
+    | &\ \mathsf{w} & \text{leftvalue}\\
+    | &\ \borrow\mathsf{w} & \text{borrow}\\
+    | &\ \mutborrow\mathsf{w} & \text{mutable borrow}\\
+    | &\ \mathtt{box}\ \mathsf{e} & \text{heap allocation.}
+  \end{align*}
+  The sets of \emph{terms} \textsf{t} and \emph{blocks} \textsf{b} is defined as:
+  \begin{align*}
+    \mathsf{t} ::= &\ \mathsf{w}=\mathsf{e} & \text{assignment}\\
+    | &\ \mathtt{let\ mut}\ x=\mathsf{e} & \text{declaration, with $x\in\Vars$}\\
+    | &\ \{\mathsf{t_1};\ldots;\mathsf{t_n}\} & \text{block.}
+  \end{align*}
 \end{definition}
+
 
 The types used by the borrow checker are somehow non-standard, in the sense
 that they describe primitive types (such as \<int>) or structures
 dynamically allocated in memory (collectively represented by a box), but can also refer to
 a borrow or mutable borrow of one or more leftvalues.
 Moreover, a type can state that a value has been \emph{moved}, that is, assigned
-to another owner. Consequently, it exists but cannot be dereferenced.
-We write this as \<dangling>. In comparison to~\cite{Pearce21}, we are using
-a slight simplified set of types here, since~\cite{Pearce21} provides
-the \emph{ghost} type $t$ of a value that has been moved, as $\<dangling>(t)$.
+to another owner. Consequently, the value exists but cannot be accessed.
+We write this as $\mathsf{dangling}$. This is a simplification of the
+$\mathsf{dangling}(t)$ type in~\cite{Pearce21}, that embeds
+the \emph{ghost} type $t$ of a value that has been moved.
 This information is important to ensure that a variable, whose value has been
 previously moved away, is subsequently reassigned a value compatible
-with its original type $t$. However, we abstract this detail here, since it is irrelevant for
+with its original type $t$. However, we abstract this detail away here,
+since it is related to traditional type checking and is irrelevant for
 the termination of the algorithm for typing leftvalues.
 
 \begin{definition}[Types]
@@ -249,8 +265,8 @@ the termination of the algorithm for typing leftvalues.
   \qed
 \end{proof}
 
-We can now define the typings. They are a type environment, that is,
-type information about the variables in scope at a given program point.
+We can now define the typings or type environments, that is,
+information about the types of the variables in scope at a given program point.
 
 \begin{definition}[Typing]\label{def:typing}
   Given a context $\kappa$, a \emph{typing} $\tau$ over $\kappa$ is
@@ -260,12 +276,12 @@ type information about the variables in scope at a given program point.
 A typing provides types to variables but can be used to type
 leftvalues as well, as shown below. Def.~\ref{def:type} is a translation of
 Def.~3.11 from~\cite{Pearce21}. It can be seen as an algorithm for typing leftvalues
-and, as such, it is heavily used in the borrow checker formalized in~\cite{Pearce21}.
+and, as such, it is heavily used in the borrow checker.
 The algorithm queries the typing when the leftvalue is actually a variable,
 and dereferences borrows or boxes when the leftvalue contains one or more
 \<*> operations, recurring in the case of borrows.
 Types \<int> and \<dangling> cannot be dereferenced, hence the
-algorithm fails in that case for them.
+algorithm fails for them.
 
 \begin{definition}[Type of leftvalues]\label{def:type}
   Given a context $\kappa$, a typing $\tau$ over $\kappa$

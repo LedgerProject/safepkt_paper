@@ -2,7 +2,8 @@ TARGET = 000_rust
 DEPS = 001_abstract.tex \
 	010_introduction.tex \
 	015_rust.tex \
-	020_types.tex \
+	020_featherweight.tex \
+	025_borrow_checker.tex \
 	030_termination.tex \
 	040_invariant.tex \
 	090_conclusion.tex \
