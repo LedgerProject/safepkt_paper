@@ -65,13 +65,14 @@ typing $\tau'$ that, by rule induction, satisfies the invariant. As a final
 step, this rule enlarges $\tau'$ with a binding for $x$. Since $x$ is
 fresh ($x\not\in\dom(\tau)$),
 variable $x$ does not occur in the right-hand side of that binding. Namely, the rule
-leads to a new typing $\tau''=\tauì[x\to T]$ where $T$ is the type of $\mathsf{e}$, such that
+leads to a new typing $\tau''=\tau'[x\to T^l]$ where $T^l$ is the type of $\mathsf{e}$, such that
 $x$ does not occur in $T$. The invariant for \textsf{T-Declare} follows by the next result.
 
 \begin{lemma}\label{lem:declare_invariant}
   Let $\tau$ be a linearizable typing for the context $\kappa$;
-  let $x\not\in\kappa$ and $T\in\mathsf{T}_\kappa$ (hence $x$ does not occur in $T$).
-  Then $\tau'=\tau[x\to T]$ is linearizable as well.
+  let $x\not\in\kappa$, $T\in\mathsf{T}_\kappa$ (hence $x$ does not occur in $T$)
+  and $l$ be a lifetime.
+  Then $\tau'=\tau[x\to T^l]$ is linearizable as well.
 \end{lemma}
 \begin{proof}
   Consider the function $\phi$ that shows that $\tau$ is linearizable (Def.~\ref{def:linearization}).
@@ -83,7 +84,7 @@ $x$ does not occur in $T$. The invariant for \textsf{T-Declare} follows by the n
   in $\tau(y)=\tau'(y)$. Since $x$ is fresh, such $v$ are distinct from $x$ and we
   conclude that $\phi'(y)>\phi'(v)$ for every $v$ that occurs in $\tau'(y)$.
   Since $x$ does not occur in $T$, it is
-  $\phi'(x)=1+\max_{y\in\kappa}\phi(y)>\phi(v)=\phi'(v)$ for every $v$ that occurs in $T=\tau'(x)$.
+  $\phi'(x)=1+\max_{y\in\kappa}\phi(y)>\phi(v)=\phi'(v)$ for every $v$ that occurs in $T^l=\tau'(x)$.
   \qed
 \end{proof}
 
@@ -103,7 +104,7 @@ The following result shows that $\tau''$ is linearizable as well.
 \end{lemma}
 \begin{proof}
   The function $\mathsf{write}$ modifies a set of variables $v_1,\ldots,v_n$ in $\tau$ to compute $\tau'$.
-  The type of the other variables remains unchanged between $\tau$ and $\tau'$. Since the
+  The type of the other variables remains unchanged from $\tau$ to $\tau'$. Since the
   type system guarantees that borrowed variables are not modified~\cite{Pearce21},
   this means that $v_1,\ldots,v_n$ do not occur in the borrows in $\tau$. Moreover,
   the variables in the borrows in $T$ do not contain $v_1,\ldots,v_n$, because

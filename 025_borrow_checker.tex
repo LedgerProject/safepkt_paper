@@ -1,12 +1,13 @@
 \section{The Borrow Checker}\label{sec:borrow_checker}
 
-The borrow checker has been formalized as a type system whose rules
-map the typing $\tau$ before the evaluation of a syntactical object $s$ to
+The borrow checker is formalized as a type system whose rules
+bind the typing $\tau$ before the evaluation of a syntactical object $s$ to
 the typing $\tau'$ resulting after that evaluation.
-We write this as $\tau\vdash s\dashv\tau'$.
+These rules require the lifetime $l$ of the piece of code that is being typed.
+We write this as $\tau,l\vdash s\dashv\tau'$.
 On expressions, the typing
 rules provide the inferred type $T$ of the expression as well:
-$\tau\vdash e:T\dashv\tau'$.
+$\tau,l\vdash e:T\dashv\tau'$.
 
 \subsection{Typing rules for expressions}
 
@@ -16,19 +17,19 @@ yields a value of type $\mathsf{int}$ and does not modify the typing:
 \[
 \frac
     {}
-    {\tau\vdash i:\mathsf{int}\dashv\tau}
+    {\tau,l\vdash i:\mathsf{int}\dashv\tau}
 \]
 
 \noindent
 \underline{\textsf{T-Copy}}.
 This rule applies to leftvalues whose type
-has copy semantics. Their evaluation yields their value
-and the typing remains unchanged. The rule requires that the leftvalue
+has copy semantics. Their evaluation yields their value, while
+the typing remains unchanged. The rule requires that the leftvalue
 can be accessed for reading:
 \[
 \frac
-    {T=\type(\mathsf{w},\tau)\quad\copytype(T)\quad\neg\mathsf{readProhibited}(\mathsf{w},\tau)}
-    {\tau\vdash\mathsf{w}:T\dashv\tau}
+    {T^m=\type(\mathsf{w},\tau)\quad\copytype(T)\quad\neg\mathsf{readProhibited}(\mathsf{w},\tau)}
+    {\tau,l\vdash\mathsf{w}:T\dashv\tau}
 \]
 
 \noindent
@@ -42,8 +43,8 @@ As a consequence, reading, from a leftvalue, a value with move semantics
 amounts to writing into its old container and requires write permission:
 \[
 \frac
-    {T=\type(\mathsf{w},\tau)\quad\movetype(T)\quad\neg\mathsf{writeProhibited}(\mathsf{w},\tau)}
-    {\tau\vdash\mathsf{w}:T\dashv\mathsf{move}(\mathsf{w},\tau)}
+    {T^m=\type(\mathsf{w},\tau)\quad\movetype(T)\quad\neg\mathsf{writeProhibited}(\mathsf{w},\tau)}
+    {\tau,l\vdash\mathsf{w}:T\dashv\mathsf{move}(\mathsf{w},\tau)}
 \]
 where the $\mathsf{move}$ function
 modifies the binding for the root of $\mathsf{w}$:
@@ -51,11 +52,12 @@ modifies the binding for the root of $\mathsf{w}$:
 \mathsf{move}(\mathsf{w},\tau)=\tau[\mathsf{root}(\mathsf{w})\mapsto
   \mathsf{strike}(\mathsf{w},\tau(\mathsf{root}(\mathsf{w})))]
 \]
+
 with
 \begin{align*}
-  \mathsf{strike}(x,T)&=\mathsf{dangling}\\
-  \mathsf{strike}(\mathtt{*}\mathsf{w},\boxtype{T})&=
-  \boxtype{\mathsf{strike}(\mathsf{w},T)}.
+  \mathsf{strike}(x,T^l)&=\mathsf{dangling}^l\\
+  \mathsf{strike}(\mathtt{*}\mathsf{w},(\boxtype{T})^l)&=
+  (\boxtype{|\mathsf{strike}(\mathsf{w},T^l)|})^l.
 \end{align*}
 The function $\mathsf{strike}$ is undefined otherwise.
 
@@ -66,8 +68,8 @@ to be readable and have full type
 (only value with full type can be borrowed in Rust):
 \[
 \frac
-    {\mathsf{full}(\type(\mathsf{w},\tau))\quad\neg\mathsf{readProhibited}(\mathsf{w},\tau)}
-    {\tau\vdash\borrow\mathsf{w}:\borrow\mathsf{w}\dashv\tau}
+    {\mathsf{full}(|\type(\mathsf{w},\tau)|)\quad\neg\mathsf{readProhibited}(\mathsf{w},\tau)}
+    {\tau,l\vdash\borrow\mathsf{w}:\borrow\mathsf{w}\dashv\tau}
 \]
 
 \noindent
@@ -78,9 +80,9 @@ leftvalue to be writable and have full type
 the borrowed leftvalue never traverses an immutable borrow:
 \[
 \frac
-    {\mathsf{full}(\type(\mathsf{w},\tau))\quad\neg\mathsf{writeProhibited}(\mathsf{w},\tau)
-    \quad\mathsf{mutable}(\mathsf{w},\tau(\mathsf{root}(\mathsf{w})),\tau)}
-    {\tau\vdash\mutborrow\mathsf{w}:\mutborrow\mathsf{w}\dashv\tau}
+    {\mathsf{full}(|\type(\mathsf{w},\tau)|)\quad\neg\mathsf{writeProhibited}(\mathsf{w},\tau)
+    \quad\mathsf{mutable}(\mathsf{w},|\tau(\mathsf{root}(\mathsf{w}))|,\tau)}
+    {\tau,l\vdash\mutborrow\mathsf{w}:\mutborrow\mathsf{w}\dashv\tau}
 \]
 where
 \begin{align*}
@@ -88,7 +90,7 @@ where
   \mathsf{mutable}(\mathtt{*}\mathsf{w},\boxtype{T},\tau)&=\mathsf{mutable}(\mathsf{w},T,\tau)\\
   \mathsf{mutable}(\mathtt{*}\underbrace{\mathtt{*}\cdots\mathtt{*}}_nx,
   \mutborrow\mathsf{w},\tau)&=\mathsf{mutable}(\underbrace{\mathtt{*}\cdots\mathtt{*}}_n\mathsf{w},
-  \tau(\mathsf{root}(\mathsf{w})),\tau).
+  |\tau(\mathsf{root}(\mathsf{w}))|,\tau).
 \end{align*}
 
 \noindent
@@ -96,8 +98,8 @@ where
 The evaluation of a box expression simply recurs on the boxed expression:
 \[
 \frac
-    {\tau\vdash\mathsf{e}:T\dashv\tau'}
-    {\tau\vdash\mathtt{box}\ \mathsf{e}:\boxtype{T}\dashv\tau'}
+    {\tau,l\vdash\mathsf{e}:T\dashv\tau'}
+    {\tau,l\vdash\mathtt{box}\ \mathsf{e}:\boxtype{T}\dashv\tau'}
 \]
 
 \subsection{Typing rules for terms}
@@ -105,27 +107,28 @@ The evaluation of a box expression simply recurs on the boxed expression:
 \noindent
 \underline{\textsf{T-Block}}.
 The execution of a block of statements simply recurs on each single statement.
-At the end, the variables $S$ declared inside the block get dropped away. We assume
+At the end, the variables declared inside the block get dropped away. We assume
 that variables cannot be redefined inside a block, hence there is no risk of name clash.
 \[
 \frac
-    {\tau\vdash\mathsf{t}_1\dashv\tau_1\quad\ldots\quad\tau_{n-1}\vdash\mathsf{t}_n\dashv\tau'
-    \quad S=\{v\in\Vars\mid v\text{ is declared in }\mathsf{t}_1;\ldots;\mathsf{t}_n\}}
-    {\tau\vdash\{\mathsf{t}_1;\ldots;\mathsf{t}_n\}\dashv\mathsf{drop}(S,\tau')}
+    {\tau,l\vdash\mathsf{t}_1\dashv\tau_1\quad\ldots\quad\tau_{n-1},l\vdash\mathsf{t}_n\dashv\tau'
+    \quad }
+    {\tau,l\vdash\{\mathsf{t}_1;\ldots;\mathsf{t}_n\}^m\dashv\mathsf{drop}(m,\tau')}
 \]
 where
 \[
-\mathsf{drop}(S,\tau)=\tau|_{-S}.
+\mathsf{drop}(m,\tau)=\{x\to T^l\mid x\in\dom(\tau),\ \tau(x)=T^l\text{ and }l\not=m\}.
 \]
 
 \noindent
 \underline{\textsf{T-Declare}}.
 The declaration of a fresh new variable $x$ evaluates its initialization expression $\mathsf{e}$ and
-binds it to $x$:
+binds $x$ to the type of $\mathsf{e}$,
+decorated with the lifetime of the block of code where the declaration is evaluated:
 \[
 \frac
-    {x\not\in\dom(\tau)\quad\tau\vdash\mathsf{e}:T\dashv\tau'}
-    {\tau\vdash\mathtt{let\ mut}\ x=\mathsf{e}\dashv\tau'[x\to T]}
+    {x\not\in\dom(\tau)\quad\tau,l\vdash\mathsf{e}:T\dashv\tau'}
+    {\tau,l\vdash\mathtt{let\ mut}\ x=\mathsf{e}\dashv\tau'[x\to T^l]}
 \]
 
 \noindent
@@ -133,21 +136,25 @@ binds it to $x$:
 The assignment of a value to a leftvalue $\mathsf{w}$ requires $\mathsf{w}$ to be writable.
 In that case, the assigned expression is evaluated and assigned to $\mathsf{w}$.
 This is modelled through the $\mathsf{write}$ function below.
-Since $\mathsf{w}$ might be more complex than a single variable, the assignment might actually
+Since $\mathsf{w}$ can be more complex than a single variable, the assignment might actually
 update a variable in a mutable borrow reachable from the root of $\mathsf{w}$. This is reflected
 in the (quite complex) definition of $\mathsf{write}$, that we take from~\cite{Pearce21}
 where more details can be found:
 \[
 \frac
-    {\tau\vdash\mathsf{e}:T\dashv\tau' \quad
+    {\begin{array}{c}
+        \tau,l\vdash\mathsf{e}:T\dashv\tau' \quad
       \tau''=\mathsf{write}(\tau',\mathsf{w},T,\mathit{strong}) \quad
-      \neg\mathsf{writeProhibited}(\tau'',\mathsf{w})}
-    {\tau\vdash\mathsf{w}=\mathsf{e}\dashv\tau''}
+      \neg\mathsf{writeProhibited}(\tau'',\mathsf{w})\\
+      \type(\mathsf{w},\tau)=D^m\quad\mathsf{survives}(T,m,\tau)
+      \end{array}
+    }
+    {\tau,l\vdash\mathsf{w}=\mathsf{e}\dashv\tau''}
 \]
 where
 \[
 \mathsf{write}(\tau,\underbrace{\mathtt{*}\cdots\mathtt{*}}_nx,T,\mathit{modality})=\mathsf{apply}
-(x,\update(\tau,n,\tau(x),T,\mathit{modality}))
+(x,\update(\tau,n,|\tau(x)|,T,\mathit{modality}))
 \]
 %
 where
@@ -163,7 +170,7 @@ where
 \end{align*}
 and
 \begin{align*}
-  \mathsf{apply}(y,\langle\tau,T\rangle)&=\tau[y\to T]\\
+  \mathsf{apply}(y,\langle\tau,T\rangle)&=\tau[y\to T^l]\quad\text{where $\tau(y)=D^l$}\\
   \mathsf{expand}(\langle\tau,T\rangle)&=\langle\tau,\boxtype{T}\rangle.
 \end{align*}
 %
@@ -174,3 +181,10 @@ can either completely replace the type of $x$
 inside the mutable borrows in $\tau$ (\emph{weak} update).
 No other variable can see its type updated.
 
+Function $\mathsf{survives}(T,m,\tau)$ determines if all leftvalues contained
+in the borrows or mutable borrows inside the type $T$ have a type whose lifetime is $m$ or
+is larger than $m$. Hence they \emph{survive} to the end of the lifetime $m$.
+The motivation of this contraint in rule
+\textsf{T-Assign} is to guarantee that, when a variable $v$ can reach another variable $v'$,
+the lifetime of $v'$ is equal or larger than the lifetime of $v$. Otherwise, the deallocation of
+$v'$ (at the end of its lifetime) would leave a dangling reference reachable from $v$.

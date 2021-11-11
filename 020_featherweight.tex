@@ -43,16 +43,24 @@ more amenable to formal proofs, by focusing on the way borrows work. Namely:
     | &\ \mutborrow\mathsf{w} & \text{mutable borrow}\\
     | &\ \mathtt{box}\ \mathsf{e} & \text{heap allocation.}
   \end{align*}
-  The sets of \emph{terms} \textsf{t} and \emph{blocks} \textsf{b} is defined as:
+  We assume there is a set $\Lifetimes$ of \emph{lifetimes}, used
+  to decorate blocks of code.
+  The sets of \emph{terms} \textsf{t} is defined as:
   \begin{align*}
     \mathsf{t} ::= &\ \mathsf{w}=\mathsf{e} & \text{assignment}\\
     | &\ \mathtt{let\ mut}\ x=\mathsf{e} & \text{declaration, with $x\in\Vars$}\\
-    | &\ \{\mathsf{t}_1;\ldots;\mathsf{t}_n\} & \text{block.}
+    | &\ \{\mathsf{t}_1;\ldots;\mathsf{t}_n\}^l & \text{block, with $l\in\Lifetimes$.}
   \end{align*}
 \end{definition}
+%
+Intuitively, the variables declared in a block with lifetime $l$ receive lifetime $l$
+and go out of scope and are deallocated
+at the end of the block. Lifetimes are important for the borrow checker,
+in order to check that borrowed variables do not survive their declaring block, since in that
+case the borrows would become dangling.
 
 The types used by the borrow checker are somehow non-standard, in the sense
-that they describe primitive types (such as \<int>) or structures
+that they describe primitive types (such as $\mathsf{int}$) or structures
 dynamically allocated in memory (collectively represented by a box), but can also refer to
 a borrow or mutable borrow of a leftvalue.
 This is a simplification of the types from~\cite{Pearce21}, that allow more leftvalues
@@ -78,6 +86,8 @@ the \emph{ghost} type $T$ of a value that has been moved away.}.
     | &\ \boxtype{\mathsf{T}_\kappa} & \text{box}\\
     | &\ \mathsf{dangling} & \text{dangling}.
   \end{align*}
+  The set of \emph{decorated types} over $\kappa$ contains types with an
+  associated lifetime, such as $T^l$. We define $|T^l|=T$.
 \end{definition}
 
 Rust distinguishes between types with copy semantics
@@ -104,13 +114,15 @@ in Sec.~\ref{sec:borrow_checker}, only values with full type can be borrowed in 
   if and only if $\mathsf{dangling}$ does not occur inside $T$.
   We write it as $\mathsf{full}(T)$.
 \end{definition}
-  
+
 We can now define the typings, or type environments, that is,
-information about the types of the variables in scope at a given program point.
+information about the types of the variables in scope at a given program point,
+with their lifetime.
 
 \begin{definition}[Typing]\label{def:typing}
   Given a context $\kappa$, a \emph{typing} $\tau$ over $\kappa$ is
-  a map from the variables in $\kappa$ to types.
+  a map from each variable $v\in\kappa$ to a type $T$ and a lifetime $l$.
+  We write this as $\tau(v)=T^l$.
 \end{definition}
 
 The types used in a typing can include borrows and mutable borrows.
@@ -134,31 +146,31 @@ in a restricted way~\cite{Pearce21}.
 It follows that $\mathsf{readProhibited}(\mathsf{w},\tau)$ entails
 $\mathsf{writeProhibited}(\mathsf{w},\tau)$.
 
-Def.~\ref{def:type} shows how a typing provides types not just to variables,
+Def.~\ref{def:type} shows how a typing provides type and lifetime not just to variables,
 but to leftvalues as well.
 It is a translation\footnote{This definition was given as a type system in~\cite{Pearce21}, while it is a recursive function here.} of
-Def.~3.11 from~\cite{Pearce21}.
+Def.~3.11 in~\cite{Pearce21}.
 It can be seen as a recursive algorithm for typing leftvalues
 and, as such, it is heavily used in the borrow checker.
 The algorithm queries the typing when the leftvalue is actually a variable,
 and dereferences borrows and boxes when the leftvalue contains one or more
 \<*> operations, further recurring in the case of borrows.
-Types \<int> and \<dangling> cannot be dereferenced, hence the
+Types $\mathsf{int}$ and $\mathsf{dangling}$ cannot be dereferenced, hence the
 algorithm fails on them.
 
 \begin{definition}[Type of leftvalues]\label{def:type}
   Given a context $\kappa$, a typing $\tau$ over $\kappa$
   and $\mathsf{w}\in\Leftvalues_\kappa$, the partial function
-  $\type(\mathsf{w},\tau)$ yields the type of $\mathsf{w}$ in $\tau$:
+  $\type(\mathsf{w},\tau)$ yields type and lifetime of $\mathsf{w}$ in $\tau$:
   \begin{align*}
     \type(x,\tau)&=\tau(x)\\
     \type(*\mathsf{w},\tau)&=\begin{cases}
     \text{undefined} & \text{if $\type(\mathsf{w},\tau)$ is undefined}\\
     \text{undefined} & \text{if $\type(\mathsf{w},\tau)=\mathsf{dangling}$}\\
     \text{undefined} & \text{if $\type(\mathsf{w},\tau)=\mathsf{int}$}\\
-    \type(\mathsf{w}',\tau) & \text{if $\type(\mathsf{w},\tau)=\borrow\mathsf{w}'$}\\
-    \type(\mathsf{w}',\tau) & \text{if $\type(\mathsf{w},\tau)=\mutborrow\mathsf{w}'$}\\
-    T & \text{if $\type(\mathsf{w},\tau)=\boxtype{T}$.}
+    \type(\mathsf{w}',\tau) & \text{if $\type(\mathsf{w},\tau)=(\borrow\mathsf{w}')^{l'}$}\\
+    \type(\mathsf{w}',\tau) & \text{if $\type(\mathsf{w},\tau)=(\mutborrow\mathsf{w}')^{l'}$}\\
+    T^l & \text{if $\type(\mathsf{w},\tau)=(\boxtype{T})^l$.}
     \end{cases}
   \end{align*}
 \end{definition}
@@ -166,7 +178,7 @@ algorithm fails on them.
 Def.~\ref{def:type} is clearly recursive, both on the structure of $\mathsf{w}$ and
 on the leftvalues contained in the borrows or mutable borrows that occur in the typing.
 In general, that recursion is not well-founded. In algorithmic terms, this means
-that this algorithm for computing the type of leftvalues might not terminate.
+that this algorithm for typing leftvalues might not terminate.
 Consider for instance the typing $\{x\to\borrow\mathtt{*}x\}$:
 the definition of $\type(\mathtt{*}x,\tau)$ ends in an infinite loop.
 This example can be arbitrarily complicated, through the
