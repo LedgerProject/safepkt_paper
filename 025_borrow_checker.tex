@@ -4,11 +4,11 @@ The borrow checker has been formalized as a type system whose rules
 map the typing $\tau$ before the evaluation of a syntactical object $s$ to
 the typing $\tau'$ resulting after that evaluation.
 We write this as $\tau\vdash s\dashv\tau'$.
-For expressions, the typing
+On expressions, the typing
 rules provide the inferred type $T$ of the expression as well:
 $\tau\vdash e:T\dashv\tau'$.
 
-Let us start from the typing rules for expressions.
+\subsection{Typing rules for expressions}
 
 \underline{\textsf{T-Const}}.
 This rule applies to integer constants. Their evaluation
@@ -19,8 +19,9 @@ yields a value of type $\mathsf{int}$ and does not modify the typing:
     {\tau\vdash i:\mathsf{int}\dashv\tau}
 \]
 
+\noindent
 \underline{\textsf{T-Copy}}.
-The first rule for leftvalues applies to those leftvalues whose type
+This rule applies to leftvalues whose type
 has copy semantics. Their evaluation yields their value
 and the typing remains unchanged. The rule requires that the leftvalue
 can be accessed for reading:
@@ -30,8 +31,9 @@ can be accessed for reading:
     {\tau\vdash\mathsf{w}:T\dashv\tau}
 \]
 
+\noindent
 \underline{\textsf{T-Move}}.
-The second rule for leftvalues applies to those leftvalues whose type
+This rule applies to leftvalues applies whose type
 has move semantics. Their evaluation yields their value,
 but its ownership is moved away from the leftvalue. Because of this,
 the typing gets modified, by letting the old container of the value
@@ -57,8 +59,9 @@ with
 \end{align*}
 The function $\mathsf{strike}$ is undefined otherwise.
 
+\noindent
 \underline{\textsf{T-ImmBorrow}}.
-The evaluation of the borrow expression requires the borrowed leftvalue
+The evaluation of a borrow expression requires the borrowed leftvalue
 to be readable and have full type
 (only value with full type can be borrowed in Rust):
 \[
@@ -67,8 +70,9 @@ to be readable and have full type
     {\tau\vdash\borrow\mathsf{w}:\borrow\mathsf{w}\dashv\tau}
 \]
 
+\noindent
 \underline{\textsf{T-MutBorrow}}.
-The evaluation of the mutable borrow expression requires the borrowed
+The evaluation of a mutable borrow expression requires the borrowed
 leftvalue to be writable and have full type
 (only value with full type can be borrowed in Rust). Moreover, Rust requires that
 the borrowed leftvalue never traverses an immutable borrow:
@@ -84,19 +88,21 @@ where
   \mathsf{mutable}(\mathtt{*}\mathsf{w},\boxtype{T},\tau)&=\mathsf{mutable}(\mathsf{w},T,\tau)\\
   \mathsf{mutable}(\mathtt{*}\underbrace{\mathtt{*}\cdots\mathtt{*}}_nx,
   \mutborrow\mathsf{w},\tau)&=\mathsf{mutable}(\underbrace{\mathtt{*}\cdots\mathtt{*}}_n\mathsf{w},
-  \tau(\mathsf{root}(\mathsf{w})),\tau)
+  \tau(\mathsf{root}(\mathsf{w})),\tau).
 \end{align*}
 
+\noindent
 \underline{\textsf{T-Box}}.
-The evaluation of the box expression simply recurs on the boxed expression:
+The evaluation of a box expression simply recurs on the boxed expression:
 \[
 \frac
     {\tau\vdash\mathsf{e}:T\dashv\tau'}
     {\tau\vdash\mathtt{box}\ \mathsf{e}:\boxtype{T}\dashv\tau'}
 \]
 
-Let us consider the typing rules for the terms now.
+\subsection{Typing rules for terms}
 
+\noindent
 \underline{\textsf{T-Block}}.
 The execution of a block of statements simply recurs on each single statement.
 At the end, the variables $S$ declared inside the block get dropped away. We assume
@@ -112,6 +118,7 @@ where
 \mathsf{drop}(S,\tau)=\tau|_{-S}.
 \]
 
+\noindent
 \underline{\textsf{T-Declare}}.
 The declaration of a fresh new variable $x$ evaluates its initialization expression $\mathsf{e}$ and
 binds it to $x$:
@@ -121,13 +128,14 @@ binds it to $x$:
     {\tau\vdash\mathtt{let\ mut}\ x=\mathsf{e}\dashv\tau'[x\to T]}
 \]
 
+\noindent
 \underline{\textsf{T-Assign}}.
-The assignment of a value to a leftvalue $\mathsf{w}$ requires the variable to be writable.
+The assignment of a value to a leftvalue $\mathsf{w}$ requires $\mathsf{w}$ to be writable.
 In that case, the assigned expression is evaluated and assigned to $\mathsf{w}$.
-This is modelled through a $\mathsf{write}$ function below.
+This is modelled through the $\mathsf{write}$ function below.
 Since $\mathsf{w}$ might be more complex than a single variable, the assignment might actually
-update a variable mutably borrowed reachable from the root of $\mathsf{w}$. This is reflected
-in the (rather complex) definition of $\mathsf{write}$ below, that we take from~\cite{Pearce21}
+update a variable in a mutable borrow reachable from the root of $\mathsf{w}$. This is reflected
+in the (quite complex) definition of $\mathsf{write}$, that we take from~\cite{Pearce21}
 where more details can be found:
 \[
 \frac

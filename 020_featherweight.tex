@@ -1,7 +1,25 @@
 \section{Simplified Featherweight Rust}\label{sec:featherweight}
 
 This section gives a formal, simplified presentation of Featherweight
-Rust~\cite{Pearce21}.
+Rust~\cite{Pearce21}. The simplifications make the language and its
+borrow checker (Sec.~\ref{sec:borrow_checker})
+more amenable to formal proofs, by focusing on the way borrows work. Namely:
+%
+\begin{itemize}
+\item We have used a dangling type that does not embed the
+  original, \emph{ghost} type as is the case in~\cite{Pearce21}.
+  That information is important to ensure that a variable, whose value has been
+  previously moved away, is subsequently reassigned a value compatible
+  with its original type. However, this is irrelevant here,
+  since it is related to traditional type checking and not to borrow checking.
+\item We have restricted borrow types to a single leftvalue, rather than to a set of
+  leftvalues as in~\cite{Pearce21}. By using a set, \cite{Pearce21}
+  was ready for the addition of conditional control. However, this just makes definitions
+  and proofs more complex, without adding anything significant \wrt the way borrows work.
+\item We have transformed some definitions, originally given as typing rules in~\cite{Pearce21},
+  to the definition of functions, such as functions $\mathsf{type}$ and $\mathsf{move}$ later.
+  This makes them more compact and simplifies proofs involving them.
+\end{itemize}
 
 \begin{definition}
   We assume there is a set of variables $\Vars$.
@@ -45,17 +63,14 @@ Moreover, a type can state that the value of a variable
 has been \emph{moved}, that is, assigned
 to another owner, that takes control of its ownership.
 Consequently, the value exists but cannot be accessed from that variable anymore.
-We write this as $\mathsf{dangling}$. This is a simplification of the
-$\mathsf{dangling}(t)$ type in~\cite{Pearce21}, that embeds
-the \emph{ghost} type $t$ of a value that has been moved.
-This information is important to ensure that a variable, whose value has been
-previously moved away, is subsequently reassigned a value compatible
-with its original type $t$. However, we abstract this detail away here,
-since it is related to traditional type checking and is irrelevant for
-the termination of the algorithm for typing leftvalues.
+We write this as $\mathsf{dangling}$\footnote{This is a simplification of the
+$\mathsf{dangling}(T)$ type in~\cite{Pearce21}, that embeds
+the \emph{ghost} type $T$ of a value that has been moved away.}.
 
 \begin{definition}[Types]
-  The set of \emph{types} over a context $\kappa$ is
+  The set of \emph{types} over a context $\kappa$
+  is\footnote{The types for borrows and mutable borrows are restricted to a single leftvalue,
+    while~\cite{Pearce21} allows one or more leftvalues.}
   \begin{align*}
     \mathsf{T}_\kappa ::=&\ \mathsf{int} & \text{integer}\\
     | &\ \borrow\mathsf{w} & \text{borrow, with $\mathsf{w}\in\mathsf{T}_\kappa$}\\
@@ -82,7 +97,7 @@ allocated data (hence boxes) have move semantics.
 
 Another useful notion is that of \emph{full} types. They are types that do not contain
 $\mathsf{dangling}$. This notion is important because, as we will see
-in Sec.~\ref{sec:borrow_checker}, only value with full type can be borrowed in Rust.
+in Sec.~\ref{sec:borrow_checker}, only values with full type can be borrowed in Rust.
 
 \begin{definition}[Full type]\label{def:full}
   A type $T\in\mathsf{T}_\kappa$ is \emph{full}
@@ -119,13 +134,15 @@ in a restricted way~\cite{Pearce21}.
 It follows that $\mathsf{readProhibited}(\mathsf{w},\tau)$ entails
 $\mathsf{writeProhibited}(\mathsf{w},\tau)$.
 
-A typing provides types to variables but can be used to type
-leftvalues as well, as shown below. Def.~\ref{def:type} is a translation of
-Def.~3.11 from~\cite{Pearce21}. It can be seen as an algorithm for typing leftvalues
+Def.~\ref{def:type} shows how a typing provides types not just to variables,
+but to leftvalues as well.
+It is a translation\footnote{This definition was given as a type system in~\cite{Pearce21}, while it is a recursive function here.} of
+Def.~3.11 from~\cite{Pearce21}.
+It can be seen as a recursive algorithm for typing leftvalues
 and, as such, it is heavily used in the borrow checker.
 The algorithm queries the typing when the leftvalue is actually a variable,
-and dereferences borrows or boxes when the leftvalue contains one or more
-\<*> operations, recurring in the case of borrows.
+and dereferences borrows and boxes when the leftvalue contains one or more
+\<*> operations, further recurring in the case of borrows.
 Types \<int> and \<dangling> cannot be dereferenced, hence the
 algorithm fails on them.
 
@@ -149,7 +166,7 @@ algorithm fails on them.
 Def.~\ref{def:type} is clearly recursive, both on the structure of $\mathsf{w}$ and
 on the leftvalues contained in the borrows or mutable borrows that occur in the typing.
 In general, that recursion is not well-founded. In algorithmic terms, this means
-that the algorithm for computing the type of leftvalues might not terminate.
+that this algorithm for computing the type of leftvalues might not terminate.
 Consider for instance the typing $\{x\to\borrow\mathtt{*}x\}$:
 the definition of $\type(\mathtt{*}x,\tau)$ ends in an infinite loop.
 This example can be arbitrarily complicated, through the

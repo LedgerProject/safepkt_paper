@@ -6,7 +6,8 @@ if those rules are applied from a linearizable typing $\tau$,
 they can only lead to a linearizable typing $\tau'$.
 By Prop.~\ref{prop:termination}, this means that the recursion used for
 typing leftvalues in those rules is well-founded,
-hence a borrow checker that implements those typing rules terminates.
+hence a borrow checker that implements those typing rules terminates
+(assuming that it starts from the empty, linearizable typing).
 The proof proceeds by rule induction.
 
 Some rules from Sec.~\ref{sec:borrow_checker} obviously satisfy the invariant,

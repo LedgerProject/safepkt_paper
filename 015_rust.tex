@@ -74,15 +74,13 @@ the function is a dangling pointer. Correctly, Rust rejects this function.
 Namely, its borrow checker, as formalized in~\cite{Pearce21}, computes the
 following \emph{typing} (or \emph{type environment}) at the end of the function:
 \[
-\{i\to\boxtype{\mathsf{int},\<result>\to\borrow\{i\}}\}
+\{i\to\boxtype{\mathsf{int},\<result>\to\borrow i}\}
 \]
 from where it is apparent that the function is trying to return a borrow
 of a value that gets deallocated at the end of the function. Note that the borrow
 checker allows one to
-use types that are borrows of more leftvalues (not just variables),
-such as $\borrow\{z,\mathtt{**}y\}$.
-Such types arise from the reconciliation of the typings at the end of
-conditional statements (that we do not show in this paper).
+use types that are borrows of leftvalues (not just variables),
+such as $\borrow\mathtt{**}y$.
 
 Borrows are a sort of temporary ownership of a value. As a consequence,
 that value can be modified only through the borrow, for the whole
@@ -107,7 +105,7 @@ checker rejects this function. It computes the following typing
 just before the \<y=\&w> statement:
 
 \[
-\{v\to\mathsf{int},w\to\mathsf{int},y\to\borrow\{v\},x\to\borrow\{y\}\}
+\{v\to\mathsf{int},w\to\mathsf{int},y\to\borrow v,x\to\borrow y\}
 \]
 
 \noindent
@@ -137,7 +135,7 @@ The statement \<x=z> tries to read $z$, that has been mutably borrowed
 at the previous line. Hence, the borrow checker rejects this function.
 It computes the typing
 \[
-\{z\to\mathsf{int},y\to\mutborrow\{z\}\}
+\{z\to\mathsf{int},y\to\mutborrow z\}
 \]
 just before \<x=z>, from where it is apparent that $z$ is mutably borrowed there.
 

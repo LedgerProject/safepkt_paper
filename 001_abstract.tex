@@ -11,7 +11,9 @@ have identified a source of non-termination within the calculus which
 arises when typing environments contain cycles between variables.  In
 fact, it turns out that well-typed programs cannot lead to such
 environments --- but this is not immediately obvious from the
-presentation.  This paper develops a sufficient condition that forbids
-cycles and, hence, guarantees termination.  Furthermore, we prove this
+presentation.  This paper defines a simplificatoin of Featherweight Rust,
+more amenable to formal proofs. Then it develops
+a sufficient condition that forbids
+cycles and, hence, guarantees termination.  Furthermore, it proves that this
 condition is, in fact, maintained by Featherweight Rust for well-typed
 programs.
