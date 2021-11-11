@@ -1,60 +1,49 @@
 \section{Semantical Invariant}\label{sec:invariant}
 
 This section proves an invariant of the typing rules
-from~\cite{Pearce21}. Namely,
-if those rules are applied to a linearizable typing $\tau$,
+from Sec.~\ref{sec:borrow_checker}. Namely, it proves that
+if those rules are applied from a linearizable typing $\tau$,
 they can only lead to a linearizable typing $\tau'$.
 By Prop.~\ref{prop:termination}, this means that the recursion used for
 typing leftvalues in those rules is well-founded,
-hence the implementation of the typing rules from~\cite{Pearce21} terminates.
-We prove the invariant by rule induction on the rule for statements in~\cite{Pearce21}.
+hence a borrow checker that implements those typing rules terminates.
+The proof proceeds by rule induction.
 
-Some rules from~\cite{Pearce21} obviously satisfy the invariant,
+Some rules from Sec.~\ref{sec:borrow_checker} obviously satisfy the invariant,
 since they do not modify the typing (for them, $\tau=\tau'$).
 This is the case of rules
-\textsf{T-Const}, \textsf{T-Copy}, \textsf{T-MutBorrow} and
-\textsf{T-ImmBorrow} (pages~3:23 and~3:24 of~\cite{Pearce21}).
+\textsf{T-Const}, \textsf{T-Copy}, \textsf{T-ImmBorrow} and
+\textsf{T-MutBorrow}.
+Rule \textsf{T-Box} satisfies the invariant by a simple application of
+rule induction.
 
-Other rules satisfy the invariant by a simple application of
-rule induction, such as \textsf{T-Box} and \textsf{T-Seq}
-(pages 3:24 and 3:25 of~\cite{Pearce21}).
-
-Rule \textsf{T-Move} (page~3:24 of~\cite{Pearce21})
-is used for typing the evaluation of a leftvalue
-whose type has move semantics. This modifies the typing since, in Rust,
-the ownership of the leftvalue moves away from itself.
-Formally, for this rule it is $\tau'=\mathsf{move}(\tau,\mathsf{w})$
-for a suitable leftvalue $\mathsf{w}$.
+For rule \textsf{T-Move}, it is $\tau'=\mathsf{move}(\mathsf{w},\tau)$.
 The intuition is that
 $\mathsf{strike}$ can only make the set of variables in the right-hand side
 of the typing smaller. Therefore, it can never make $\tau'$
 non-linearizable. This is proved below.
 
 \begin{lemma}\label{lem:move_invariant}
-  If rule \textsf{T-Move} is applied from a linearizable typing $\tau$
+  If \textsf{T-Move} is applied from a linearizable typing $\tau$
   and leads to a typing $\tau'$, then also $\tau'$ is linearizable.
 \end{lemma}
 \begin{proof}
   By definition of $\mathsf{move}$, the only
-  difference between $\tau$ and $\tau'$ is at $r=\mathsf{root}(\mathsf{w})$,
-  where the variables that occur in $\tau'(r)$ are included in those that occur
+  difference between $\tau$ and $\tau'$ is at $r=\mathsf{root}(\mathsf{w})$.
+  The variables that occur in $\tau'(r)$ are included in those that occur
   in $\tau(r)$ ($\mathsf{strike}$ can only strike away part of the type $\tau(r)$).
   Hence the same function $\phi$ that exists for $\tau$ (Def.~\ref{def:linearization})
   shows that $\tau'$ is linearizable.
   \qed
 \end{proof}
 
-Rule \textsf{T-Block} (page~3:25 of~\cite{Pearce21}) is used at the end of a
+Rule \textsf{T-Block} is used at the end of a
 block of code, where the set $S$ of local
-variables declared in the block goes out of scope. As a consequence, this rule removes
-the type bindings for those variables in $S$ from the initial typing $\tau$. It performs this
-through a function $\mathsf{drop}$ that projects those variables away from $\tau$ and is defined as:
-\[
-\mathsf{drop}(\tau,S)=\tau|_{-S}.
-\]
-The invariant for rule \textsf{T-Block} follows by rule induction and by the following result,
-whose intuition is that the removal of bindings from a typing can never make it
-non-linearizable.
+variables declared in the block goes out of scope. It removes
+the type bindings for the variables in $S$ from the initial typing $\tau$,
+through function $\mathsf{drop}$.
+The invariant for \textsf{T-Block} follows by rule induction and by the following result,
+whose intuition is that the removal of bindings from a typing can never make it non-linearizable.
 %
 \begin{lemma}\label{lem:drop_invariant}
   If \textsf{drop} is applied from a linearizable typing $\tau$
@@ -68,14 +57,15 @@ non-linearizable.
   \qed
 \end{proof}
 
-Rule \textsf{T-Declare} (page~3:25 of~\cite{Pearce21}) models the declaration
-of a new variable $x$, bound to a term $t$. The evaluation of $t$ leads to a
-typing $\tau$ that, by rule induction, satisfies the invariant. As a final
-step, this rule enlarges $\tau$ with a binding for $x$. Since $x$ is
-fresh (that is, $x\not\in\dom(\tau)$),
+Rule \textsf{T-Declare} models the declaration
+of a new variable $x$, bound to an expression $\mathsf{e}$. The evaluation of
+$\mathsf{e}$ leads to a
+typing $\tau'$ that, by rule induction, satisfies the invariant. As a final
+step, this rule enlarges $\tau'$ with a binding for $x$. Since $x$ is
+fresh ($x\not\in\dom(\tau)$),
 variable $x$ does not occur in the right-hand side of that binding. Namely, the rule
-leads to a new typing $\tau'=\tau[x\to T]$ where $T$ is the type of $t$, such that
-$x$ does not occur in $T$. The invariant for rule \textsf{T-Declare} follows by the next result.
+leads to a new typing $\tau''=\tauì[x\to T]$ where $T$ is the type of $\mathsf{e}$, such that
+$x$ does not occur in $T$. The invariant for \textsf{T-Declare} follows by the next result.
 
 \begin{lemma}\label{lem:declare_invariant}
   Let $\tau$ be a linearizable typing for the context $\kappa$;
@@ -91,45 +81,16 @@ $x$ does not occur in $T$. The invariant for rule \textsf{T-Declare} follows by 
   Given $y\in\kappa$, it is $\phi'(y)=\phi(y)>\phi(v)$ for every $v$ that occurs
   in $\tau(y)=\tau'(y)$. Since $x$ is fresh, such $v$ are distinct from $x$ and we
   conclude that $\phi'(y)>\phi'(v)$ for every $v$ that occurs in $\tau'(y)$.
-  Moreover, since $x$ does not occur in $T$, it is
-  $\phi'(x)=1+\max_{y\in\kappa}\phi(y)>\phi(v)=\phi'(v)$ for all $v$ that occur in $T=\tau'(x)$.
+  Since $x$ does not occur in $T$, it is
+  $\phi'(x)=1+\max_{y\in\kappa}\phi(y)>\phi(v)=\phi'(v)$ for every $v$ that occurs in $T=\tau'(x)$.
   \qed
 \end{proof}
 
-Rule \textsf{T-Assign} (page~3:25 of~\cite{Pearce21}) writes a value of type
-$T$ into a leftvalue $\mathsf{w}$.
-It performs this by computing $\tau'=\mathsf{write}(\tau,\mathsf{w},T,\mathit{strong})$,
-a function that yields the final typing from the typing $\tau$ resulting
-after the computation of $T$.
-By rule induction, $\tau$ is linearizable. In order to show that $\tau'$ is linearizable as well,
-we must show how $\mathsf{write}$ is defined:
-\[
-\mathsf{write}(\tau,\underbrace{\mathtt{*}\cdots\mathtt{*}}_nx,T,\mathit{modality})=\mathsf{apply}
-(x,\update(\tau,n,\tau(x),T,\mathit{modality}))
-\]
-where
-\begin{align*}
-  \update(\tau,0,T',T,\mathit{strong})&=\langle\tau,T\rangle\\
-  \update(\tau,0,T',T,\mathit{weak})&=\langle\tau,T'\sqcup T\rangle\\
-  \update(\tau,n+1,\boxtype{T'},T,\mathit{modality})
-  &=\mathsf{expand}(\update(\tau,n,T',T,\mathit{modality}))\\
-  \update(\tau,n+1,\mutborrow\mathsf{w},T,\_)&=
-  \langle\mathsf{write}(\tau,\underbrace{\mathtt{*}\cdots\mathtt{*}}_n\mathsf{w},T,\mathit{weak}),
-  \mutborrow\mathsf{w}\rangle
-\end{align*}
-and
-\begin{align*}
-  \mathsf{apply}(y,\langle\tau,T\rangle)&=\tau[y\to T]\\
-  \mathsf{expand}(\langle\tau,T\rangle)&=\langle\tau,\boxtype{T}\rangle.
-\end{align*}
-%
-The details of these functions
-are complex and we refer the interested reader to~\cite{Pearce21}.
-Here, it is important to observe that $\mathsf{write}$
-can either completely replace the type of $x$
-(\emph{strong} update) or modify the previous type of variables
-inside the mutable borrows in $\tau$ (\emph{weak} update).
-No other variables can see their type updated.
+Rule \textsf{T-Assign} computes the type $T$ of the value of the assigned expression
+$\mathsf{e}$, which leads to a typing $\tau'$. By rule induction, $\tau'$ is
+linearizable. Then the rule writes that value into a leftvalue $\mathsf{w}$.
+It performs this by computing $\tau''=\mathsf{write}(\tau',\mathsf{w},T,\mathit{strong})$.
+The following result shows that $\tau''$ is linearizable as well.
 
 \begin{lemma}\label{lem:write_invariant}
   Let $\tau$ be a linearizable typing for the context $\kappa$;
@@ -142,16 +103,16 @@ No other variables can see their type updated.
 \begin{proof}
   The function $\mathsf{write}$ modifies a set of variables $v_1,\ldots,v_n$ in $\tau$ to compute $\tau'$.
   The type of the other variables remains unchanged between $\tau$ and $\tau'$. Since the
-  type system in~\cite{Pearce21} guarantees that borrowed variables are not modified,
+  type system guarantees that borrowed variables are not modified~\cite{Pearce21},
   this means that $v_1,\ldots,v_n$ do not occur in the borrows in $\tau$. Moreover,
   the variables in the borrows in $T$ do not contain $v_1,\ldots,v_n$, because
   such variables are either $x=\mathsf{root}(\mathsf{w})$, and the rule \textsf{T-Assign}
   forbids the presence of $x$ in the borrows in $T$ ($\neg\mathsf{writeProhibited}$ in rule
   \textsf{T-Assign}); or they are inside mutable borrows in $\tau$ (last case of
-  $\update$ above), but hence they would be mutably borrowed and the type system
-  in~\cite{Pearce21} would have forbidden to read mutably borrowed variables in order to compute
+  $\update$), in which case they would be mutably borrowed and the type system
+  would have forbidden to read mutably borrowed variables in order to compute
   the type $T$ (see rule \textsf{T-MutBorrow}).
-  This means that such $v_1,\ldots,v_n$ only occurs in the left-hand side of the bindings of $\tau'$.
+  This means that such $v_1,\ldots,v_n$ only occur in the left-hand side of the bindings of $\tau'$.
   Consider now the function $\phi$ that shows that $\tau$ is linearizable
   (Def.~\ref{def:linearization}).
   Let us extend $\phi$ into an injective function $\phi'$
@@ -161,7 +122,7 @@ No other variables can see their type updated.
   \]
   For every $y\in\kappa\setminus\{v_1,\ldots,v_n\}$, it is
   $\phi'(y)=\phi(x)>\phi(v)=\phi'(v)$ for every $v$ that occurs in $\tau(y)=\tau'(y)$.
-  Moreover, by construction $\phi'(v_i)>\phi(v)=\phi'(v)$ for every $v$ that occurs in $\tau'(v_i)$.
+  Moreover, by construction, $\phi'(v_i)>\phi(v)=\phi'(v)$ for every $v$ that occurs in $\tau'(v_i)$.
   That is, $\phi'$ is linearizable as well.
   \qed
 \end{proof}

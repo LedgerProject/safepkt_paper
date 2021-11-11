@@ -6,7 +6,7 @@ idea that the Rust type system forces programmers to build
 \emph{linear} data structures. This translates into a notion of
 \emph{linearization} for typings, meaning that they map
 variables in a way that does not allow cycles: each variable is mapped
-into a type whose variables have strictly lower ranks.
+into a type that only contains variables of strictly lower ranks.
 
 \begin{definition}\label{def:linearization}
   A typing $\tau$ over a context $\kappa$ is \emph{linearizable} if there exists
@@ -14,15 +14,17 @@ into a type whose variables have strictly lower ranks.
   $v$ that occurs in $\tau(x)$, it is $\phi(x)>\phi(v)$. We say that $\phi(y)$ is the \emph{rank} of $y$.
 \end{definition}
 
-A linearizable typing induces an ordering between leftvalues. Intuitively, either
-the number of dereferences decreases, or the rank of the root decreases.
+A linearizable typing induces an ordering between leftvalues: either
+the number of dereferences decreases, or the rank of their roots decreases.
 
 \begin{definition}\label{def:ordering}
   Given a context $\kappa$ and a linearizable typing $\tau$ over $\kappa$, the
   relation $>$ between leftvalues is the minimal relation such that
   \begin{enumerate}
-  \item $\mathtt{*}\mathsf{w}>\mathsf{w}$, and
-  \item $\mathsf{w}_1>\mathsf{w}_2$ if $\phi(\mathsf{root}(\mathsf{w}_1))>\phi(\mathsf{root}(\mathsf{w}_2))$.
+  \item $\mathtt{*}\mathsf{w}>\mathsf{w}$ for every $\mathsf{w}\in\Leftvalues_\kappa$, and
+  \item $\mathsf{w}_1>\mathsf{w}_2$ if
+    $\phi(\mathsf{root}(\mathsf{w}_1))>\phi(\mathsf{root}(\mathsf{w}_2))$,
+    for every $\mathsf{w}_1,\mathsf{w}_2\in\Leftvalues_\kappa$.
   \end{enumerate}
 \end{definition}
 
@@ -40,12 +42,12 @@ the number of dereferences decreases, or the rank of the root decreases.
   $|\kappa|$ times in $s$ or remains constant. Hence, there is a finite $k$ such that
   $\phi(\mathsf{root}(\mathsf{w}_{k}))=\phi(\mathsf{root}(\mathsf{w}_{k+i}))$
   for all $i\ge 0$. This means that, from $k$ onwards, only rule 1 of Def.~\ref{def:ordering}
-  is applied. But that rule strictly decreases the size of the leftvalues and consequently cannot
+  applies. But that rule strictly decreases the size of the leftvalues and consequently cannot
   be applied indefinitely. This is incompatible with the hypothesis that $s$ is infinite.
   \qed
 \end{proof}
 
-Since $>$ is well-founded, we can use it in a proof by induction, as in the next result.
+Since $>$ is well-founded, it can be used in proofs by induction, as below.
 
 \begin{proposition}\label{prop:termination}
   If a typing $\tau$ over $\kappa$ is linearizable, then the algorithm for computing $\type$ in
@@ -71,14 +73,14 @@ Since $>$ is well-founded, we can use it in a proof by induction, as in the next
   then $\mathsf{w}>\mathsf{w}''$ (Def.~\ref{def:ordering}) and by inductive hypothesis we know that~1
   and~2 hold for $\mathsf{w}''$. The computation of $\type(\mathtt{*}\mathsf{w}'',\tau)$
   first recurs on $\type(\mathsf{w}'',\tau)$ (Def.~\ref{def:type}).
-  In the first, second and third case of Def.~\ref{def:type} also the
+  In the first, second and third case of Def.~\ref{def:type}, also the
   computation of $\type(\mathtt{*}\mathsf{w}'',\tau)$ terminates and property~2 is vacuously true.
-  In the sixth case in Def.~\ref{def:type}, the computation of
+  In the sixth case of Def.~\ref{def:type}, the computation of
   $\type(\mathtt{*}\mathsf{w}'',\tau)$ terminates and
   $\type(\mathsf{w}'',\tau)=\boxtype{\type(\mathtt{*}\mathsf{w}'',\tau)}$.
   Since $\mathsf{w}''$ and $\mathtt{*}\mathsf{w}''$ have the same root, condition~2
   lifts from $\mathsf{w}''$ to $\mathtt{*}\mathsf{w}''$.
-  In the fourth and fifth cases, by inductive hypothesis we know that~2 holds
+  In the fourth and fifth case of Def.~\ref{def:type}, by inductive hypothesis we know that~2 holds
   for $\mathsf{w}''$ and consequently the root of $\mathsf{w}'$ in Def.~\ref{def:type}
   has lower rank than the root of $\mathsf{w}''$. That is, $\mathsf{w}''>\mathsf{w}'$.
   By inductive hypothesis, both~1 and~2 hold for $\mathsf{w}'$. Hence
@@ -87,7 +89,7 @@ Since $>$ is well-founded, we can use it in a proof by induction, as in the next
   $\type(\mathsf{w}',\tau)$.
   Every variable that occurs in
   $\type(\mathsf{w}',\tau)$ has lower rank than
-  $\mathsf{root}(\mathsf{w}'')=\mathsf{root}(\mathsf{w})$. Therefore
+  $\mathsf{root}(\mathsf{w}'')=\mathsf{root}(\mathsf{w})$. Therefore,
   both~1 and~2 hold for $\mathsf{w}$ also in this case.
   \qed
 \end{proof}
