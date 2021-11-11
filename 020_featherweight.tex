@@ -166,10 +166,10 @@ algorithm fails on them.
     \type(x,\tau)&=\tau(x)\\
     \type(*\mathsf{w},\tau)&=\begin{cases}
     \text{undefined} & \text{if $\type(\mathsf{w},\tau)$ is undefined}\\
-    \text{undefined} & \text{if $\type(\mathsf{w},\tau)=\mathsf{dangling}$}\\
-    \text{undefined} & \text{if $\type(\mathsf{w},\tau)=\mathsf{int}$}\\
-    \type(\mathsf{w}',\tau) & \text{if $\type(\mathsf{w},\tau)=(\borrow\mathsf{w}')^{l'}$}\\
-    \type(\mathsf{w}',\tau) & \text{if $\type(\mathsf{w},\tau)=(\mutborrow\mathsf{w}')^{l'}$}\\
+    \text{undefined} & \text{if $|\type(\mathsf{w},\tau)|=\mathsf{dangling}$}\\
+    \text{undefined} & \text{if $|\type(\mathsf{w},\tau)|=\mathsf{int}$}\\
+    \type(\mathsf{w}',\tau) & \text{if $|\type(\mathsf{w},\tau)|=\borrow\mathsf{w}'$}\\
+    \type(\mathsf{w}',\tau) & \text{if $|\type(\mathsf{w},\tau)|=\mutborrow\mathsf{w}'$}\\
     T^l & \text{if $\type(\mathsf{w},\tau)=(\boxtype{T})^l$.}
     \end{cases}
   \end{align*}
