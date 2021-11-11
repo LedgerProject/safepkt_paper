@@ -5,7 +5,7 @@ map the typing $\tau$ before the evaluation of a syntactical object $s$ to
 the typing $\tau'$ resulting after that evaluation.
 We write this as $\tau\vdash s\dashv\tau'$.
 For expressions, the typing
-rules provide the type $T$ of the expression as well:
+rules provide the inferred type $T$ of the expression as well:
 $\tau\vdash e:T\dashv\tau'$.
 
 Let us start from the typing rules for expressions.
@@ -33,7 +33,7 @@ can be accessed for reading:
 \underline{\textsf{T-Move}}.
 The second rule for leftvalues applies to those leftvalues whose type
 has move semantics. Their evaluation yields their value,
-whose ownership is moved away from the leftvalue. Because of this,
+but its ownership is moved away from the leftvalue. Because of this,
 the typing gets modified, by letting the old container of the value
 get the $\mathsf{dangling}$ type (it cannot be used anymore).
 As a consequence, reading, from a leftvalue, a value with move semantics
@@ -58,32 +58,33 @@ with
 The function $\mathsf{strike}$ is undefined otherwise.
 
 \underline{\textsf{T-ImmBorrow}}.
-The evaluation of the borrow expression requires the borrow to be readable and have full type
+The evaluation of the borrow expression requires the borrowed leftvalue
+to be readable and have full type
 (only value with full type can be borrowed in Rust):
 \[
 \frac
     {\mathsf{full}(\type(\mathsf{w},\tau))\quad\neg\mathsf{readProhibited}(\mathsf{w},\tau)}
-    {\tau\vdash\borrow\mathsf{w}:\borrow\{\mathsf{w}\}\dashv\tau}
+    {\tau\vdash\borrow\mathsf{w}:\borrow\mathsf{w}\dashv\tau}
 \]
 
 \underline{\textsf{T-MutBorrow}}.
-The evaluation of the mutable borrow expression requires the borrow to be writable and have full type
+The evaluation of the mutable borrow expression requires the borrowed
+leftvalue to be writable and have full type
 (only value with full type can be borrowed in Rust). Moreover, Rust requires that
 the borrowed leftvalue never traverses an immutable borrow:
 \[
 \frac
     {\mathsf{full}(\type(\mathsf{w},\tau))\quad\neg\mathsf{writeProhibited}(\mathsf{w},\tau)
     \quad\mathsf{mutable}(\mathsf{w},\tau(\mathsf{root}(\mathsf{w})),\tau)}
-    {\tau\vdash\mutborrow\mathsf{w}:\mutborrow\{\mathsf{w}\}\dashv\tau}
+    {\tau\vdash\mutborrow\mathsf{w}:\mutborrow\mathsf{w}\dashv\tau}
 \]
 where
 \begin{align*}
   \mathsf{mutable}(x,T,\tau)&=\mathit{true}\\
   \mathsf{mutable}(\mathtt{*}\mathsf{w},\boxtype{T},\tau)&=\mathsf{mutable}(\mathsf{w},T,\tau)\\
-  \mathsf{mutable}(\mathtt{*}\underbrace{\mathtt{*}\cdots\mathtt{*}}_mx,
-  \mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_n\},\tau)&=\bigwedge\limits_{i=1}^n
-  \mathsf{mutable}(\underbrace{\mathtt{*}\cdots\mathtt{*}}_m\mathsf{w}_i,
-  \tau(\mathsf{root}(\mathsf{w}_i)),\tau)
+  \mathsf{mutable}(\mathtt{*}\underbrace{\mathtt{*}\cdots\mathtt{*}}_nx,
+  \mutborrow\mathsf{w},\tau)&=\mathsf{mutable}(\underbrace{\mathtt{*}\cdots\mathtt{*}}_n\mathsf{w},
+  \tau(\mathsf{root}(\mathsf{w})),\tau)
 \end{align*}
 
 \underline{\textsf{T-Box}}.

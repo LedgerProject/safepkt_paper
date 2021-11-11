@@ -48,7 +48,7 @@ the number of dereferences decreases, or the rank of the root decreases.
 Since $>$ is well-founded, we can use it in a proof by induction, as in the next result.
 
 \begin{proposition}\label{prop:termination}
-  If the typing $\tau$ over $\kappa$ is linearizable, then the algorithm for computing $\type$ given in
+  If a typing $\tau$ over $\kappa$ is linearizable, then the algorithm for computing $\type$ in
   Def.~\ref{def:type} terminates.
 \end{proposition}
 \begin{proof}
@@ -62,35 +62,32 @@ Since $>$ is well-founded, we can use it in a proof by induction, as in the next
   of lowest rank. By Def.~\ref{def:type}, it is $\type(x,\tau)=\tau(x)$ hence it terminates and
   no variable occurs in it, since (Def.~\ref{def:linearization})
   the rank of those variables should be even lower, which is impossible.
-  Assume now that both~1 and~2 hold for all leftvalues $\mathsf{w}'$ such that $\mathsf{w}>\mathsf{w}'$.
+  Assume now that both~1 and~2 hold for all leftvalues
+  $\mathsf{w}''$ such that $\mathsf{w}>\mathsf{w}''$.
   If $\mathsf{w}$ is a variable $x$, then $\type(x,\tau)=\tau(x)$ hence
   $\type(\mathsf{w},\tau)$ terminates and every variable $v$ that occurs in $\tau(x)$ is such that
   $\phi(x)>\phi(v)$ (Def.~\ref{def:linearization}). Hence both~1 and~2 hold for $\mathsf{w}$ as well.
-  If, instead, $\mathsf{w}=\mathtt{*}\mathsf{w}'$ for a suitable $\mathsf{w}'$,
-  then $\mathsf{w}>\mathsf{w}'$ (Def.~\ref{def:ordering}) and by inductive hypothesis we know that~1
-  and~2 hold for $\mathsf{w}'$. The computation of $\type(\mathtt{*}\mathsf{w}',\tau)$
-  first recurs on $\type(\mathsf{w}',\tau)$ (Def.~\ref{def:type}).
+  If, instead, $\mathsf{w}=\mathtt{*}\mathsf{w}''$ for a suitable $\mathsf{w}''$,
+  then $\mathsf{w}>\mathsf{w}''$ (Def.~\ref{def:ordering}) and by inductive hypothesis we know that~1
+  and~2 hold for $\mathsf{w}''$. The computation of $\type(\mathtt{*}\mathsf{w}'',\tau)$
+  first recurs on $\type(\mathsf{w}'',\tau)$ (Def.~\ref{def:type}).
   In the first, second and third case of Def.~\ref{def:type} also the
-  computation of $\type(\mathtt{*}\mathsf{w}',\tau)$ terminates and property~2 is vacuously true.
+  computation of $\type(\mathtt{*}\mathsf{w}'',\tau)$ terminates and property~2 is vacuously true.
   In the sixth case in Def.~\ref{def:type}, the computation of
-  $\type(\mathtt{*}\mathsf{w}',\tau)$ terminates and
-  $\type(\mathsf{w}',\tau)=\boxtype{\type(\mathtt{*}\mathsf{w}',\tau)}$.
-  Since $\mathsf{w}'$ and $\mathtt{*}\mathsf{w}'$ have the same root, condition~2
-  lifts from $\mathsf{w}'$ to $\mathtt{*}\mathsf{w}'$.
+  $\type(\mathtt{*}\mathsf{w}'',\tau)$ terminates and
+  $\type(\mathsf{w}'',\tau)=\boxtype{\type(\mathtt{*}\mathsf{w}'',\tau)}$.
+  Since $\mathsf{w}''$ and $\mathtt{*}\mathsf{w}''$ have the same root, condition~2
+  lifts from $\mathsf{w}''$ to $\mathtt{*}\mathsf{w}''$.
   In the fourth and fifth cases, by inductive hypothesis we know that~2 holds
-  for $\mathsf{w}'$ and consequently the roots of the $\mathsf{w}_i$ in Def.~\ref{def:type}
-  have lower rank than the root of $\mathsf{w}'$. That is, $\mathsf{w}'>\mathsf{w}_i$
-  for every $i$. By inductive hypothesis, both~1 and~2 hold for those $\mathsf{w}_i$ as well. Hence
-  all $\type(\mathsf{w}_i,\tau)$ terminate. If any of them is undefined
-  or if $\sqcup_{1\le i\le n}\type(\mathsf{w}_i,\tau)$ is undefined, also
-  $\mathsf{type}(\mathtt{*}\mathsf{w}',\tau)$ is undefined and therefore terminates and
-  satisfies~2 vacuously. Otherwise
-  $\mathsf{type}(\mathtt{*}\mathsf{w}',\tau)$ terminates and yields
-  $\sqcup_{1\le i\le n}\type(\mathsf{w}_i,\tau)$.
-  Since $\sqcup$ does not introduce any new variable
-  (Def.~\ref{def:lub}), every variable that occurs in
-  $\sqcup_{1\le i\le n}\type(\mathsf{w}_i,\tau)$ has lower rank than
-  $\mathsf{root}(\mathsf{w}')=\mathsf{root}(\mathsf{w})$. Therefore
+  for $\mathsf{w}''$ and consequently the root of $\mathsf{w}'$ in Def.~\ref{def:type}
+  has lower rank than the root of $\mathsf{w}''$. That is, $\mathsf{w}''>\mathsf{w}'$.
+  By inductive hypothesis, both~1 and~2 hold for $\mathsf{w}'$. Hence
+  $\type(\mathsf{w}',\tau)$ terminates and
+  $\mathsf{type}(\mathtt{*}\mathsf{w}'',\tau)$ terminates and yields
+  $\type(\mathsf{w}',\tau)$.
+  Every variable that occurs in
+  $\type(\mathsf{w}',\tau)$ has lower rank than
+  $\mathsf{root}(\mathsf{w}'')=\mathsf{root}(\mathsf{w})$. Therefore
   both~1 and~2 hold for $\mathsf{w}$ also in this case.
   \qed
 \end{proof}

@@ -97,28 +97,30 @@ $x$ does not occur in $T$. The invariant for rule \textsf{T-Declare} follows by 
 \end{proof}
 
 Rule \textsf{T-Assign} (page~3:25 of~\cite{Pearce21}) writes a value of type
-$t$ into a leftvalue $\mathsf{w}$.
-It performs this by computing $\tau'=\mathsf{write}(\tau,\mathsf{w},t,\mathit{strong})$,
-a function that yields the final typing from the typing $\tau$ resulting after the computation of $t$.
+$T$ into a leftvalue $\mathsf{w}$.
+It performs this by computing $\tau'=\mathsf{write}(\tau,\mathsf{w},T,\mathit{strong})$,
+a function that yields the final typing from the typing $\tau$ resulting
+after the computation of $T$.
 By rule induction, $\tau$ is linearizable. In order to show that $\tau'$ is linearizable as well,
 we must show how $\mathsf{write}$ is defined:
 \[
-\mathsf{write}(\tau,\underbrace{\mathtt{*}\cdots\mathtt{*}}_nx,t,\mathit{modality})=\mathsf{apply}
-(x,\update(\tau,n,\tau(x),t,\mathit{modality}))
+\mathsf{write}(\tau,\underbrace{\mathtt{*}\cdots\mathtt{*}}_nx,T,\mathit{modality})=\mathsf{apply}
+(x,\update(\tau,n,\tau(x),T,\mathit{modality}))
 \]
 where
 \begin{align*}
-  \update(\tau,0,t',t,\mathit{strong})&=\langle\tau,t\rangle\\
-  \update(\tau,0,t',t,\mathit{weak})&=\langle\tau,t'\sqcup t\rangle\\
-  \update(\tau,n+1,\boxtype{t'},t,\mathit{modality})
-  &=\mathsf{expand}(\update(\tau,n,t',t,\mathit{modality}))\\
-  \update(\tau,n+1,\underbrace{\mutborrow\{\mathsf{w}_1,\ldots,\mathsf{w}_m\}}_b,t,\_)&=
-    \langle\bigsqcup\limits_{1\le i\le m}\mathsf{write}(\tau,\underbrace{\mathtt{*}\cdots\mathtt{*}}_n\mathsf{w}_i,t,\mathit{weak}),b\rangle
+  \update(\tau,0,T',T,\mathit{strong})&=\langle\tau,T\rangle\\
+  \update(\tau,0,T',T,\mathit{weak})&=\langle\tau,T'\sqcup T\rangle\\
+  \update(\tau,n+1,\boxtype{T'},T,\mathit{modality})
+  &=\mathsf{expand}(\update(\tau,n,T',T,\mathit{modality}))\\
+  \update(\tau,n+1,\mutborrow\mathsf{w},T,\_)&=
+  \langle\mathsf{write}(\tau,\underbrace{\mathtt{*}\cdots\mathtt{*}}_n\mathsf{w},T,\mathit{weak}),
+  \mutborrow\mathsf{w}\rangle
 \end{align*}
 and
 \begin{align*}
-  \mathsf{apply}(y,\langle\tau,t\rangle)&=\tau[y\to t]\\
-  \mathsf{expand}(\langle\tau,t\rangle)&=\langle\tau,\boxtype{t}\rangle.
+  \mathsf{apply}(y,\langle\tau,T\rangle)&=\tau[y\to T]\\
+  \mathsf{expand}(\langle\tau,T\rangle)&=\langle\tau,\boxtype{T}\rangle.
 \end{align*}
 %
 The details of these functions
@@ -131,10 +133,10 @@ No other variables can see their type updated.
 
 \begin{lemma}\label{lem:write_invariant}
   Let $\tau$ be a linearizable typing for the context $\kappa$;
-  let $\mathsf{w}\in\Leftvalues_\kappa$ and $t\in\mathsf{T}_\kappa$.
-  Let $\tau'=\mathsf{write}(\tau,\mathsf{w},t,\mathit{strong})$ be
+  let $\mathsf{w}\in\Leftvalues_\kappa$ and $T\in\mathsf{T}_\kappa$.
+  Let $\tau'=\mathsf{write}(\tau,\mathsf{w},T,\mathit{strong})$ be
   the application of function $\mathsf{write}$ in rule \textsf{T-Assign},
-  used there to assign the type $t$ to $\mathsf{w}$.
+  used there to assign the type $T$ to $\mathsf{w}$.
   Then $\tau'$ is linearizable as well.
 \end{lemma}
 \begin{proof}
@@ -142,16 +144,18 @@ No other variables can see their type updated.
   The type of the other variables remains unchanged between $\tau$ and $\tau'$. Since the
   type system in~\cite{Pearce21} guarantees that borrowed variables are not modified,
   this means that $v_1,\ldots,v_n$ do not occur in the borrows in $\tau$. Moreover,
-  the variables in the borrows in $t$ do not contain $v_1,\ldots,v_n$, because
+  the variables in the borrows in $T$ do not contain $v_1,\ldots,v_n$, because
   such variables are either $x=\mathsf{root}(\mathsf{w})$, and the rule \textsf{T-Assign}
-  forbids the presence of $x$ in the borrows in $t$ ($\neg\mathsf{writeProhibited}$ in rule
-  \textsf{T-Assign}); or they are inside a mutable borrow in $\tau$ (last case of
+  forbids the presence of $x$ in the borrows in $T$ ($\neg\mathsf{writeProhibited}$ in rule
+  \textsf{T-Assign}); or they are inside mutable borrows in $\tau$ (last case of
   $\update$ above), but hence they would be mutably borrowed and the type system
   in~\cite{Pearce21} would have forbidden to read mutably borrowed variables in order to compute
-  the type $t$ (see rule \textsf{T-MutBorrow} at page~3:24 of~\cite{Pearce21}).
+  the type $T$ (see rule \textsf{T-MutBorrow}).
   This means that such $v_1,\ldots,v_n$ only occurs in the left-hand side of the bindings of $\tau'$.
-  Consider now the function $\phi$ that shows that $\tau$ is linearizable (Def.~\ref{def:linearization}).
-  Let us extend $\phi$ into an injective function $\phi'$ that gives $v_1,\ldots,v_n$ the highest ranks:
+  Consider now the function $\phi$ that shows that $\tau$ is linearizable
+  (Def.~\ref{def:linearization}).
+  Let us extend $\phi$ into an injective function $\phi'$
+  that gives $v_1,\ldots,v_n$ the highest ranks:
   \[
   \phi'=\phi\left[\left.v_i\to i+\max\limits_{y\in\kappa\setminus\{v_1,\ldots,v_n\}}\phi(y)\right|1\le i\le n\right].
   \]
