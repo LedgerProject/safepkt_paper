@@ -34,9 +34,9 @@ can be accessed for reading:
 
 \noindent
 \underline{\textsf{T-Move}}.
-This rule applies to leftvalues applies whose type
+This rule applies to leftvalues whose type
 has move semantics. Their evaluation yields their value,
-but its ownership is moved away from the leftvalue. Because of this,
+but the ownership of the value is moved away from the leftvalue. Because of this,
 the typing gets modified, by letting the old container of the value
 get the $\mathsf{dangling}$ type (it cannot be used anymore).
 As a consequence, reading, from a leftvalue, a value with move semantics
