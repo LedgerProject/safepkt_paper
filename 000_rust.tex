@@ -47,7 +47,7 @@
 
 \newcommand{\ran}{\mathit{ran}}
 
-\usepackage{listings, xcolor}
+\usepackage{listings, listings-rust, xcolor}
 \newcommand{\todo}[1]{\textcolor{red}{#1}}
 
 
@@ -120,6 +120,13 @@
         breaklines=true,
         showtabs=false,
         captionpos=b
+}
+
+\lstset{
+  language=Rust,
+  style=boxed,
+  numberstyle=\scriptsize,
+  basicstyle=\ttfamily
 }
 
 \begin{document}

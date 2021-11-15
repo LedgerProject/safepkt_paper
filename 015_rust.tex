@@ -1,93 +1,100 @@
 \section{Rust and its Borrow Checker}\label{sec:rust}
 
-This section shows examples about the use of borrows in
-Rust and how the borrow checker identifies illegal situations.
+This section illustrates various aspects Rust related to memory
+allocation and borrowing, and provides an initial connection with
+Featherweight Rust (FR).  A more detailed introduction to Rust can be
+found elsewhere~\cite{RustBook,Rustonomicon}.
 
-Rust deallocates the data structure owned by a variable
-as soon as that variable goes out of scope. Consider for instance
-the following function, where the \<Box::new(13)> is the allocation of
-a data structure that wraps the integer $13$:
+Rust deallocates the data owned by a variable as soon as that variable
+goes out of scope. Consider the following, where the \<Box::new(13)>
+allocates a new box on the heap which wraps the integer $13$:
 
-\begin{verbatim}
-fn deallocate1() -> i32 { // accepted by the borrow checker
+\begin{lstlisting}
+fn deallocate1() -> i32 {    // accepted by the borrow checker
     let x = Box::new(13);
     return 17;
 }
-\end{verbatim}
+\end{lstlisting}
 
 \noindent
-Local variable $x$ goes out of scope at the end of the function,
-hence Rust deallocates the box there, automatically.
-
+Local variable \lstinline{x} goes out of scope at the end of the
+function, hence Rust deallocates the box there, automatically.
 Assignments move the ownership of a value to their leftvalue. Consider
-for instance the following function:
+the following:
 
-\begin{verbatim}
-fn deallocate2() { // rejected by the borrow checker
+\begin{lstlisting}
+fn deallocate2() {          // rejected by the borrow checker
     let x = Box::new(13);
     {
         let y = x;
     }
     println!("{}", x);
 }
-\end{verbatim}
+\end{lstlisting}
 
 \noindent
-The ownership of the box moves from $x$ to $y$. Since $y$ goes out of scope
-at the end of the inner block, the box gets deallocated there, before the
-\<println>. Consequently, the print statement is trying to print
-already deallocated data\ie it is trying to access a dangling pointer.
-Correctly, the borrow checker of Rust rejects the previous function.
+The assignment moves ownership of the box from \lstinline{x} to
+\lstinline{y}.  Since \lstinline{y} goes out of scope when the inner
+block ends, the box is deallocated there. Consequently, the print
+statement is trying to use deallocated data\ie it is trying to access
+a dangling pointer.  Correctly, the borrow checker of Rust rejects
+this.  Consider the following function now:
 
-Consider the following function now:
-
-\begin{verbatim}
-fn ok1() -> Box<i32> { // accepted by the borrow checker
+\begin{lstlisting}
+fn ok1() -> Box<i32> {      // accepted by the borrow checker
     let x = Box::new(13);
     return x;
 }
-\end{verbatim}
+\end{lstlisting}
 
 \noindent
-This time, the box owned by $x$ is assigned to the value returned by
-the function, that acquires its ownership and hands it to the caller of
-the function. Variable $x$ reaches the end of its scope at the end of the
-function, but it owns no value there, hence Rust does not deallocate
-anything inside \<ok1>.
+Here, ownership of the box is transferred from \lstinline{x} to the
+value, and subsequently to the caller of the function.  When variable
+\lstinline{x} reaches the end of its scope it no longer owns a value
+and, hence, Rust does not deallocate anything inside \<ok1>.
 
 Things become more complicated if borrows of data structures exist.
 For instance, the following function tries to return a borrow of
 a data structure that has been already deallocated:
 
-\begin{verbatim}
+\begin{lstlisting}
 fn dangling() -> &Box<i32> { // rejected by the borrow checker
     let i = Box::new(13);
     let result = &i;
     return result;
 }
-\end{verbatim}
+\end{lstlisting}
 
 \noindent
-Local variable $i$ owns the box and goes out of scope at the end of the
-function, where the box gets deallocated. Consequently, the return value of
-the function is a dangling pointer. Correctly, Rust rejects this function.
-Namely, its borrow checker, as formalized in~\cite{Pearce21}, computes the
-following \emph{typing} (or \emph{type environment}) at the end of the function:
+
+Local variable \lstinline{i} owns the box and, when it goes out of
+scope at the end of the function, the box is deallocated.  Variable
+\lstinline{result} takes an {\em immutable borrow} of \lstinline{i}
+(roughly a pointer to \lstinline{i} without ownership).  Thus, when
+the box is deallocated, \lstinline{result} becomes a dangling pointer
+which cannot safely be returned.  Again, Rust rejects this function.
+Roughly, the borrow checker for FR~\cite{Pearce21} computes the
+following \emph{typing} (or \emph{type environment}) at the end of the
+function:
 \[
 \{i\to\boxtype{\mathsf{int},\<result>\to\borrow i}\}
 \]
-from where it is apparent that the function is trying to return a borrow
-of a value that gets deallocated at the end of the function. Note that the borrow
-checker allows one to
-use types that are borrows of leftvalues (not just variables),
-such as $\borrow\mathtt{**}y$.
+
+For simplicity, FR uses ${\tt int}$ to collectively represent integer
+types in Rust (e.g. \lstinline{i32}, \lstinline{i64}, etc).  Likewise,
+$\boxempty{\tt T}$ corresponds with \lstinline{Box<T>} and provides
+the only form of dynamically allocated data in FR.  Finally, $\borrow
+w$ (resp. $\mutborrow w$) where $w$ is a leftvalue is the type of an
+immutable (resp. mutable) borrow.  Furthermore, since the borrow
+checker allows arbitrary leftvalues here (i.e. not just variables), we
+can have types such as $\borrow\mathtt{**}y$.
 
 Borrows are a sort of temporary ownership of a value. As a consequence,
 that value can be modified only through the borrow, for the whole
 duration of the borrow. Any other attempt to modify the value is rejected.
 Consider for instance the following function:
 
-\begin{verbatim}
+\begin{lstlisting}
 fn writes_to_borrowed() { // rejected by the borrow checker
     let v = 13;
     let w = 17;
@@ -96,7 +103,7 @@ fn writes_to_borrowed() { // rejected by the borrow checker
     y = &w;
     println!("{}{}{}{}", x, y, v, w);
 }
-\end{verbatim}
+\end{lstlisting}
 
 \noindent
 Here, the \<y=\&w> statement is trying to modify the leftvalue $y$
@@ -121,14 +128,14 @@ whole lifetime. When a mutable borrow to a value exists, that value cannot
 be written \emph{nor read} from any other path. Consider for instance
 the following function:
 
-\begin{verbatim}
+\begin{lstlisting}
 fn reads_from_mutably_borrowed() { // rejected by the borrow checker
     let mut z = 13;
     let y = &mut z;
     let x = z;
     println!("{}{}{}", x, y, z);
 }
-\end{verbatim}
+\end{lstlisting}
 
 \noindent
 The statement \<x=z> tries to read $z$, that has been mutably borrowed
@@ -142,14 +149,14 @@ just before \<x=z>, from where it is apparent that $z$ is mutably borrowed there
 %For the same reason, a mutable borrow cannot coexist with any other borrow. Consider for instance
 %the following function:
 %
-%\begin{verbatim}
+%\begin{lstlisting}
 %fn both_borrows() { // rejected by the borrow checker
 %    let mut z = 13;
 %    let b1 = &z;
 %    let b2 = &mut z;
 %    println!("{}{}{}", z, b1, b2);
 %}
-%\end{verbatim}
+%\end{lstlisting}
 %
 %\noindent
 %The attempt to create a mutable borrow of $z$ fails because there is already a borrow of $z$
@@ -159,7 +166,7 @@ just before \<x=z>, from where it is apparent that $z$ is mutably borrowed there
 %responsibility (temporarily) for the borrowed object and everything that is reachable from it.
 %Consider for instance the following function:
 %
-%\begin{verbatim}
+%\begin{lstlisting}
 %fn both_borrows_complex() { // rejected by the borrow checker
 %    let b = 13;
 %    let x = Box::new(b);
@@ -169,7 +176,7 @@ just before \<x=z>, from where it is apparent that $z$ is mutably borrowed there
 %    let w = &mut z;
 %    println!("{}{}", v, w);
 %}
-%\end{verbatim}
+%\end{lstlisting}
 %
 %\noindent
 %The borrow checker rejects this function since it complains about
