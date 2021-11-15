@@ -4,237 +4,83 @@
 
 \section{Related Work}
 
-Perhaps most relevant here is the recent work of work Jung {\em et
-  al.} which provides a machine checked safety proof for a realistic
-subset of Rust~\cite{JJKD18}.  Their focus was on establishing safety
-proofs in the presence of \lstinline{unsafe} code, arguing these play
-a fundamental role in any practical usage of Rust.  For example,
-inside an \lstinline{unsafe} block one can mutate locations via
-immutable references, thereby potentially breaking the ownership
-invariant.  Similarly, methods like
-\lstinline{String::from_utf8_unchecked()} (which converts a byte
-sequence into a \lstinline{String}) are marked \lstinline{unsafe} as
-they make assumptions about their inputs (in this case, that the bytes
-are valid \lstinline{utf8} character sequences).  Indeed, several bugs
-have arisen in libraries using \lstinline{unsafe} code (some of which
-are subtle, requiring interactions across multiple libraries).  The
-challenge arises when developers believe their uses of \lstinline{unsafe}
-code are properly encapsulated when, in fact, this is not the case.
 
-The formalisation of Jung {\em et al.}, called ${\tt\lambda_{Rust}}$,
-employs a substructural type system and permits one to establish an
-appropriate verification condition for a given library using
-\lstinline{unsafe} which, when satisfied, ensures safety of the
-overall system.  A key challenge they faced is that the standard
-approach to proving safety properties --- namely, {\em progress} and
-{\em preservation} -- does not easily extend to mixing safe and unsafe
-code.  Instead, a semantic approach in the style of Milner was adopted
-over this more familiar syntactic approach~\cite{Milner78}.  In
-particular, this allows terms to be observed as having a type, even
-when they use unsafe features.  The specific property achieved in
-${\tt\lambda_{Rust}}$ is that, provided unsafe code is confined to
-libraries which respect their verification conditions, the program is
-safe to execute (i.e. will not get stuck).  Underpinning this
-development is {\em Iris} --- a framework for high-order concurrent
-separation logic~\cite{JKBD16,KDDLV17,JKJBBD18}.  This enables, for
-example, a notion of {\em borrow propositions} which correspond with
-borrowing in Rust.  Several notable Rust libraries using unsafe code
-were ported to ${\tt\lambda_{Rust}}$ and verified as correct,
-including: \lstinline{Arc}, \lstinline{Rc}, \lstinline{Cell},
-\lstinline{RefCell}, \lstinline{Mutex}, \lstinline{RwLock} and more.
-Finally, given the size of Rust, some language features were omitted,
-including traits and certain relaxed forms of atomic access (used in
-libraries such as \lstinline{Arc} for efficiency).  More specifically,
-a key assumption was that the language is sequentially consistent
-when, in fact, certain libraries (such as \lstinline{Arc}) employ
-relaxed-memory operations.  Later work adapted RustBelt to account for
-relaxed memory operations and, in the process, uncovered a previously
-unknown data race in \lstinline{Arc}~\cite{DJKD20}.
+Reed provided an early formalisation of Rust called ``Patina'' which
+shares some similarities with \FR/~\cite{Reed15}.  For example, it
+employs a flow-sensitive type system for characterising borrow
+checking which operates over a ``shadow'' heap.  However, the scope of
+Patina was significantly larger than that of \FR/.  As such, soundness
+was not established.  Likewise, Wang {\em et al.} presented a formal,
+executable operational semantics for Rust called KRust~\cite{WSZZZ18}.
+This was defined in $\mathbb{K}$ --- a rewrite-based executable
+semantic framework particularly suited at developing operational
+semantics~\cite{RS10b}.  A large subset of Rust was defined in this
+way and partially validated against the official Rust test suite.
 
-Compared with the work presented here, however, there are some
-differences from RustBelt.  First and foremost, ${\tt\lambda_{Rust}}$
-does not follow the source-level syntax of Rust (unlike \FR/):
-
-%\vspace{0.5cm}
-\begin{quote}
-``{\em Crucially, ${\tt\lambda_{Rust}}$ incorporates Rust's notions of
-borrowing, lifetimes, and lifetime inclusion---which are fundamental
-to Rust's ownership discipline---in a manner inspired by Rust's
-Mid-level Intermediate Representation (MIR)}.''~\cite{JJKD18}
-\end{quote}
-%\vspace{0.5cm}
-
-Operating on an intermediate representation allows various
-simplifications compared with formalising at the source-level.  For
-example, all control-flow is represented in ${\tt\lambda_{Rust}}$
-using continuations, while local variables at the source-level are
-represented using heap locations in ${\tt\lambda_{Rust}}$ (thereby
-avoiding the need to distinguish between the stack and heap).  For
-example, consider the following Rust program:
-
-\begin{lstlisting}
-fn option_as_mut<'a>(x: &'a mut Option<i32>) ->Option<&'amut i32> {
-    match *x {
-      None => None,
-      Some(ref mut t) => Some(t)
-}  }
-\end{lstlisting}
-
-\noindent The above program is represented in ${\tt\lambda_{Rust}}$ as
-follows~\cite{JJKD18}:
-
-\begin{lstlisting}
-funrec option_as_mut(x) ret ret :=
-  let r = new(2) in
-  letcont k() := delete(1;x); jump ret(r) in
-  let y = *x in case *y of
-  - r :== (); jump k()
-  - r :== y.1; jump k()
-\end{lstlisting}
-
-The purpose of ${\tt\lambda_{Rust}}$ is also quite different and the
-emphasis is on a comprehensive treatment of important Rust features.
-Indeed, during the work itself, a bug in Rust's standard library was
-uncovered and fixed.  The downside, however, of such a thorough
-treatment is that the formalisation cannot easily be digested by
-researchers or practitioners, either to understand the concepts of
-lifetimes and borrowing, or to understand the proof (which itself is
-around 17.5KLOC of Coq).
-
-Another relevant work is that of Wang {\em et al.} who presented a
-formal, executable operational semantics for Rust called
-KRust~\cite{WSZZZ18}.  This was defined in $\mathbb{K}$ --- a
-rewrite-based executable semantic framework particularly suited at
-developing operational semantics~\cite{RS10b}.  A large subset of Rust
-was defined in this way and validated against 157 tests from the
-official Rust test suite.  We note, however, that this work differs
-considerably from that presented here as it covers only the {\em
-  executable semantics} of Rust, not the rules for type and borrow
-checking.
-
-The unpublished work-in-progress of Weiss {\em et al.} presents a
-system called {\em Oxide} which bears some striking similarities with
-that presented here~\cite{WPMA19}.  For example, {\em places} in Oxide
-are essentially the same as lvals in \FR/, whilst {\em shapes} give
-something comparable to the compound values and paths in \FR/.
-Furthermore, Oxide was also inspired by Featherweight Java to produce
-a relatively lean formalisation of Rust.  In fact, it includes a far
-larger subset of Rust than the \FR/ core (perhaps making it more {\em
-  middleweight} than {\em featherweight} in a manner somewhat
-reminiscent of Middleweight Java versus Featherweight
-Java~\cite{BP03}).  However, there are also differences between \FR/
+Weiss {\em et al.} presented an unpublished system called {\em Oxide}
+which bears striking similarity with \FR/~\cite{WPMA19}.  Oxide was
+also inspired by Featherweight Java to produce a relatively lean
+formalisation of Rust.  Still, it includes a far larger subset of Rust
+than the \FR/ core (perhaps making it more {\em middleweight} than
+{\em featherweight}.  However, there are also differences between \FR/
 and Oxide.  For example, Oxide doesn't model boxes explicitly and, as
 a result, has no clear means to model heap allocated memory.
-Likewise, the judgments used in Oxide do not model undefined types
-explicitly as in \FR/ but, rather, require a separate environment for
-holding declared types.  In addition, the proof obtained relies on an
-operational semantics instrumented with additional (unnecessary)
-runtime checks, and a subsequent lemma is used to establish they can
-be safely erased.  Another difference is that, unlike \FR/, Oxide has
-yet to be validated against \lstinline{rustc} and its relative size
-may render this somewhat prohibitive.  Oxide and \FR/ both treat
-lifetimes in a similar fashion (i.e. lexically), though a notion of
-{\em weakening} brings Oxide closer to the non-lexical lifetimes found
-in Rust 2018.  More specifically, variables can be dropped from the
-typing environment at arbitrary points allowing borrows to expire
-early, whilst still catching cases where dropped variables were in
-fact live.  We note that such an approach is also directly applicable
-to \FR/.
 
-Reed provides a preliminary (though unpublished) formalisation of Rust
-called ``Patina''~\cite{Reed15}.  This shares some similarities with
-our work.  For example, it employs a flow-sensitive type system for
-characterising borrow checking which operates over a ``shadow'' heap
-(roughly akin to our typing environment).  However, there are also
-significant differences.  The scope of Patina is significantly larger
-than that presented here and attempts to incorporate, for example,
-complex reasoning about partial borrows.  Likewise, Patina is
-concerned with detailed aspects of exactly how and when memory is
-released.  As such, the statements of progress and preservation are
-formidable in their complexity.  Furthermore, their soundness is not
-established and, instead, are presented as conjectures with an
-argument that they would, if proven, have {\em ``established soundness
-  for Patina''}.
+The work of Jung {\em et al.} provides a comprehensive,
+machine-checked formalisation for a realistic subset of
+Rust~\cite{JJKD18}.  This includes various notions of concurrency and
+extends to libraries using \lstinline{unsafe} features by identifying
+{\em library-specific verification conditions} which must be satisfied
+to ensure overall safety.  However, concessions were understandably
+necessary given the enormity of this formalisation task (which, in
+fact, amounts to roughly 17.5KLOC of Coq).  For example, the system
+presented does not resemble the surface syntax of Rust but, rather, is
+more akin to the {\em Mid-level Intermediate Representation (MIR)}
+used within the Rust compiler.  Underpinning this development is {\em
+  Iris} --- a framework for high-order concurrent separation
+logic~\cite{JKBD16,KDDLV17,JKJBBD18}.  This enables, for example, a
+notion of {\em borrow propositions} which correspond with borrowing in
+Rust.
 
-There has also been a growing interest in exploiting Rust's safety
-guarantees to improve program verification tools.  For example,
-Matsushita {\em et al.}  exploit Rust's uniqueness guarantees to aid
-verification of pointer manipulating programs~\cite{MTK20}.  Their
-tool, RustHorn, translates Rust programs into {\em Constrained Horn
-  Clauses (CHC)} (which can then be discharged by a specialised CHC
-solver).  More specifically, the translation operates on a
-formalisation of Rust inspired by ${\tt\lambda_{Rust}}$ called the
-{\em Calculus of Ownership and Reference (COR)}.  Since COR resembles
-Rust's Mid-Level Representation (MIR) their tool translates directly
-from the MIR emitted by \lstinline{rustc}, thereby allowing RustHorn
-to leverage the guarantees provided by the borrow checker.  Likewise,
-Astrauskas {\em et al.} argue that formal verification of systems
-software has been notoriously difficult due to the complex
-specifications needed for reasoning about pointers and
-aliasing~\cite{AMPS19}.  To this end, they leverage Rust's type system
-to simplify the specification and verification of systems software.
-In particular, they developed a specification language for Rust which
-is embedded using annotations and statically checked using
-Viper~\cite{MSS16}.  The SMACK verifier which translates LLVM IR to
-Boogie/Z3~\cite{BCDJL06,MB08} was also extended to Rust~\cite{BHR18}.
-This was used in developing RedLeaf, an operating system written in
-Rust that targets firmware~\cite{NBRRB19}.  Firmware is a critical
-component sitting underneath traditional operating systems, where
-flaws enable complete access to the machine.  Here formal verification
-is easily justified and, in Redleaf, pre/post-conditions are again
-given as Rust annotations and, in this case, checked statically using
-SMACK.  The {\scshape CRUST} tool~\cite{TPT15} enables unsafe code to
-be checked using the C Bounded Model Checker (CMBC)~\cite{KT14}.  This
-employs a custom C code generator for \lstinline{rustc}, and
-correctly identified bugs arising during development of Rust's
-standard library.  Finally the widely-used symbolic execution tool,
-Klee \cite{CDE08}, was also extended for Rust allowing assertions to
-be checked statically~\cite{LAL18,LFEL19}.
 
-Dewey {\em et al.} focus on fuzz testing the Rust type
-checker~\cite{DRH15}.  Like us, a key challenge faced is that of
-generating well typed programs (and, also, ``almost typed'' programs).
-Their approach was to leverage the existing power of Constraint Logic
-Programming tools (e.g. Prolog) which allow the encoding of
-constraints and the enumeration of satisfying solutions.  Using this
-approach, they fuzz tested the Rust compiler using over 900M
-automatically generated programs.  However, we note, they did not
-attempt to exhaust particular spaces of programs but, rather, simply
-allowed the testing process to continue up to some time limit.
-Nevertheless, they identified 18 bugs in the Rust type checker (most
-of which were confirmed by the Rust developers).
+The potential hazards of \lstinline{unsafe} code are already a
+considerable focus of academic work and, indeed, numerous bugs and
+security advisories have already been found in real-world
+programs~\cite{BKALK21,XCSZ20}.  In light of these issues, interest
+has been growing in using state-of-the-art verification tools to
+ensure Rust code is safe.  Such tools vary in their scope and levels
+of precision.  For example, Rudra employs a straightforward static
+analysis to scan for bug patterns related to error
+handling~\cite{BKALK21}.  Nevertheless, the tool identified 74 new
+CVE's (including two in the standard library).  SMACK provides another
+good example here~\cite{BCDJL06,MB08}.  This tool translates LLVM IR
+to Boogie/Z3 and was recently extended to Rust~\cite{BHR18}.
+CRUST~\cite{TPT15} is similar, but uses CBMC~\cite{KT14} as the
+backend.  CRUST specifically focuses on memory safety violations
+(e.g. multiple mutable references to the same data).  An interesting
+feature is support for automatically deriving drivers using a
+technique reminiscent of that for test case generation~\cite{PE07}.
+KLEE employs symbolic execution and was also extended to support
+Rust~\cite{LAL18,LFEL19}.  Unlike CRUST this tool considers a larger
+number of errors, including arithmetic overflow and buffer overruns
+(i.e. not just those related to memory unsafety).  Prusti exploits
+automated theorem proving as the core technique, building on
+Viper~\cite{AMPS19}.  This makes Prusti more comparable with tools
+such as Spec\#~\cite{BFLMSV11,BDFLS04} and
+Dafny~\cite{Leino10,Leino12} which require additional programmer
+annotations to verify memory-safety properties (e.g.  adding
+specifications to clarify method side-effects, etc).  However, Prusti
+exploits aliasing information inherent in Rust programs to avoid much
+of this.  Instead, programmers can focus on specifying properties of
+interest, such as the absence of arithmetic overflow or buffer
+overruns.  Unfortunately, Prusti does not consider \lstinline{unsafe}
+code (though it presumably could be managed with further
+specification).  Finally, other relevant tools include
+Miri~\cite{Ols16,JDKJD20} (a partially symbolic interpreter for MIR)
+and RustHorn~\cite{MTK20} (a specialised verifier based on Constrained
+Horn Clauses).
 
-Levy {\em et al.} report on experiences developing an Embedded OS in
-Rust~\cite{LACCDGLP15}.  They argued that {\em ``At first examination,
-  Rust seems perfectly suited for this task''}.  Unfortunately, they
-were hindered by ownership in Rust preventing otherwise safe resource
-sharing.  For example, an interrupt handler could not retain a mutable
-borrow of a shared resource (e.g. a network stack).  Such situations
-are not safe in general.  However, in their particular setting this
-was safe due to guarantees provided by the OS and, to workaround, they
-instead relied on \lstinline{unsafe} code.  In subsequent work, they
-further reduced this \lstinline{unsafe} code to a single trusted
-primitive, \lstinline{TakeCell}~\cite{LCGPDL17,LCGGPPL17}.  This is
-similar to \lstinline{Cell} but instead of copying values out as
-\lstinline{Cell} does (which can introduce overhead), it provides a
-mechanism for code to execute ``within'' the cell with, effectively,
-zero overhead.  As such, it provides a form of mutual exclusion.
-
-Jespersen {\em et al.}  describe a library for implementing session
-types in Rust which was an adaptation of communication patterns in
-Servo~\cite{JML15}.  Session types require a linear usage of channels
-which naturally fits with the ownership in Rust and, as such, afforded
-some safety guarantees.  Finally, it is interesting to note that Rust
-is the primary language used to develop Mozilla's experimental
-rendering engine, Servo, and accounts for some 800KLOC.  Anderson {\em
-  et al.} examined how the use of Rust here addresses many common
-security issues~\cite{ABGMMMS16}.  For example, use of uninitialised
-memory has led to problems in Firefox.  They argue many aspects of
-Rust (e.g. good interoperation with C) make it well suited here, but
-found situations where its ownership model was problematic, such as
-for data structures which do not assume a single owner {\em ``in order
-  to provide multiple traversal APIs without favoring the performance
-  of one over the other''}.
+\subsection{TODO}
 
 An interesting question explored by Jung {\em et al.} is that of
 deciding what compiler optimisations should be permitted in unsafe
@@ -246,13 +92,4 @@ operational semantics for memory accesses in Rust.  This introduces a
 strong notion of {\em undefined behaviour} such that a compiler is
 permitted to ignore the possibility of such programs when applying
 optimisations (roughly in line with how C compilers handle undefined
-behaviour~\cite{MGDKRWS19}).  Indeed, much previous work has focused
-on the issues arising with unsafe code and the problems associated
-with checking unsafe code.  To this end, Qin {\em et al.}  conducted
-an empirical evaluation into the usage of unsafe code in
-Rust~\cite{QCYSZ20}. They found, amongst other things, that: (1)
-unsafe code was used extensively in real-world Rust code and,
-generally speaking, was encapsulated from library users; and (2) that
-many memory safety issues were caused by incorrect reasoning about the
-scope of lifetimes.
-
+behaviour~\cite{MGDKRWS19})

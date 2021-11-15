@@ -6,6 +6,7 @@ DEPS = 001_abstract.tex \
 	025_borrow_checker.tex \
 	030_termination.tex \
 	040_invariant.tex \
+        060_relwork.tex \
 	090_conclusion.tex \
 	biblio.bib
 
