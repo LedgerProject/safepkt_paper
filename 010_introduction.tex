@@ -5,39 +5,35 @@ as system programming~\cite{ABGMMMS16,BBBPRR17,LCGPDL17}, blockchain
 systems~\cite{HHHH18,NQ20}, smart contracts~\cite{Ash20,ZHCKHJJMS20}
 and more~\cite{BHR18,AMPS19}.  A key feature of Rust is its ability to
 automatically deallocate dynamically allocated data when it goes out
-of scope. This is different from what happens in most other
-programming languages, that either: require programmers free data
-structures explicitly in code (such as C or C++); or, embed a garbage
-collector that scans allocated memory and frees unreachable data (such
-as Java, C\#, etc).  The former approach is error prone: programmers
-might miss deallocations or might deallocate twice; the latter is
-safer but more expensive and suboptimal: the garbage collector
-consumes resources and unreachable data remains allocated until the
-garbage collector is run.
+of scope. This differs from most other programming languages, that
+either: require programmers free data structures explicitly
+(e.g. C/C++); or, rely on garbage collection to free unreachable data
+(e.g. Java, C\#, etc).  The former approach is error prone
+(e.g. use-after-free or free-after-free errors), whilst the latter is
+safe but costly (garbage collection consumes resources and data may
+not be released in a timely fashion).
 
 In Rust, each data structure is \emph{owned} by a
 variable~\cite{RustBook}. Once that variable goes out of scope, the
-data structure it owns gets freed as well.  Data is divided into two
+data is freed as well.  Rust also allows data to be lent temporarily
+(e.g. as a function parameter) using {\em borrows}, which can be seen
+as pointers in traditional programming languages (but without
+ownership).  Since borrows are access paths into data structures, the
+type checker of Rust must enforce strict rules on their creation and
+lifetime.  For example, a location cannot be mutated as long as a
+borrow to it exists.  To support this, data is divided into two
 categories: that which can be {\em copied} (e.g. primitives); and that
 which must be {\em moved} (e.g. mutable borrows).  For the latter,
 assignments result in a transfer of ownership from rightvalue to
-leftvalue.  In order to \emph{lend} a data structure as a parameter to
-a function, \marginpar{Explain better}{Rust} allows the creation of
-\emph{borrows}, that can be seen as pointers in traditional
-programming languages.  However, since borrows are access paths to
-data structures, the type checker of Rust must enforce strict rules on
-their creation and lifetime. For instance, at each given instant, a
-borrowed location cannot be written as long as the borrow exists.  The
-implementation of the Rust compiler performs an additional
-\emph{borrow checking} phase, after the traditional type checking is
-over.  According to the developers of Rust, borrow checking is enough
-to guarantee that automatic deallocation does not create dangling
-pointers and multithreaded executions do not generate race conditions.
+leftvalue.  The Rust compiler performs \emph{borrow checking} to
+statically check that borrows are used safely (i.e. that automatic
+deallocation does not create dangling pointers, that multithreaded
+code does not generate race conditions, etc).
 
-Featherweight Rust formalises a subset of Rust and includes a proof of
-correctness for borrow checking~\cite{Pea21}.  In particular, borrow
-checking is formalised as a flow-sensitive type system, whose types
-include primitives (such as \<int>), dynamically allocated data
+Featherweight Rust (\FR/) formalises a subset of Rust and includes a
+proof of correctness for borrow checking~\cite{Pea21}.  In particular,
+borrow checking is formalised as a flow-sensitive type system, whose
+types include primitives (such as \<int>), dynamically allocated data
 structures (collectively represented by a boxing operator) and borrows
 of leftvalues, both for {\em reading} (immutable borrows) and {\em
   writing} (mutable borrows). The type system rules are given by
@@ -49,18 +45,17 @@ borrow checker would not terminate either.
 
 \paragraph{Contribution.}
 
-\marginpar{Simplified FR}{This} paper provides a sufficient condition
-which ensures the borrow checker for Featherweight Rust
-terminates~\cite{Pea21}.  Our insight is that, for well-typed
-programs, this condition already holds for typing environments created
-during borrow checking.  Hence, this is not a bug in Featherweight
-Rust {\em per se}, but rather an important condition which was left
-implicit.  Our approach shows that data structures are
-\emph{linearizable} at run time and, hence, that our condition holds
-for the specific kind of type environments the borrow checker builds
-during execution.  This result is important in order to increase
-confidence in the borrow checker of Rust.  Moreover, it provides a
-notion of well-foundness for the recursion used in the borrow checker,
-that future work can exploit in order to prove other properties by
-induction.  For example, this is a necessary step towards a mechanical
-proof of Featherweight Rust.
+This paper provides a sufficient condition which ensures the borrow
+checker for Featherweight Rust terminates~\cite{Pea21}.  Our insight
+is that, for well-typed programs, this condition already holds for
+typing environments created during borrow checking.  Hence, this is
+not a bug in Featherweight Rust {\em per se}, but rather an important
+condition which was left implicit.  Our approach shows that data
+structures are \emph{linearizable} at run time and, hence, that our
+condition holds for the specific kind of type environments the borrow
+checker builds during execution.  This result is important in order to
+increase confidence in the borrow checker of Rust.  Moreover, it
+provides a notion of well-foundness for the recursion used in the
+borrow checker, that future work can exploit in order to prove other
+properties by induction.  For example, this is a necessary step
+towards a mechanical proof of Featherweight Rust.

@@ -128,7 +128,7 @@ be written \emph{nor read} from any other path. Consider for instance
 the following function:
 
 \begin{lstlisting}
-fn reads_from_mutably_borrowed() { // rejected by the borrow checker
+fn reads_mutably_borrowed() { // rejected by the borrow checker
     let mut z = 13;
     let y = &mut z;
     let x = z;
