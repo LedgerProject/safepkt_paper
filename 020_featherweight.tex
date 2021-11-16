@@ -1,9 +1,9 @@
-\section{Simplified Featherweight Rust}\label{sec:featherweight}
+\section{Preliminaries}\label{sec:featherweight}
 
 This section gives a formal, simplified presentation of Featherweight
-Rust~\cite{Pea21}.  This retains the key features of Featherweight
-Rust relevant to our discussion but, for brevity, omits many other
-aspects.  More specifically:
+Rust (\FR/)~\cite{Pea21}.  This retains the key features of \FR/
+relevant to our discussion but, for brevity, omits other aspects.
+Roughly speaking, the main simplifications are:
 %
 \begin{itemize}
 
@@ -27,88 +27,83 @@ aspects.  More specifically:
   them.
 \end{itemize}
 
-\begin{definition}
-  We assume there is a set of variables $\Vars$.
-  A context $\kappa\subseteq\Vars$ is a finite set of variables in scope.
-  The set $\Leftvalues_\kappa$ of \emph{leftvalues} over $\kappa$ is defined as:
-  \begin{align*}
-    \mathsf{w} ::= &\ x & \text{variable, with $x\in\kappa$}\\
-    | &\ \mathtt{*}\mathsf{w} & \text{dereference.}
-  \end{align*}
-  The \emph{root} of a leftvalue is the starting variable to which the dereferences of the
-  leftvalue are applied. Namely, we define
+\begin{definition}[LVals]
+  We assume a set of variables $\Vars$.  A context
+  $\kappa\subseteq\Vars$ is a finite set of variables in scope.  The
+  set $\Leftvalues_\kappa$ of \emph{leftvalues} over $\kappa$ is:
+  \begin{displaymath}
+    \mathsf{w} ::= x\;|\;\mathtt{*}\mathsf{w}, \text{where $x\in\kappa$}
+  \end{displaymath}
+  The \emph{root} of a leftvalue is then defined as:
   \begin{align*}
     \mathsf{root}(x) &= x\qquad\text{if $x\in\Vars$}\\
     \mathsf{root}(\mathtt{*}\mathsf{w}) &= \mathsf{root}(\mathsf{w}).
   \end{align*}
+\end{definition}
+\begin{definition}[Expressions]
   The set of \emph{expressions} \textsf{e} is defined as
-  \begin{align*}
-    \mathsf{e} ::= &\ i & \text{integer}\\
-    | &\ \mathsf{w} & \text{leftvalue}\\
-    | &\ \borrow\mathsf{w} & \text{borrow}\\
-    | &\ \mutborrow\mathsf{w} & \text{mutable borrow}\\
-    | &\ \mathtt{box}\ \mathsf{e} & \text{heap allocation.}
-  \end{align*}
-  We assume there is a set $\Lifetimes$ of \emph{lifetimes}, used
-  to decorate blocks of code.
-  The sets of \emph{terms} \textsf{t} is defined as:
-  \begin{align*}
-    \mathsf{t} ::= &\ \mathsf{w}=\mathsf{e} & \text{assignment}\\
-    | &\ \mathtt{let\ mut}\ x=\mathsf{e} & \text{declaration, with $x\in\Vars$}\\
-    | &\ \{\mathsf{t}_1;\ldots;\mathsf{t}_n\}^l & \text{block, with $l\in\Lifetimes$.}
-  \end{align*}
+  \begin{displaymath}
+    \mathsf{e} ::= i\ |\ \mathsf{w}\ |\ \borrow\mathsf{w}\ |\ \mutborrow\mathsf{w}\ |\ \mathtt{box}\ \mathsf{e}
+  \end{displaymath}
+\end{definition}  
+\begin{definition}[Terms]  
+  We assume a set $\Lifetimes$ of \emph{lifetimes} $l$ which decorate
+  blocks of code.  The set of \emph{terms} \textsf{t} is defined as (where $x\in\Vars$ and $l\in\Lifetimes$):
+  \begin{displaymath}
+    \mathsf{t} ::= \ \mathsf{w}=\mathsf{e}\;|\;\mathtt{let\ mut}\ x=\mathsf{e}\;|\;\{\;\mathsf{t}_1\;;\;\ldots\;;\;\mathsf{t}_n\;\}^l
+  \end{displaymath}
 \end{definition}
 %
-Intuitively, the variables declared in a block with lifetime $l$ receive lifetime $l$
-and go out of scope and are deallocated
-at the end of the block. Lifetimes are important for the borrow checker,
-in order to check that borrowed variables do not survive their declaring block, since in that
-case the borrows would become dangling.
+Intuitively, variables declared in a block with lifetime $l$ have
+lifetime $l$ and are deallocated at the end of the block.  Lifetimes
+are important for the borrow checker to ensure borrows do not outlive
+their referents and become dangling.  The following illustrates a
+simple (invalid) program:
+\begin{displaymath}
+{\tt \{\;let\;mut\;x=0;\;let\;mut\;p=\&x;\;\{\;let\;mut\;y=1;\;p=\&y;\;\}^m\;\}^l}
+\end{displaymath}
 
-The types used by the borrow checker are somehow non-standard, in the sense
-that they describe primitive types (such as $\mathsf{int}$) or structures
-dynamically allocated in memory (collectively represented by a box), but can also refer to
-a borrow or mutable borrow of a leftvalue.
-This is a simplification of the types from~\cite{Pea21}, that allow more leftvalues
-in borrows. Since our simplified language has no conditionals, there is no need for
-more than one leftvalue in borrows.
+This program creates a dangling reference when the inner block
+completes and, hence, is rejected by the borrow checker.  The types
+used in \FR/ are a simplification of those found in Rust, and include
+only primitive types (such as $\mathsf{int}$) or structures
+dynamically allocated in memory (collectively represented by a box),
+but can also refer to a borrow or mutable borrow of a leftvalue.  This
+is a simplification of the types from~\cite{Pea21}, that allow more
+leftvalues in borrows. Since our simplified language has no
+conditionals, there is no need for more than one leftvalue in borrows.
 
-Moreover, a type can state that the value of a variable
-has been \emph{moved}, that is, assigned
-to another owner, that takes control of its ownership.
-Consequently, the value exists but cannot be accessed from that variable anymore.
-We write this as $\mathsf{dangling}$\footnote{This is a simplification of the
-$\mathsf{dangling}(T)$ type in~\cite{Pea21}, that embeds
-the \emph{ghost} type $T$ of a value that has been moved away.}.
-
-\begin{definition}[Types]
-  The set of \emph{types} over a context $\kappa$
-  is\footnote{The types for borrows and mutable borrows are restricted to a single leftvalue,
-    while~\cite{Pea21} allows one or more leftvalues.}
-  \begin{align*}
-    \mathsf{T}_\kappa ::=&\ \mathsf{int} & \text{integer}\\
-    | &\ \borrow\mathsf{w} & \text{borrow, with $\mathsf{w}\in\mathsf{T}_\kappa$}\\
-    | &\ \mutborrow\mathsf{w} & \text{mutable borrow, with $\mathsf{w}\in\mathsf{T}_\kappa$}\\
-    | &\ \boxtype{\mathsf{T}_\kappa} & \text{box}\\
-    | &\ \mathsf{dangling} & \text{dangling}.
-  \end{align*}
-  The set of \emph{decorated types} over $\kappa$ contains types with an
-  associated lifetime, such as $T^l$. We define $|T^l|=T$.
+\begin{definition}[Types] The set of \emph{types} over a context $\kappa$ is defined as follows (where $\mathsf{w}\in\kappa$):
+\begin{displaymath}
+    \mathsf{T}_\kappa
+    ::=\ \mathsf{int}\;|\;\borrow\mathsf{w}\;|\;\mutborrow\mathsf{w}\;|\;\boxtype{\mathsf{T}_\kappa}\;|\;\mathsf{dangling}
+\end{displaymath}
 \end{definition}
 
-Rust distinguishes between types with copy semantics
-and types with move semantics.
-Values whose type has copy semantics
-are copied upon reading, while values whose type has
-move semantics are \emph{moved} instead, in the sense that their original container
-loses the ownership to the value. Only mutable borrows and dynamically
-allocated data (hence boxes) have move semantics.
+Here, type $\mathsf{dangling}$ is given to a variable whose value has
+been \emph{moved}, that is, assigned to another owner.\footnote{This
+  is a simplification of the $\mathsf{dangling}(T)$ type
+  in~\cite{Pea21}, that embeds the \emph{ghost} type $T$ of a value
+  that has been moved away.}  Consequently, the value exists but
+cannot be accessed from that variable anymore.
 
-\begin{definition}[Copy and move types]\label{def:copy_move}
-  Let $T\in\mathsf{T}_\kappa$. Then $T$ \emph{has move semantics}, and we write
-  $\movetype(T)$, if and only if $T=\mutborrow\mathsf{w}$ or
-  $T=\boxtype{T'}$ for some $T'$. In all other cases, $T$ \emph{has copy semantics},
-  and we write $\copytype(T)$.
+\begin{definition}[Declared Types]
+  The set of \emph{declared types}, $T^l$, over $\kappa$ associates
+  types with lifetimes. We define $|T^l|=T$.
+\end{definition}
+
+Rust distinguishes types with {\em copy semantics} and types with {\em
+  move semantics}.  Values whose type has copy semantics are copied
+upon reading, while values whose type has move semantics are
+\emph{moved} instead, in the sense that their original container loses
+the ownership to the value. Only mutable borrows and dynamically
+allocated data (i.e. boxes) have move semantics.
+
+\begin{definition}[Copy and Move]\label{def:copy_move}
+  Let $T\in\mathsf{T}_\kappa$. Then $T$ \emph{has move semantics}, and
+  we write $\movetype(T)$, if and only if $T=\mutborrow\mathsf{w}$ or
+  $T=\boxtype{T'}$ for some $T'$. In all other cases, $T$ \emph{has
+    copy semantics}, and we write $\copytype(T)$.
 \end{definition}
 
 Another useful notion is that of \emph{full} types. They are types that do not contain
