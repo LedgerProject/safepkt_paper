@@ -73,9 +73,8 @@ scope at the end of the function, the box is deallocated.  Variable
 (roughly a pointer to \lstinline{i} without ownership).  Thus, when
 the box is deallocated, \lstinline{result} becomes a dangling pointer
 which cannot safely be returned.  Again, Rust rejects this function.
-Roughly, the borrow checker for FR~\cite{Pearce21} computes the
-following \emph{typing} (or \emph{type environment}) at the end of the
-function:
+Roughly, the borrow checker for FR~\cite{Pea21} computes the following
+\emph{typing} (or \emph{type environment}) at the end of the function:
 \[
 \{i\to\boxtype{\mathsf{int},\<result>\to\borrow i}\}
 \]

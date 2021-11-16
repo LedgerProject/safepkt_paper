@@ -35,9 +35,9 @@ to guarantee that automatic deallocation does not create dangling
 pointers and multithreaded executions do not generate race conditions.
 
 Featherweight Rust formalises a subset of Rust and includes a proof of
-correctness for borrow checking~\cite{Pearce21}.  In particular,
-borrow checking is formalised as a flow-sensitive type system, whose
-types include primitives (such as \<int>), dynamically allocated data
+correctness for borrow checking~\cite{Pea21}.  In particular, borrow
+checking is formalised as a flow-sensitive type system, whose types
+include primitives (such as \<int>), dynamically allocated data
 structures (collectively represented by a boxing operator) and borrows
 of leftvalues, both for {\em reading} (immutable borrows) and {\em
   writing} (mutable borrows). The type system rules are given by
@@ -51,7 +51,7 @@ borrow checker would not terminate either.
 
 \marginpar{Simplified FR}{This} paper provides a sufficient condition
 which ensures the borrow checker for Featherweight Rust
-terminates~\cite{Pearce21}.  Our insight is that, for well-typed
+terminates~\cite{Pea21}.  Our insight is that, for well-typed
 programs, this condition already holds for typing environments created
 during borrow checking.  Hence, this is not a bug in Featherweight
 Rust {\em per se}, but rather an important condition which was left

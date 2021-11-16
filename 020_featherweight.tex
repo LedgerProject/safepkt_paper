@@ -1,22 +1,22 @@
 \section{Simplified Featherweight Rust}\label{sec:featherweight}
 
 This section gives a formal, simplified presentation of Featherweight
-Rust~\cite{Pearce21}. The simplifications make the language and its
+Rust~\cite{Pea21}. The simplifications make the language and its
 borrow checker (Sec.~\ref{sec:borrow_checker})
 more amenable to formal proofs, by focusing on the way borrows work. Namely:
 %
 \begin{itemize}
 \item We have used a dangling type that does not embed the
-  original, \emph{ghost} type as is the case in~\cite{Pearce21}.
+  original, \emph{ghost} type as is the case in~\cite{Pea21}.
   That information is important to ensure that a variable, whose value has been
   previously moved away, is subsequently reassigned a value compatible
   with its original type. However, this is irrelevant here,
   since it is related to traditional type checking and not to borrow checking.
 \item We have restricted borrow types to a single leftvalue, rather than to a set of
-  leftvalues as in~\cite{Pearce21}. By using a set, \cite{Pearce21}
+  leftvalues as in~\cite{Pea21}. By using a set, \cite{Pea21}
   was ready for the addition of conditional control. However, this just makes definitions
   and proofs more complex, without adding anything significant \wrt the way borrows work.
-\item We have transformed some definitions, originally given as typing rules in~\cite{Pearce21},
+\item We have transformed some definitions, originally given as typing rules in~\cite{Pea21},
   to the definition of functions, such as functions $\mathsf{type}$ and $\mathsf{move}$ later.
   This makes them more compact and simplifies proofs involving them.
 \end{itemize}
@@ -63,7 +63,7 @@ The types used by the borrow checker are somehow non-standard, in the sense
 that they describe primitive types (such as $\mathsf{int}$) or structures
 dynamically allocated in memory (collectively represented by a box), but can also refer to
 a borrow or mutable borrow of a leftvalue.
-This is a simplification of the types from~\cite{Pearce21}, that allow more leftvalues
+This is a simplification of the types from~\cite{Pea21}, that allow more leftvalues
 in borrows. Since our simplified language has no conditionals, there is no need for
 more than one leftvalue in borrows.
 
@@ -72,13 +72,13 @@ has been \emph{moved}, that is, assigned
 to another owner, that takes control of its ownership.
 Consequently, the value exists but cannot be accessed from that variable anymore.
 We write this as $\mathsf{dangling}$\footnote{This is a simplification of the
-$\mathsf{dangling}(T)$ type in~\cite{Pearce21}, that embeds
+$\mathsf{dangling}(T)$ type in~\cite{Pea21}, that embeds
 the \emph{ghost} type $T$ of a value that has been moved away.}.
 
 \begin{definition}[Types]
   The set of \emph{types} over a context $\kappa$
   is\footnote{The types for borrows and mutable borrows are restricted to a single leftvalue,
-    while~\cite{Pearce21} allows one or more leftvalues.}
+    while~\cite{Pea21} allows one or more leftvalues.}
   \begin{align*}
     \mathsf{T}_\kappa ::=&\ \mathsf{int} & \text{integer}\\
     | &\ \borrow\mathsf{w} & \text{borrow, with $\mathsf{w}\in\mathsf{T}_\kappa$}\\
@@ -128,7 +128,7 @@ with their lifetime.
 The types used in a typing can include borrows and mutable borrows.
 The basic idea of the borrow checker is that the root of the
 borrowed leftvalues (mutable or not) can only be used
-in a restricted way~\cite{Pearce21}.
+in a restricted way~\cite{Pea21}.
 
 \begin{definition}[Read/Write Prohibited]\label{def:prohibited}
   Let $\kappa$ be a context and $\tau$ a \emph{typing} over $\kappa$.
@@ -148,8 +148,8 @@ $\mathsf{writeProhibited}(\mathsf{w},\tau)$.
 
 Def.~\ref{def:type} shows how a typing provides type and lifetime not just to variables,
 but to leftvalues as well.
-It is a translation\footnote{This definition was given as a type system in~\cite{Pearce21}, while it is a recursive function here.} of
-Def.~3.11 in~\cite{Pearce21}.
+It is a translation\footnote{This definition was given as a type system in~\cite{Pea21}, while it is a recursive function here.} of
+Def.~3.11 in~\cite{Pea21}.
 It can be seen as a recursive algorithm for typing leftvalues
 and, as such, it is heavily used in the borrow checker.
 The algorithm queries the typing when the leftvalue is actually a variable,

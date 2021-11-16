@@ -105,7 +105,7 @@ The following result shows that $\tau''$ is linearizable as well.
 \begin{proof}
   The function $\mathsf{write}$ modifies a set of variables $v_1,\ldots,v_n$ in $\tau$ to compute $\tau'$.
   The type of the other variables remains unchanged from $\tau$ to $\tau'$. Since the
-  type system guarantees that borrowed variables are not modified~\cite{Pearce21},
+  type system guarantees that borrowed variables are not modified~\cite{Pea21},
   this means that $v_1,\ldots,v_n$ do not occur in the borrows in $\tau$. Moreover,
   the variables in the borrows in $T$ do not contain $v_1,\ldots,v_n$, because
   such variables are either $x=\mathsf{root}(\mathsf{w})$, and the rule \textsf{T-Assign}
