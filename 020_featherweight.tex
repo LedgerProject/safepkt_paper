@@ -1,24 +1,30 @@
 \section{Simplified Featherweight Rust}\label{sec:featherweight}
 
 This section gives a formal, simplified presentation of Featherweight
-Rust~\cite{Pea21}. The simplifications make the language and its
-borrow checker (Sec.~\ref{sec:borrow_checker})
-more amenable to formal proofs, by focusing on the way borrows work. Namely:
+Rust~\cite{Pea21}.  This retains the key features of Featherweight
+Rust relevant to our discussion but, for brevity, omits many other
+aspects.  More specifically:
 %
 \begin{itemize}
-\item We have used a dangling type that does not embed the
-  original, \emph{ghost} type as is the case in~\cite{Pea21}.
-  That information is important to ensure that a variable, whose value has been
-  previously moved away, is subsequently reassigned a value compatible
-  with its original type. However, this is irrelevant here,
-  since it is related to traditional type checking and not to borrow checking.
-\item We have restricted borrow types to a single leftvalue, rather than to a set of
-  leftvalues as in~\cite{Pea21}. By using a set, \cite{Pea21}
-  was ready for the addition of conditional control. However, this just makes definitions
-  and proofs more complex, without adding anything significant \wrt the way borrows work.
-\item We have transformed some definitions, originally given as typing rules in~\cite{Pea21},
-  to the definition of functions, such as functions $\mathsf{type}$ and $\mathsf{move}$ later.
-  This makes them more compact and simplifies proofs involving them.
+
+\item {\bf Compatibility}.  The original formulation of \FR/ supports
+  a notion of {\em partial type}.  This allows the ``shadow'' of a
+  variable's type to be retained in the environment after it has been
+  moved, such that subsequent assignments can be checked for
+  compatibility.  Since this is not important here, we reduce these
+  shadow types to a single ``dangling'' type.
+  
+\item {\bf Borrows} The original formulation of \FR/ models borrows
+  using {\em sets} of leftvalues.  Whilst strictly unnecessary, this
+  allows \FR/ to be easily extended with control-flow constructs.
+  Since this makes our presentation more complex without adding
+  anything significant, we restrict borrows to a single leftvalue.
+
+\item {\bf Misc.} We have transformed some definitions, originally
+  given as typing rules in~\cite{Pea21}, to the definition of
+  functions, such as functions $\mathsf{type}$ and $\mathsf{move}$
+  later.  This makes them more compact and simplifies proofs involving
+  them.
 \end{itemize}
 
 \begin{definition}
